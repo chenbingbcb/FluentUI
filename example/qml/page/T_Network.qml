@@ -46,10 +46,35 @@ FluContentPage{
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: FluScrollBar {}
         contentHeight:layout_column.height
+        property Component mainRectComponent: null
         Column{
             spacing: 2
             id:layout_column
             width: parent.width
+
+            function createItem() {
+                var testJson = {"type": 1, "text": "Test", "implicitHeight": 72}
+                if (testJson["type"] === 1) {
+                    // layout_flick.mainRectComponent = Qt.createComponent("T_FluButton.qml");
+                    // console.debug(layout_flick.mainRectComponent.errorString());
+                    // var obj = layout_flick.mainRectComponent.createObject(layout_column, {});
+                    var obj = Qt.createQmlObject("import FluentUI; FluButton{}", layout_column);
+                    obj["text"] = testJson["text"];
+                    obj["implicitHeight"] = testJson["implicitHeight"];
+                    obj["implicitWidth"] = parent.width;
+                    console.debug(obj);
+                }
+
+                var testArray = [
+                    {"type": 1, "text": "TestA", "implicitHeight": 72}
+                    , {"type": 1, "text": "TestB", "implicitHeight": 72}
+                    , {"type": 1, "text": "TestC", "implicitHeight": 72}
+                ]
+            }
+            Component.onCompleted:{
+                createItem()
+            }
+
             FluButton{
                 implicitWidth: parent.width
                 implicitHeight: 36

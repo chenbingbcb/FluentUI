@@ -89,6 +89,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("InitializrHelper", InitializrHelper::getInstance());
     engine.rootContext()->setContextProperty("TranslateHelper", TranslateHelper::getInstance());
     engine.rootContext()->setContextProperty("Network", Network::getInstance());
+    engine.rootContext()->setContextProperty("AesEncryptor", AesEncryptor::getInstance());
 #ifdef FLUENTUI_BUILD_STATIC_LIB
     FluentUI::registerTypes(&engine);
 #endif

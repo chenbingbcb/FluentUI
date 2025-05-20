@@ -7,7 +7,7 @@ import "../component"
 
 FluScrollablePage{
 
-    title: qsTr("BreadcurmbBar")
+    title: qsTr("BreadcrumbBar")
 
     Component.onCompleted: {
         var items = []

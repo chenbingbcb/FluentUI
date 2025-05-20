@@ -39,7 +39,7 @@ FluWindow {
     }
 
     onLazyLoad: {
-        tour.open()
+        // tour.open()
     }
 
     Component.onCompleted: {
@@ -52,7 +52,7 @@ FluWindow {
 
     SystemTrayIcon {
         id:system_tray
-        visible: true
+        visible: false
         icon.source: "qrc:/example/res/image/favicon.ico"
         tooltip: "FluentUI"
         menu: Menu {

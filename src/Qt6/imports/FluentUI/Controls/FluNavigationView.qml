@@ -76,7 +76,7 @@ Item {
                         }
                         var objEmpty = comEmpty.createObject(items,{_idx:_idx});
                         itemFooter._idx = _idx;
-                        data.push(objEmpty)
+                        data.push(itemFooter)
                         _idx++
                     }
                 }
@@ -756,6 +756,7 @@ Item {
                     }else if(pageMode === FluNavigationViewType.NoStack){
                         loader_content.setSource(item._ext.url,item._ext.argument)
                     }
+                    gotoTab()
                 }
             }
             FluIconButton{
@@ -863,8 +864,7 @@ Item {
             }
         }
     }
-    FluLoader{
-        id:loader_content
+    FluFrame{
         anchors{
             left: parent.left
             top: nav_app_bar.bottom
@@ -887,7 +887,50 @@ Item {
                 easing.type: Easing.OutCubic
             }
         }
-        sourceComponent: com_stack_content
+        FluTabView{
+            id:tab_view
+            addButtonVisibility:false
+            FluLoader{
+                id:loader_content
+                anchors.fill: parent
+                anchors.topMargin: 34
+                sourceComponent: com_stack_content
+            }
+        }
+    }
+    function gotoTab(){
+        var index = tab_view.findTabModelByTitle(loader_content.item.title)
+        if (-1 !== index) {
+            tab_view.onPressed(index)
+            return
+        }
+        tab_view.appendTab("qrc:/example/res/image/favicon.ico", loader_content.item.title/*, loader_content.item*/)
+    }
+    Connections{
+        target: tab_view
+        ignoreUnknownSignals:true
+        function onChooseTab(title){
+            for(var i=0;i<nav_list.model.length;i++){
+                var item = nav_list.model[i]
+                if(item.title === title){
+                    if(item._idx<(nav_list.count - layout_footer.count)){
+                        layout_footer.currentIndex = -1
+                    }else{
+                        layout_footer.currentIndex = item._idx-(nav_list.count-layout_footer.count)
+                    }
+                    nav_list.currentIndex = item._idx
+                    item.tap()
+                    break
+                }
+            }
+        }
+    }
+    Connections{
+        target: tab_view
+        ignoreUnknownSignals:true
+        function onRemoveTab(title){
+            btn_back.clicked()
+        }
     }
     MouseArea{
         anchors.fill: parent
@@ -1314,7 +1357,7 @@ Item {
             d.stackItems = d.stackItems.concat(nav_list.model[nav_list.currentIndex])
         }
         function noStackPush(){
-            if(loader_content.source.toString() === url && Object.keys(argument).length === 0){
+            if(loader_content.source.toString() === url/* && Object.keys(argument).length === 0*/){
                 return
             }
             loader_content.setSource(url,argument)
@@ -1327,6 +1370,7 @@ Item {
         }else if(pageMode === FluNavigationViewType.NoStack){
             noStackPush()
         }
+        gotoTab()
     }
     function startPageByItem(data){
         var items = getItems()

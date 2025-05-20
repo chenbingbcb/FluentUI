@@ -7,7 +7,7 @@ import "../window"
 import "../global"
 
 FluScrollablePage{
-
+    title: qsTr("Home")
     launchMode: FluPageType.SingleTask
     animationEnabled: false
     header: Item{}

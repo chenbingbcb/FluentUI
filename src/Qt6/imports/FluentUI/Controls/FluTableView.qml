@@ -12,7 +12,7 @@ Rectangle {
     property var sourceModel:FluTableModel {
         columnSource: control.columnSource
     }
-    property var columnSource: []
+    property var columnSource: [] //表头配置
     property var dataSource
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
     property bool horizonalHeaderVisible: true
@@ -195,7 +195,7 @@ Rectangle {
         }
     }
     Component{
-        id:com_text
+        id:com_text //数据配置
         FluText {
             id:item_text
             text: String(display)
@@ -208,7 +208,8 @@ Rectangle {
                 topMargin: 6
                 bottomMargin: 6
             }
-            verticalAlignment: Text.AlignVCenter
+            verticalAlignment: dataColumnModel.verticalAlignment || Qt.AlignVCenter
+            horizontalAlignment: dataColumnModel.horizontalAlignment || Qt.AlignHCenter
             MouseArea{
                 acceptedButtons: Qt.NoButton
                 id: hover_handler
@@ -348,6 +349,7 @@ Rectangle {
                     property var display: rowModel[columnModel.dataIndex]
                     property var rowModel : model.rowModel
                     property var columnModel : model.columnModel
+                    property var dataColumnModel : columnModel.dataColumnModel || columnModel //数据列属性无效则用表头列属性 容错处理
                     property int row : model.row
                     property int column: model.column
                     property bool isObject: typeof(display) == "object"
@@ -747,14 +749,15 @@ Rectangle {
         }
     }
     Component{
-        id:com_column_text
+        id:com_column_text //表头配置
         FluText {
             id: column_text
             text: String(display)
             anchors.fill: parent
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
+            horizontalAlignment: model.display.horizontalAlignment || Qt.AlignHCenter
+            verticalAlignment: model.display.verticalAlignment || Qt.AlignVCenter
+            elide: Text.ElideRight
+         }
     }
     Item{
         id: header_vertical_column
@@ -891,7 +894,7 @@ Rectangle {
                     }
                     color: "#00000000"
                 }
-                TableView{
+                TableView {
                     property string dataIndex: columnModel.dataIndex
                     id: item_table_frozen
                     interactive: false

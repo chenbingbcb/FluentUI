@@ -91,6 +91,24 @@ else ()
 endif ()
 add_dependencies(${PROJECT_NAME} Script-UpdateTranslations)
 
+if (WIN32)
+    if (MSVC)
+        if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+            include_directories(${CMAKE_SOURCE_DIR}/3rdparty/msvc/x86/OpenSSL-Win64/include)
+            target_link_libraries(${PROJECT_NAME} PRIVATE
+                ${CMAKE_SOURCE_DIR}/3rdparty/msvc/x86/OpenSSL-Win64/lib/libcrypto.lib
+                ${CMAKE_SOURCE_DIR}/3rdparty/msvc/x86/OpenSSL-Win64/lib/libssl.lib)
+        elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+            include_directories(${CMAKE_SOURCE_DIR}/3rdparty/msvc/x64/OpenSSL-Win64/include)
+            target_link_libraries(${PROJECT_NAME} PRIVATE
+                ${CMAKE_SOURCE_DIR}/3rdparty/msvc/x64/OpenSSL-Win64/lib/libcrypto.lib
+                ${CMAKE_SOURCE_DIR}/3rdparty/msvc/x64/OpenSSL-Win64/lib/libssl.lib)
+        endif ()
+    endif ()
+elseif (UNIX)
+    target_link_libraries(${PROJECT_NAME} PRIVATE crypto ssl)
+endif ()
+
 #复制程序运行所需要的动态库
 if (WIN32)
     if (MSVC)

@@ -7,8 +7,11 @@
 #include <QJSValue>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QByteArray>
 #include "src/stdafx.h"
 #include "src/singleton.h"
+#include <openssl/aes.h>
+#include <openssl/evp.h>
 
 namespace NetworkType {
     Q_NAMESPACE
@@ -220,4 +223,44 @@ private:
 
 public:
     QJSValue _interceptor;
+};
+
+/**
+ * AES加密
+ */
+class AesEncryptor : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+    SINGLETON(AesEncryptor)
+public:
+    explicit AesEncryptor(QObject *parent = nullptr) : QObject(parent) {}
+
+    /**
+     * 加密方法
+     * @param data  要加密的数据
+     * @param key 加密key
+     * @param iv 加密iv
+     * @return 加密的结果
+     */
+    Q_INVOKABLE QString encrypt(const QString &data, const QString &key, const QString &iv);
+
+    /**
+     * 解密方法
+     * @param data 要解密的数据
+     * @param key  解密key
+     * @param iv 解密iv
+     * @return 解密的结果
+     */
+    Q_INVOKABLE QString decrypt(const QString &data, const QString &key, const QString &iv);
+
+    Q_INVOKABLE QString encrypt(const QString &data);
+
+    Q_INVOKABLE QString decrypt(const QString &data);
+
+private:
+    //使用AES-128-CBC加密模式，key需要为16位,key和iv可以相同！
+    static const QString KEY;
+    static const QString IV;
 };

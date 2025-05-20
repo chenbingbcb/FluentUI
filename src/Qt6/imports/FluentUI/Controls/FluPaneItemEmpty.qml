@@ -8,6 +8,7 @@ QtObject {
     property var _ext
     property var _parent
     property bool visible: true
+    property string title
     Component.onCompleted: {
         key = FluTools.uuid()
     }

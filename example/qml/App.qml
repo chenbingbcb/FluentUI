@@ -50,7 +50,7 @@ FluLauncher {
         if(args.length>=2 && args[1].startsWith("-crashed=")){
             FluRouter.navigate("/crash",{crashFilePath:args[1].replace("-crashed=","")})
         }else{
-            FluRouter.navigate("/")
+            FluRouter.navigate("/login")
         }
     }
 

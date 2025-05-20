@@ -696,3 +696,69 @@ NetworkParams *Network::deleteJsonArray(const QString &url) {
 void Network::setInterceptor(QJSValue interceptor) {
     this->_interceptor = std::move(interceptor);
 }
+
+const QString AesEncryptor::KEY = "123aaa7890adbcde";
+const QString AesEncryptor::IV = "123456bcd0hjlkew";
+
+QString AesEncryptor::encrypt(const QString &data, const QString &key, const QString &iv)
+{
+    QByteArray dataBa = data.toUtf8();
+    QByteArray keyBa = key.toUtf8();
+    QByteArray ivBa = iv.toUtf8();
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, (const unsigned char*)keyBa.data(), (const unsigned char*)ivBa.data());
+
+    int len;
+    int ciphertext_len;
+    QByteArray ciphertext(dataBa.length() + AES_BLOCK_SIZE, '\0');
+
+    EVP_EncryptUpdate(ctx, (unsigned char*)ciphertext.data(), &len, (const unsigned char*)dataBa.data(), dataBa.length());
+    ciphertext_len = len;
+
+    EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext.data() + len, &len);
+    ciphertext_len += len;
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    // Base64 编码
+    return QString::fromLatin1(ciphertext.left(ciphertext_len).toBase64());
+}
+
+QString AesEncryptor::decrypt(const QString &data, const QString &key, const QString &iv)
+{
+    QByteArray cipherData = QByteArray::fromBase64(data.toUtf8());
+    QByteArray keyData = key.toUtf8();
+    QByteArray ivData = iv.toUtf8();
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, (const unsigned char*)keyData.data(), (const unsigned char*)ivData.data());
+
+    int len;
+    int plaintext_len = 0;
+    QByteArray plaintext(cipherData.size() + AES_BLOCK_SIZE, '\0');
+
+    // 开始解密
+    EVP_DecryptUpdate(ctx, (unsigned char*)plaintext.data(), &len, (const unsigned char*)cipherData.data(), cipherData.size());
+    plaintext_len += len;
+
+    // 结束解密
+    EVP_DecryptFinal_ex(ctx, (unsigned char*)plaintext.data() + len, &len);
+    plaintext_len += len;
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    // 转换为字符串并去除可能的填充空白
+    QString result = QString::fromUtf8(plaintext.left(plaintext_len).data());
+    return result.trimmed(); // 去除尾部空白或多余填充
+}
+
+QString AesEncryptor::encrypt(const QString &data)
+{
+    return encrypt(data, KEY, IV);
+}
+
+QString AesEncryptor::decrypt(const QString &data)
+{
+    return decrypt(data, KEY, IV);
+}

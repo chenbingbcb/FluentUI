@@ -9,6 +9,8 @@ Item {
     property int itemWidth: 146
     property bool addButtonVisibility: true
     signal newPressed
+    signal chooseTab(string title)
+    signal removeTab(string title)
     id:control
     implicitHeight: height
     implicitWidth: width
@@ -129,6 +131,7 @@ Item {
                             var timeDiff = new Date().getTime() - item_container.timestamp
                             if (timeDiff < 300) {
                                 tab_nav.currentIndex = index
+                                chooseTab(model.text)
                             }
                             d.dragIndex = -1;
                             var pos = tab_nav.mapToItem(item_layout, item_container.x, item_container.y)
@@ -237,7 +240,7 @@ Item {
                         width: visible ? 24 : 0
                         height: 24
                         visible: {
-                            if(closeButtonVisibility === FluTabViewType.Never)
+                            if(closeButtonVisibility === FluTabViewType.Never || model.text === qsTr("首页"))
                                 return false
                             if(closeButtonVisibility === FluTabViewType.OnHover)
                                 return item_mouse_hove.containsMouse || item_btn_close.hovered
@@ -249,6 +252,9 @@ Item {
                             verticalCenter: parent.verticalCenter
                         }
                         onClicked: {
+                            if (tab_nav.currentIndex === index){
+                                removeTab(model.text)
+                            }
                             tab_model.remove(index)
                         }
                     }
@@ -288,6 +294,7 @@ Item {
     }
     function appendTab(icon,text,page,argument){
         tab_model.append(createTab(icon,text,page,argument))
+        tab_nav.currentIndex = tab_model.count - 1
     }
     function setTabList(list){
         tab_model.clear()
@@ -295,5 +302,16 @@ Item {
     }
     function count(){
         return tab_nav.count
+    }
+    function findTabModelByTitle(title){
+        for(var i = 0; i< tab_model.count; i++){
+            if(tab_model.get(i).text === title){
+                return i
+            }
+        }
+        return -1
+    }
+    function onPressed(index){
+        tab_nav.currentIndex = index
     }
 }
