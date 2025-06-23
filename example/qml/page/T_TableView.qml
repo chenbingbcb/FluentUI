@@ -30,7 +30,7 @@ FluContentPage{
 
     onCheckBoxChanged: {
         for(var i =0;i< table_view.rows ;i++){
-            if(false === table_view.getRow(i).checkbox.options.checked){
+            if(false === table_view.getRow(i).checkbox.options.checked) {
                 root.selectedAll = false
                 return
             }

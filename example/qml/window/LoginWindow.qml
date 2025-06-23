@@ -16,9 +16,16 @@ FluWindow {
     fixSize: true
     modality: Qt.ApplicationModal
     property string password: ""
-    property string loginUrl: "http://10.18.254.51:9999/sys/login"
-    property string captchaUrl: "http://10.18.254.51:9999/sys/randomImage/"
-    property string getUserPermissionByTokenUrl: "http://10.18.254.51:9999/sys/permission/getUserPermissionByToken"
+    property string loginUrl: "http://10.18.254.51:8079/basic-api/sys/login"
+    property string captchaUrl: "http://10.18.254.51:8079/basic-api/sys/randomImage/"
+    property string getUserPermissionByTokenUrl: "http://10.18.254.51:8079/basic-api/sys/permission/getUserPermissionByToken"
+
+    appBar: FluAppBar {
+        title: window.title
+        icon: FluApp.windowIcon
+        showStayTop: false
+        closeClickListener: ()=>{FluRouter.exit(0)}
+    }
 
     onInitArgument:
         (argument)=>{
@@ -56,15 +63,15 @@ FluWindow {
                     if (jsResult.code === 500 && jsResult.message === "验证码错误") {
                         procCaptcha()
                     } else {
-                        showError(qsTr("Login failed: " + result))
+                        showError(qsTr("login failed: " + result))
                         return
                     }
                 }
                 settings.username = textbox_uesrname.text
 
-                var token = jsResult.result.token
+                GlobalModel.token = jsResult.result.token
                 Network.get(getUserPermissionByTokenUrl)
-                .addHeader("X-Access-Token",token)
+                .addHeader("S-Token",GlobalModel.token)
                 .addQuery("_t",Math.floor(Date.now()/1000))
                 .bind(window)
                 .go(getUserPermissionByTokenUrlCallable)
@@ -88,7 +95,7 @@ FluWindow {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 0) {
-                    showError(qsTr("Get captcha failed: " + result))
+                    showError(qsTr("captcha failed: " + result))
                     return
                 }
 
@@ -113,6 +120,10 @@ FluWindow {
             (result)=>{
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200 || jsResult.result === null) {
+                    showError(qsTr("getUserPermissionByToken failed: " + result))
+                    return
+                }
 
                 var menu = jsResult.hasOwnProperty("result") ? jsResult.result.menu : []
                 ItemsOriginal.paneItemModel = menu
@@ -145,6 +156,9 @@ FluWindow {
             placeholderText: qsTr("Please enter your password")
             echoMode:TextInput.Password
             Layout.alignment: Qt.AlignHCenter
+            onCommit: {
+                btnLogin.clicked()
+            }
         }
 
         RowLayout{
@@ -172,6 +186,7 @@ FluWindow {
         }
 
         FluFilledButton{
+            id: btnLogin
             text: qsTr("Login")
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 20

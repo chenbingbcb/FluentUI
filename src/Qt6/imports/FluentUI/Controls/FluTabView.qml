@@ -205,13 +205,13 @@ Item {
                     RowLayout{
                         spacing: 0
                         height: parent.height
-                        Image{
-                            source:model.icon
-                            Layout.leftMargin: 10
-                            Layout.preferredWidth: 14
-                            Layout.preferredHeight: 14
-                            Layout.alignment: Qt.AlignVCenter
-                        }
+                        // Image{
+                        //     source:model.icon
+                        //     Layout.leftMargin: 10
+                        //     Layout.preferredWidth: 14
+                        //     Layout.preferredHeight: 14
+                        //     Layout.alignment: Qt.AlignVCenter
+                        // }
                         FluText{
                             id:item_text
                             text: model.text
@@ -228,7 +228,7 @@ Item {
                                 }
                                 return false
                             }
-                            Layout.preferredWidth: visible?item_container.width - 41 - item_btn_close.width:0
+                            Layout.preferredWidth: visible?item_container.width - 11 - item_btn_close.width:0
                             elide: Text.ElideRight
                             Layout.alignment: Qt.AlignVCenter
                         }

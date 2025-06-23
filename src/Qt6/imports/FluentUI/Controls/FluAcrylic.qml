@@ -1,5 +1,4 @@
 import QtQuick
-import Qt5Compat.GraphicalEffects
 import FluentUI
 
 Item {
@@ -18,7 +17,7 @@ Item {
         sourceRect: control.targetRect
         sourceItem: control.target
     }
-    FastBlur {
+    FluFastBlur {
         id: fast_blur
         anchors.fill: parent
         source: effect_source

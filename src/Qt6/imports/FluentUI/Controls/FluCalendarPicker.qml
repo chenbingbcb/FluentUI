@@ -7,9 +7,9 @@ import FluentUI
 FluButton {
     text: {
         if(control.current){
-            return control.current.toLocaleDateString(FluApp.locale,"yyyy/M/d")
+            return control.current.toLocaleDateString(FluApp.locale,"yyyy-MM-dd")
         }
-        return qsTr("Pick a date")
+        return qsTr("")
     }
     property date from: new Date(1924, 0, 1)
     property date to: new Date(2124, 11, 31)

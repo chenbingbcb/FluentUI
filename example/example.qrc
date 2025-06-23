@@ -214,6 +214,8 @@
         <file>res/image/logo_pro.png</file>
         <file>qml/page/T_FluentPro.qml</file>
         <file>qml/page/T_AccountMgr.qml</file>
+        <file>qml/page/T_SelectDemo.qml</file>
+        <file>qml/page/T_OnlineList_1.qml</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

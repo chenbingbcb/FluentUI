@@ -15,8 +15,8 @@ FluWindow {
     title: "FluentUI"
     width: 1000
     height: 668
-    minimumWidth: 668
-    minimumHeight: 320
+    minimumWidth: 1000
+    minimumHeight: 668
     launchMode: FluWindowType.SingleTask
     fitsAppBarWindows: true
     appBar: FluAppBar {
@@ -43,7 +43,8 @@ FluWindow {
     }
 
     Component.onCompleted: {
-        checkUpdate(true)
+        // checkUpdate(true)
+        showMaximized()
     }
 
     Component.onDestruction: {
@@ -52,7 +53,7 @@ FluWindow {
 
     SystemTrayIcon {
         id:system_tray
-        visible: false
+        visible: true
         icon.source: "qrc:/example/res/image/favicon.ico"
         tooltip: "FluentUI"
         menu: Menu {

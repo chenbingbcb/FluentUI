@@ -6,6 +6,7 @@ import Qt.labs.qmlmodels
 import FluentUI
 
 Rectangle {
+    signal editClicked(int r)
     readonly property alias rows: table_view.rows
     readonly property alias columns: table_view.columns
     readonly property alias current: d.current
@@ -13,7 +14,7 @@ Rectangle {
         columnSource: control.columnSource
     }
     property var columnSource: [] //表头配置
-    property var dataSource
+    property var dataSource: []
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
     property bool horizonalHeaderVisible: true
     property bool verticalHeaderVisible: true
@@ -58,11 +59,12 @@ Rectangle {
             var headerRow = {}
             var offsetX = 0
             for(var i=0;i<=columnSource.length-1;i++){
+                columnSource[i] = Object.assign(columnSource[i], {x: offsetX}) //强制添加属性 因为item.x = offsetX或columnSource[i].x = offsetX不一定都管用
                 var item = columnSource[i]
                 if(!item.width){
                     item.width = d.defaultItemWidth
                 }
-                item.x = offsetX
+                // item.x = offsetX
                 offsetX = offsetX + item.width
                 var column = Qt.createQmlObject('import Qt.labs.qmlmodels 1.0;TableModelColumn{}',sourceModel);
                 column.display = item.dataIndex
@@ -120,7 +122,7 @@ Rectangle {
             readOnly: true === control.columnSource[column].readOnly
             Component.onCompleted: {
                 forceActiveFocus()
-                selectAll()
+                // selectAll()
             }
             onCommit: {
                 if(!readOnly){
@@ -148,7 +150,7 @@ Rectangle {
                     isCtrlEnterForNewline: true
                     Component.onCompleted: {
                         forceActiveFocus()
-                        selectAll()
+                        // selectAll()
                     }
                     rightPadding: 34
                     onCommit: {
@@ -195,7 +197,7 @@ Rectangle {
         }
     }
     Component{
-        id:com_text //数据配置
+        id:com_text //单元格显示文本
         FluText {
             id:item_text
             text: String(display)
@@ -260,7 +262,7 @@ Rectangle {
             visible: !isHide
             TableView.onPooled: {
                 if(d.editPosition && d.editPosition.row === row && d.editPosition.column === column){
-                    control.closeEditor()
+                    // control.closeEditor()
                 }
             }
             hoverEnabled: true
@@ -343,14 +345,14 @@ Rectangle {
                         }
                 }
                 FluLoader{
-                    id: item_table_loader
+                    id: item_table_loader //单元格显示组件
                     property var tableView: control
                     property var model: item_table_mouse._model
                     property var display: rowModel[columnModel.dataIndex]
                     property var rowModel : model.rowModel
                     property var columnModel : model.columnModel
                     property var dataColumnModel : columnModel.dataColumnModel || columnModel //数据列属性无效则用表头列属性 容错处理
-                    property int row : model.row
+                    property int row: model.row
                     property int column: model.column
                     property bool isObject: typeof(display) == "object"
                     property var options: {
@@ -371,7 +373,7 @@ Rectangle {
                     }
                 }
                 FluLoader{
-                    id: loader_edit
+                    id: loader_edit //单元格编辑组件
                     property var tableView: control
                     property var display
                     property int column: {
@@ -756,7 +758,6 @@ Rectangle {
             anchors.fill: parent
             horizontalAlignment: model.display.horizontalAlignment || Qt.AlignHCenter
             verticalAlignment: model.display.verticalAlignment || Qt.AlignVCenter
-            elide: Text.ElideRight
          }
     }
     Item{

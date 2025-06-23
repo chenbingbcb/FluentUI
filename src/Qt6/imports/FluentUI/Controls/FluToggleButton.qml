@@ -6,6 +6,7 @@ import FluentUI
 Button {
     property bool disabled: false
     property string contentDescription: ""
+    property alias controlBackground: bg
     property color normalColor: {
         if(checked){
             return FluTheme.primaryColor
@@ -42,6 +43,7 @@ Button {
     horizontalPadding:12
     onClicked: clickListener()
     background: FluControlBackground{
+        id: bg
         implicitWidth: 30
         implicitHeight: 30
         radius: 4

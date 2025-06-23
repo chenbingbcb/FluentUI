@@ -9,106 +9,100 @@ FluObject{
     property var navigationView
     property var paneItemMenu
     property var paneItemModel
-    property var paneItemMap: {
-        "/dashboard/analysis": {key:qsTr("Home"),icon:FluentIcons.Home}
-        ,"/flow": {key:qsTr("Basic Input"),icon:FluentIcons.CheckboxComposite,expander:true}
-        ,"/online/cgformList/eb8bbbc76d6c4868b993f928f4d725f7": {key:qsTr("Buttons")}
-        ,"/flow/ActDeModelList": {key:qsTr("Text")}
-        ,"/flow/ApplyingTasks": {key:qsTr("Image")}
-        ,"/flow/ApplyedTasks": {key:qsTr("Slider")}
-        ,"/flow/mySendTasks": {key:qsTr("CheckBox")}
-        ,"/flow/FlowActList": {key:qsTr("RadioButton")}
-        ,"/flow/FlowOfFormList": {key:qsTr("ToggleSwitch")}
-        ,"/flow/FlowStepModal": {key:qsTr("GroupBox")}
-        ,"/doc": {key:qsTr("Form"),icon:FluentIcons.GridView,expander:true}
-        ,"/document/modules/DocPropsModal": {key:qsTr("TextBox")}
-        ,"/document/DocPropsList": {key:qsTr("TimePicker")}
-        ,"/document/FileMenuList": {key:qsTr("DatePicker")}
-        ,"/document/modules/FilePersApplyModal": {key:qsTr("CalendarPicker")}
-        ,"/document/IsoDocRevisionHistoryList": {key:qsTr("ColorPicker")}
-        ,"/document/DocPaperList": {key:qsTr("ShortcutPicker")}
-        ,"/company": {key:qsTr("Surface"),icon:FluentIcons.SurfaceHub,expander:true}
-        ,"/txmanage": {key:qsTr("Surface"),icon:FluentIcons.SurfaceHub,expander:true}
-        ,"/company/TxPlanList": {key:qsTr("InfoBar")}
-        ,"/company/TxClauseList": {key:qsTr("Progress")}
-        ,"/company/TxAimList": {key:qsTr("RatingControl")}
-        ,"/iamanage": {key:qsTr("Surface"),icon:FluentIcons.SurfaceHub,expander:true}
-        ,"/txmanager/TxIaPlanList": {key:qsTr("Badge")}
-        ,"/txmanager/TxIaCheckList": {key:qsTr("Rectangle")}
-        ,"/txmanager/TxIaSummaryList": {key:qsTr("Clip")}
-        ,"/revmanage": {key:qsTr("Surface"),icon:FluentIcons.SurfaceHub,expander:true}
-        ,"/txmanager/TxIaconfirmList": {key:qsTr("Carousel")}
-        ,"/txmanager/TxCheckRecordListNew": {key:qsTr("Expander")}
-        ,"/txmanager/TxCheckRecordList": {key:qsTr("Watermark")}
-        ,"/report": {key:qsTr("Layout"),icon:FluentIcons.DockLeft,expander:true}
-        ,"0db9cf20e868dd9267bd6bb3f94f86aa": {key:qsTr("StaggeredLayout")}
-        ,"/report/ArchivesStatisticst": {key:qsTr("SplitLayout")}
-        ,"/report/ViserChartDemo": {key:qsTr("StatusLayout")}
-        ,"/warehouse": {key:qsTr("Popus"),icon:FluentIcons.ButtonMenu,expander:true}
-        ,"/warehouse/WareInList": {key:qsTr("Dialog")}
-        ,"/warehouse/WareOutList": {key:qsTr("ComboBox")}
-        ,"/online/cgreport/1666328591908102146": {key:qsTr("Tooltip")}
-        ,"/online/cgreport/1665538501220917250": {key:qsTr("Menu")}
-        ,"/warehouse/WareOrgList": {key:qsTr("Sheet")}
-        ,"/lease": {key:qsTr("Navigation"),icon:FluentIcons.AllApps,expander:true}
-        ,"/lease/ZlLandList": {key:qsTr("Pivot")}
-        ,"/lease/ZlHouseList": {key:qsTr("BreadcrumbBar")}
-        ,"/lease/ZlCustomerList": {key:qsTr("TabView")}
-        ,"/lease/ZlContractList": {key:qsTr("TreeView")}
-        ,"/lease/ZlInContractList": {key:qsTr("TableView")}
-        ,"/lease/ZlStatementList": {key:qsTr("Pagination")}
-        ,"/online/cgreport/1299277634155347970": {key:qsTr("MultiWindow")}
-        ,"/online/cgreport/1299275479721738242": {key:qsTr("FlipView")}
-        ,"/transit": {key:qsTr("Theming"),icon:FluentIcons.Brightness,expander:true}
-        ,"/transit/InterfaceTaskConfigList": {key:qsTr("Acrylic")}
-        ,"/transit/InvokeConfigList": {key:qsTr("Theme")}
-        ,"/transit/InterfaceTemplateList": {key:qsTr("Typography")}
-        ,"/transit/InterfaceLogList": {key:qsTr("Icons")}
-        ,"/safety": {key:qsTr("Chart"),icon:FluentIcons.AreaChart,expander:true}
-        ,"/secure/SecureCompdetailList": {key:qsTr("BarChart")}
-        ,"/secure/SecureRiskPreventList": {key:qsTr("LineChart")}
-        ,"/secure/SecureSafetyInspectionList": {key:qsTr("PieChart")}
-        ,"/secure/SecureRisksAnalysisList": {key:qsTr("PolarAreaChart")}
-        ,"/secure/SecureResponsibleDocList": {key:qsTr("BubbleChart")}
-        ,"/secure/SecureRulesList": {key:qsTr("ScatterChart")}
-        ,"/secure/SecureMeetingsList": {key:qsTr("RadarChart")}
-        ,"/isystem": {key:qsTr("Other"),icon:FluentIcons.Shop,expander:true}
-        ,"/system/SysBusiRuleList": {key:qsTr("AccountMgr")}
-        ,"/isystem/user": {key:qsTr("OpenGL")}
-        ,"/isystem/roleUserList": {key:qsTr("CustomPlot")}
-        ,"/isystem/permission": {key:qsTr("QRCode")}
-        ,"/isystem/depart": {key:qsTr("Tour")}
-        ,"/isystem/position": {key:qsTr("Timeline")}
-        ,"/isystem/departUserList": {key:qsTr("Captcha")}
-        ,"/isystem/addressList": {key:qsTr("Network")}
-        ,"/isystem/dict": {key:qsTr("RemoteLoader")}
-        ,"/system/SysPostList": {key:qsTr("HotLoader")}
-        // ,"/isys/category": {key:qsTr("Test Crash")}
-        ,"/isys/category": {key:qsTr("About")}
-        ,"/isystem/annountCement": {key:qsTr("Settings")}
-        ,"/isys/tenant": {key:qsTr("FluentUIPro")}
-    }
+    property int paneItemIndex: 0
+    property int paneItemIcon: 0
+    property var paneItemMap: [
+        {key:qsTr("OnlineList_1")}
+        , {key:qsTr("SelectDemo")}
+        , {key:qsTr("AccountMgr")}
+        , {key:qsTr("Buttons")}
+        , {key:qsTr("Text")}
+        , {key:qsTr("Image")}
+        , {key:qsTr("Slider")}
+        , {key:qsTr("CheckBox")}
+        , {key:qsTr("RadioButton")}
+        , {key:qsTr("ToggleSwitch")}
+        , {key:qsTr("GroupBox")}
+        , {key:qsTr("TextBox")}
+        , {key:qsTr("TimePicker")}
+        , {key:qsTr("DatePicker")}
+        , {key:qsTr("CalendarPicker")}
+        , {key:qsTr("ColorPicker")}
+        , {key:qsTr("ShortcutPicker")}
+        , {key:qsTr("InfoBar")}
+        , {key:qsTr("Progress")}
+        , {key:qsTr("RatingControl")}
+        , {key:qsTr("Badge")}
+        , {key:qsTr("Rectangle")}
+        , {key:qsTr("Clip")}
+        , {key:qsTr("Carousel")}
+        , {key:qsTr("Expander")}
+        , {key:qsTr("Watermark")}
+        , {key:qsTr("StaggeredLayout")}
+        , {key:qsTr("SplitLayout")}
+        , {key:qsTr("StatusLayout")}
+        , {key:qsTr("Dialog")}
+        , {key:qsTr("ComboBox")}
+        , {key:qsTr("Tooltip")}
+        , {key:qsTr("Menu")}
+        , {key:qsTr("Sheet")}
+        , {key:qsTr("Pivot")}
+        , {key:qsTr("BreadcrumbBar")}
+        , {key:qsTr("TabView")}
+        , {key:qsTr("TreeView")}
+        , {key:qsTr("TableView")}
+        , {key:qsTr("Pagination")}
+        , {key:qsTr("MultiWindow")}
+        , {key:qsTr("FlipView")}
+        , {key:qsTr("Acrylic")}
+        , {key:qsTr("Theme")}
+        , {key:qsTr("Typography")}
+        , {key:qsTr("Icons")}
+        , {key:qsTr("BarChart")}
+        , {key:qsTr("LineChart")}
+        , {key:qsTr("PieChart")}
+        , {key:qsTr("PolarAreaChart")}
+        , {key:qsTr("BubbleChart")}
+        , {key:qsTr("ScatterChart")}
+        , {key:qsTr("RadarChart")}
+        , {key:qsTr("OpenGL")}
+        , {key:qsTr("CustomPlot")}
+        , {key:qsTr("QRCode")}
+        , {key:qsTr("Tour")}
+        , {key:qsTr("Timeline")}
+        , {key:qsTr("Captcha")}
+        , {key:qsTr("Network")}
+        , {key:qsTr("RemoteLoader")}
+        // , {key:qsTr("HotLoader")}
+        // , {key:qsTr("Test Crash")}
+        // , {key:qsTr("About")}
+        , {key:qsTr("Settings")}
+        , {key:qsTr("FluentPro")}
+        , {key:qsTr("Home")}
+    ]
 
     Component {
         id: com_pane_item
         FluPaneItem {
-            title: element.meta.title
-            icon: paneItemMap[element.path].icon
+            title: element.meta.menuTitle || element.meta.title
             menuDelegate: paneItemMenu
-            url: "qrc:/example/qml/page/T_%1.qml".arg(element.componentC || paneItemMap[element.path].key)
             onTap:{
-                navigationView.push(url, {title: title})
+                navigationView.push(url, {title: element.meta.title})
+            }
+            Component.onCompleted: {
+                icon = element.meta.icon ? FluentIcons.GlobalNavButton + paneItemIcon++ : 0
+                var i = paneItemIndex < paneItemMap.length ? paneItemIndex++ : paneItemMap.length - 1
+                url = "qrc:/example/qml/page/T_%1.qml".arg(paneItemMap[i] ? paneItemMap[i].key : "Home")
             }
         }
     }
 
-    //一级折叠
+    //二级菜单
     Component {
         id: com_expander0
         FluPaneItemExpander {
             id: pane_item_expander0
             title: element.meta.title
-            icon: paneItemMap[element.path].icon || FluentIcons.Home
             Instantiator {
                 model: element.children
                 delegate: FluLoader {
@@ -119,12 +113,10 @@ FluObject{
                             return
                         }
 
-                        if (paneItemMap.hasOwnProperty(element.path)) {
-                            if(element.children !== undefined)
-                                return com_expander1
-                            else
-                                return com_pane_item
-                        }
+                        if(element.children !== undefined)
+                            return com_expander1
+                        else
+                            return com_pane_item
                     }
                 }
                 onObjectAdded: (index, object) => {
@@ -133,14 +125,18 @@ FluObject{
                     }
                 }
             }
+            Component.onCompleted: {
+                icon = element.meta.icon ? FluentIcons.GlobalNavButton + paneItemIcon++ : 0
+            }
         }
     }
 
-    //三级折叠目前难搞 先支持到二级并将三级整到二级
+    //三级菜单目前难搞 先支持到二级并将三级整到二级
     Component {
         id: com_expander1
         Instantiator {
             model: element.children
+            property string preTitle: element.meta.title + ">"
             delegate: FluLoader {
                 property var element: model.modelData
                 sourceComponent: {
@@ -148,9 +144,8 @@ FluObject{
                         return
                     }
 
-                    if (paneItemMap.hasOwnProperty(element.path)) {
-                        return com_pane_item
-                    }
+                    element.meta.menuTitle = preTitle + element.meta.title
+                    return com_pane_item
                 }
             }
             onObjectAdded: (index, object) => {
@@ -161,21 +156,20 @@ FluObject{
         }
     }
 
+    //一级菜单
     Instantiator {
         model: paneItemModel
         delegate: FluLoader {
             property var element: model.modelData
             sourceComponent: {
-                if (paneItemMap.hasOwnProperty(element.path)) {
-                    if (element.hidden === true) {
-                        return
-                    }
+                if (element.hidden === true) {
+                    return
+                }
 
-                    if(element.children !== undefined) {
-                        return com_expander0
-                    } else {
-                        return com_pane_item
-                    }
+                if(element.children !== undefined) {
+                    return com_expander0
+                } else {
+                    return com_pane_item
                 }
             }
         }
