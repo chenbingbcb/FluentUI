@@ -6,6 +6,7 @@ import Qt.labs.qmlmodels
 import FluentUI
 
 Rectangle {
+    property int test: 0
     signal editClicked(int r)
     readonly property alias rows: table_view.rows
     readonly property alias columns: table_view.columns
@@ -22,6 +23,7 @@ Rectangle {
     property color selectedBorderColor: FluTheme.primaryColor
     property color selectedColor: FluTools.withOpacity(FluTheme.primaryColor,0.3)
     property alias view: table_view
+    property int editRow: -1
     property var columnWidthProvider: function(column) {
         var columnModel = control.columnSource[column]
         var width = columnModel.width
@@ -232,6 +234,7 @@ Rectangle {
             property var _model: model
             property bool isMainTable: TableView.view == table_view
             property var currentTableView: TableView.view
+            property alias loaderEdit: loader_edit
             property bool isHide: {
                 if(isMainTable && columnModel.frozen){
                     return true
@@ -348,7 +351,23 @@ Rectangle {
                     id: item_table_loader //单元格显示组件
                     property var tableView: control
                     property var model: item_table_mouse._model
-                    property var display: rowModel[columnModel.dataIndex]
+                    property var display: {
+                        var value = ""
+                        var format = columnModel.format
+                        if (typeof format === "string") {
+                            if (format.startsWith("column|")) {
+                                value = rowModel[format.slice(7)]
+                            } else if (format.startsWith("dict|")) {
+                                value = rowModel[columnModel.dataIndex + "_dictText"]
+                            } else if (format.startsWith("date|")) {
+                                var whole = Date.fromLocaleString(FluApp.locale, rowModel[columnModel.dataIndex], "yyyy-MM-dd hh:mm:ss")
+                                value = whole.toLocaleString(FluApp.locale, format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5))
+                            }
+                        }
+
+                        return value || rowModel[columnModel.dataIndex]
+                    }
+
                     property var rowModel : model.rowModel
                     property var columnModel : model.columnModel
                     property var dataColumnModel : columnModel.dataColumnModel || columnModel //数据列属性无效则用表头列属性 容错处理
@@ -374,31 +393,51 @@ Rectangle {
                 }
                 FluLoader{
                     id: loader_edit //单元格编辑组件
+                    property var uuid: FluTools.uuid()
                     property var tableView: control
                     property var display
-                    property int column: {
-                        if(d.editPosition){
-                            return d.editPosition.column
-                        }
-                        return 0
-                    }
-                    property int row: {
-                        if(d.editPosition){
-                            return d.editPosition.row
-                        }
-                        return 0
-                    }
+                    property var model: item_table_mouse._model
+                    property var config : model.columnModel
+                    property var value: null
+                    property int row: model.row
+                    property int column: model.column
                     anchors{
                         fill: parent
                         margins: 1
                     }
                     signal editTextChaged(string text)
                     sourceComponent: {
-                        if(item_table_mouse.visible && d.editPosition && d.editPosition.column === model.column && d.editPosition.row === model.row){
-                            return d.editDelegate
+                        if(editRow !== model.row || item_table_loader.isObject) {
+                            return undefined
                         }
-                        return undefined
+
+                        var modelIndex = table_view.index(model.row, model.column)
+                        var item = table_view.itemAtIndex(modelIndex)
+                        if (item && item.loaderEdit && item.loaderEdit.item) { //临时方案 尽量防止编辑控件弹窗2次
+                            return undefined
+                        }
+
+                        return d.getEditDelegate(model.column)
                     }
+                    onSourceComponentChanged: {
+                        if (!sourceComponent) {
+                            return
+                        }
+
+                        loader_edit.value = model.rowModel[config.dataIndex]
+                        if (loader_edit.item && loader_edit.item.initDisplay) {
+                            loader_edit.item.initDisplay()
+                        }
+                    }
+                    onValueChanged: {
+                        var obj = control.getRow(row)
+                        if (obj[control.columnSource[column].dataIndex] === value) {
+                            return
+                        }
+                        obj[control.columnSource[column].dataIndex] = value
+                        control.setRow(row, obj)
+                    }
+
                     onEditTextChaged:
                         (text)=>{
                             var obj = control.getRow(row)
@@ -458,6 +497,7 @@ Rectangle {
         }
         TableView {
             id:table_view
+            reuseItems: false
             boundsBehavior: Flickable.StopAtBounds
             anchors.fill: parent
             ScrollBar.horizontal:scroll_bar_h

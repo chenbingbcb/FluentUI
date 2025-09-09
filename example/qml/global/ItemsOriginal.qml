@@ -7,7 +7,7 @@ FluObject{
     id:original_items
 
     property var navigationView
-    property var paneItemMenu
+    property var paneItemMenu: null
     property var paneItemModel
     property int paneItemIndex: 0
     property int paneItemIcon: 0

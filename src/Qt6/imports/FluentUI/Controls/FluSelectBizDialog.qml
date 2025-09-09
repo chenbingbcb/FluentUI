@@ -6,11 +6,11 @@ import FluentUI
 
 FluPopup {
     id: control
-    property string strTitle: ""
-    property string strChoosedTitle: ""
+    property string title: ""
+    property string choosedTitle: ""
     property string strId: ""
-    property string strName: ""
-    property string strOrgCodeTxt: ""
+    property string name: ""
+    property string orgCodeTxt: ""
     property var queryClickListener: function(){} //查询回调
 
     property string negativeText: qsTr("关闭")
@@ -49,7 +49,7 @@ FluPopup {
             RowLayout{
                 FluText{
                     font: FluTextStyle.Subtitle
-                    text: strTitle
+                    text: title
                     leftPadding: 10
                     wrapMode: Text.WordWrap
                 }
@@ -83,7 +83,7 @@ FluPopup {
                     leftPadding: 10
                 }
 
-                FluTextBox {
+                FluMultilineTextBox {
                     id: textBoxId
                     placeholderText: strId
                     implicitWidth: 150
@@ -92,13 +92,13 @@ FluPopup {
                 FluText{
                     id: textName
                     font: FluTextStyle.Body
-                    text: strName + ":"
+                    text: name + ":"
                     leftPadding: 10
                 }
 
                 FluTextBox {
                     id: textBoxName
-                    placeholderText: strName
+                    placeholderText: name
                     implicitWidth: 150
                 }
 
@@ -268,7 +268,7 @@ FluPopup {
                         var obj = choosedTableView.getRow(row)
                         for (var j = 0; j < table_view.rows; j++) {
                             var item = table_view.getRow(j)
-                            if(item.order === obj.order){
+                            if(item.id === obj.id){
                                 item.checkbox = table_view.customItem(getCheckOrRadioComponent(),{checked:false})
                                 table_view.setRow(j,item)
                                 break
@@ -278,7 +278,7 @@ FluPopup {
                         var temp = choosedTableView.dataSource
                         for (var i = 0; i < temp.length; i++) {
                             var sourceItem = temp[i]
-                            if(sourceItem.order === obj.order){
+                            if(sourceItem.id === obj.id){
                                 temp.splice(i, 1)
                                 choosedTableView.dataSource = temp
                                 return
@@ -309,7 +309,7 @@ FluPopup {
                                             width: 50
                                         },
                                         {
-                                            title: strName,
+                                            title: name,
                                             dataIndex: 'name',
                                             readOnly:true,
                                             width: 300
@@ -323,9 +323,9 @@ FluPopup {
                             if (control.isSingleSelect) {
                                 temp[0].title = ""
                             }
-                            if(strOrgCodeTxt !== "") { //第三列
+                            if(orgCodeTxt !== "") { //第三列
                                 temp.push({
-                                    title: strOrgCodeTxt,
+                                    title: orgCodeTxt,
                                     dataIndex: 'orgCodeTxt',
                                     width: 200
                                 })
@@ -415,7 +415,7 @@ FluPopup {
                         padding: 10
 
                         FluCopyableText{
-                            text: strChoosedTitle
+                            text: choosedTitle
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -434,7 +434,7 @@ FluPopup {
                         startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
                         columnSource:[
                             {
-                                title: strName,
+                                title: name,
                                 dataIndex: 'name',
                                 readOnly:true,
                                 width: 200
@@ -490,17 +490,36 @@ FluPopup {
         return control.isSingleSelect ? comRadio : comCheckBox
     }
 
-    function loadData(records, total, size, current) {
-        root.selectedAll = false
+    function initChoosed(records) {
         records.forEach(function(item, index) {
-            item.checkbox = table_view.customItem(getCheckOrRadioComponent(),{checked:root.selectedAll})
-            item._key = FluTools.uuid()
-            item.order = size * (current - 1) + index + 1 //在总数中的顺序号
+            item.delete = choosedTableView.customItem(componentDelete)
             item._minimumHeight = 50
         })
-        table_view.dataSource = records
-        gagination.itemCount = total || 0
-        gagination.__itemPerPage = size || 10
+        choosedTableView.dataSource = records
+    }
+
+    function loadData(result) {
+        root.selectedAll = false
+        result.records.forEach(function(item, index) {
+            item.checkbox = table_view.customItem(getCheckOrRadioComponent(),{checked:root.selectedAll})
+            item._key = FluTools.uuid()
+            // item.order = result.size * (result.current - 1) + index + 1 //在总数中的顺序号
+            item._minimumHeight = 50
+        })
+
+        choosedTableView.dataSource.forEach(function(choosed, index) {
+            for(var i = 0; i < result.records.length; i++) {
+                var item = result.records[i]
+                if (item.id === choosed.id) {
+                    item.checkbox.options.checked = true
+                    break
+                }
+            }
+        })
+
+        table_view.dataSource = result.records
+        gagination.itemCount = result.total || 0
+        gagination.__itemPerPage = result.size || 10
     }
 
     function getTextBoxId() {
@@ -535,7 +554,7 @@ FluPopup {
         var temp = choosedTableView.dataSource
         for (var i = 0; i < temp.length; i++) {
             var sourceItem = temp[i]
-            if(sourceItem.order === obj.order){
+            if(sourceItem.id === obj.id){
                 if (checked) {
                     return //如果存在且勾选 则不添加
                 } else {
@@ -550,7 +569,7 @@ FluPopup {
             itemChoosed.delete = choosedTableView.customItem(componentDelete)
             itemChoosed.id = obj.id
             itemChoosed.name = obj.name
-            itemChoosed.order = obj.order
+            // itemChoosed.order = obj.order
             itemChoosed._minimumHeight = 50
             temp.push(itemChoosed)
         }
@@ -567,7 +586,7 @@ FluPopup {
                 itemChoosed.delete = choosedTableView.customItem(componentDelete)
                 itemChoosed.id = obj.id
                 itemChoosed.name = obj.name
-                itemChoosed.order = obj.order
+                // itemChoosed.order = obj.order
                 itemChoosed._minimumHeight = 50
                 temp.push(itemChoosed)
             }

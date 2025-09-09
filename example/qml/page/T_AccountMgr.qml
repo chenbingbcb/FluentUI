@@ -420,55 +420,63 @@ FluContentPage{
             top: parent.top
             topMargin: 20
         }
-        height: 60
-
-        Row{
-            spacing: 5
+        height: 60+multiine_textbox.height
+        FluMultilineTextBox{
+            id: multiine_textbox
+            placeholderText: qsTr("Multi-line Input Box")
+            disabled: text_box_multi_switch.checked
             anchors{
-                left: parent.left
-                leftMargin: 10
                 verticalCenter: parent.verticalCenter
-            }
-
-            Repeater{
-                model: [
-                    {
-                        component: qsTr("import FluentUI; FluText{}"),
-                        text: 's11',
-                        verticalAlignment: Qt.AlignBottom
-                    },
-                    {
-                        component: qsTr("import FluentUI; FluTextBox{}"),
-                        text: 's22',
-                        implicitWidth: 240
-                    },
-                    {
-                        component: qsTr("import FluentUI; FluButton{}"),
-                        text: 's33'
-                    }
-                ]
-                delegate: RowLayout{
-                    spacing: 10
-                    Layout.topMargin: 14
-                    FluLoader{
-                        anchors.fill: parent
-                        sourceComponent: {
-                            var comp = Qt.createQmlObject("%1".arg(modelData.component), parent);
-                            if (modelData.text !== undefined) {
-                                comp.text = modelData.text;
-                            }
-                            if (modelData.verticalAlignment !== undefined) {
-                                comp.verticalAlignment = modelData.verticalAlignment;
-                            }
-                            if (modelData.implicitWidth !== undefined) {
-                                comp.implicitWidth = modelData.implicitWidth;
-                            }
-                            return comp;
-                        }
-                    }
-                }
+                left: parent.left
             }
         }
+        // Row{
+        //     spacing: 5
+        //     anchors{
+        //         left: parent.left
+        //         leftMargin: 10
+        //         verticalCenter: parent.verticalCenter
+        //     }
+
+        //     Repeater{
+        //         model: [
+        //             {
+        //                 component: qsTr("import FluentUI; FluText{}"),
+        //                 text: 's11',
+        //                 verticalAlignment: Qt.AlignBottom
+        //             },
+        //             {
+        //                 component: qsTr("import FluentUI; FluTextBox{}"),
+        //                 text: 's22',
+        //                 implicitWidth: 240
+        //             },
+        //             {
+        //                 component: qsTr("import FluentUI; FluButton{}"),
+        //                 text: 's33'
+        //             }
+        //         ]
+        //         delegate: RowLayout{
+        //             spacing: 10
+        //             Layout.topMargin: 14
+        //             FluLoader{
+        //                 anchors.fill: parent
+        //                 sourceComponent: {
+        //                     var comp = Qt.createQmlObject("%1".arg(modelData.component), parent);
+        //                     if (modelData.text !== undefined) {
+        //                         comp.text = modelData.text;
+        //                     }
+        //                     if (modelData.verticalAlignment !== undefined) {
+        //                         comp.verticalAlignment = modelData.verticalAlignment;
+        //                     }
+        //                     if (modelData.implicitWidth !== undefined) {
+        //                         comp.implicitWidth = modelData.implicitWidth;
+        //                     }
+        //                     return comp;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         FluButton{
             anchors{

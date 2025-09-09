@@ -16,9 +16,10 @@ FluWindow {
     fixSize: true
     modality: Qt.ApplicationModal
     property string password: ""
-    property string loginUrl: "http://10.18.254.51:8079/basic-api/sys/login"
-    property string captchaUrl: "http://10.18.254.51:8079/basic-api/sys/randomImage/"
-    property string getUserPermissionByTokenUrl: "http://10.18.254.51:8079/basic-api/sys/permission/getUserPermissionByToken"
+    property string loginUrl: "/sys/login"
+    property string captchaUrl: "/sys/randomImage/"
+    property string getUserInfoUrl: "/sys/user/getUserInfo"
+    property string getUserPermissionByTokenUrl: "/sys/permission/getUserPermissionByToken"
 
     appBar: FluAppBar {
         title: window.title
@@ -67,12 +68,17 @@ FluWindow {
                         return
                     }
                 }
-                settings.username = textbox_uesrname.text
 
+                settings.username = textbox_uesrname.text
                 GlobalModel.token = jsResult.result.token
-                Network.get(getUserPermissionByTokenUrl)
+
+                Network.get(GlobalModel.basicUrl + getUserInfoUrl)
                 .addHeader("S-Token",GlobalModel.token)
-                .addQuery("_t",Math.floor(Date.now()/1000))
+                .bind(window)
+                .go(getUserInfoUrlCallable)
+
+                Network.get(GlobalModel.basicUrl + getUserPermissionByTokenUrl)
+                .addHeader("S-Token",GlobalModel.token)
                 .bind(window)
                 .go(getUserPermissionByTokenUrlCallable)
             }
@@ -101,6 +107,31 @@ FluWindow {
 
                 row_captcha.visible = true
                 img_captcha.source = jsResult.result
+            }
+    }
+
+    NetworkCallable{
+        id:getUserInfoUrlCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200 || jsResult.result === null) {
+                    showError(qsTr("getUserInfoUrl failed: " + result))
+                    return
+                }
+
+                GlobalModel.sysAllDictItems = jsResult.result.sysAllDictItems
             }
     }
 
@@ -207,7 +238,7 @@ FluWindow {
         var encrypted = AesEncryptor.encrypt(textbox_password.text);
         console.log("Encrypted:", encrypted);
 
-        Network.postJson(loginUrl)
+        Network.postJson(GlobalModel.basicUrl + loginUrl)
         .add("captcha",captcha)
         .add("checkKey",Date.now())
         .add("password",encrypted)
@@ -218,7 +249,7 @@ FluWindow {
 
     function procCaptcha() {
         var timestamp = Date.now()
-        Network.get(captchaUrl + timestamp)
+        Network.get(GlobalModel.basicUrl + captchaUrl + timestamp)
         .addQuery("_t",Math.floor(timestamp/1000))
         .bind(window)
         .go(captchaCallable)

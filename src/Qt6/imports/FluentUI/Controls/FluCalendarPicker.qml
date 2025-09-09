@@ -7,7 +7,7 @@ import FluentUI
 FluButton {
     text: {
         if(control.current){
-            return control.current.toLocaleDateString(FluApp.locale,"yyyy-MM-dd")
+            return control.current.toLocaleDateString(FluApp.locale, "yyyy-MM-dd")
         }
         return qsTr("")
     }
@@ -75,7 +75,7 @@ FluButton {
             id:container
             implicitWidth: 300
             implicitHeight: 360
-            ColumnLayout  {
+            ColumnLayout {
                 anchors.fill: parent
                 spacing: 0
                 Item{

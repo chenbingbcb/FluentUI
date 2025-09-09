@@ -14,8 +14,9 @@ Item {
     property string placeholder: qsTr("")
     property var selectedItems: []
     property bool popupVisible: false
-    property string listUrl: qsTr("")
+    property var listUrl: qsTr("")
     property bool listMore: false
+    property int listPageNo: 1
 
     // 内部属性
     property var filteredModel: []
@@ -39,6 +40,7 @@ Item {
         placeholderText: control.placeholder
         anchors.fill: parent
         rightPadding: 30
+        verticalAlignment: TextInput.AlignVCenter
     }
 
     // 下拉按钮
@@ -64,7 +66,7 @@ Item {
             // spacing: 10
 
             Item{
-                implicitWidth: 300
+                implicitWidth: control.width
                 height: 32
 
                 // More按钮

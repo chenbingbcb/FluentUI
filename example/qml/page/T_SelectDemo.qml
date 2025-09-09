@@ -56,10 +56,10 @@ FluContentPage{
             strId = "*" + strId + "*"
             networkParams.addQuery("id", strId)
         }
-        var strName = selectBizDialogDepart.getTextBoxName()
-        if (strName !== "") {
-            strName = "*" + strName + "*"
-            networkParams.addQuery("departName", strName)
+        var name = selectBizDialogDepart.getTextBoxName()
+        if (name !== "") {
+            name = "*" + name + "*"
+            networkParams.addQuery("departName", name)
         }
 
         networkParams.go(sysDepartListCallable)
@@ -68,7 +68,7 @@ FluContentPage{
     function sysUserListRequest() {
         var networkParams = Network.get(GlobalModel.basicUrl + sysUserListUrl)
         .addHeader("S-Token",GlobalModel.token)
-        .addQuery("field", "id,,realname,username,orgCodeTxt")
+        .addQuery("field", "id,realname,username,orgCodeTxt")
         .addQuery("order", "desc")
         .addQuery("column", "createTime")
         .addQuery("pageNo", selectBizDialogUser.getPageNo())
@@ -80,10 +80,10 @@ FluContentPage{
             strId = "*" + strId + "*"
             networkParams.addQuery("username", strId)
         }
-        var strName = selectBizDialogUser.getTextBoxName()
-        if (strName !== "") {
-            strName = "*" + strName + "*"
-            networkParams.addQuery("realname", strName)
+        var name = selectBizDialogUser.getTextBoxName()
+        if (name !== "") {
+            name = "*" + name + "*"
+            networkParams.addQuery("realname", name)
         }
         var sex = selectBizDialogUser.getComboBoxSex()
         if (sex !== 0) {
@@ -194,10 +194,10 @@ FluContentPage{
                     return
                 }
 
-                var records = jsResult.result.records.map(function(item) {
+                jsResult.result.records = jsResult.result.records.map(function(item) {
                     return {id: item.id, name: item.departName}
                 })
-                selectBizDialogDepart.loadData(records, jsResult.result.total, jsResult.result.size, jsResult.result.current)
+                selectBizDialogDepart.loadData(jsResult.result)
                 selectBizDialogDepart.open()
             }
     }
@@ -227,10 +227,10 @@ FluContentPage{
                     return
                 }
 
-                var records = jsResult.result.records.map(function(item) {
+                jsResult.result.records = jsResult.result.records.map(function(item) {
                     return {id: item.username, name: item.realname, orgCodeTxt: item.orgCodeTxt || ""}
                 })
-                selectBizDialogUser.loadData(records, jsResult.result.total, jsResult.result.size, jsResult.result.current)
+                selectBizDialogUser.loadData(jsResult.result)
                 selectBizDialogUser.open()
             }
     }
@@ -373,17 +373,20 @@ FluContentPage{
             id: textBoxSysDepart
             readOnly: true
             placeholderText: "请点击选择"
-        }
-
-        FluIconButton{
-            iconSource: FluentIcons.Search
-            iconSize: 15
-            text: qsTr("选择")
-            display: Button.TextBesideIcon
-            onClicked:{
+            onPressed:{
                 sysDepartListRequest()
             }
         }
+
+        // FluIconButton{
+        //     iconSource: FluentIcons.Search
+        //     iconSize: 15
+        //     text: qsTr("选择")
+        //     display: Button.TextBesideIcon
+        //     onClicked:{
+        //         sysDepartListRequest()
+        //     }
+        // }
 
         FluText{
             id:textSysDepart
@@ -394,10 +397,10 @@ FluContentPage{
 
         FluSelectBizDialog{
             id: selectBizDialogDepart
-            strTitle: qsTr("部门选择")
-            strChoosedTitle: qsTr("已选部门")
+            title: qsTr("部门选择")
+            choosedTitle: qsTr("已选部门")
             strId: qsTr("部门代号")
-            strName: qsTr("部门名称")
+            name: qsTr("部门名称")
             queryClickListener: sysDepartListRequest
             buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
             onNegativeClicked: {
@@ -437,50 +440,53 @@ FluContentPage{
             id: textBoxUser
             readOnly: true
             placeholderText: "请点击选择"
-        }
-
-        FluIconButton{
-            iconSource: FluentIcons.Search
-            iconSize: 15
-            text: qsTr("选择")
-            display: Button.TextBesideIcon
-            onClicked:{
+            onPressed:{
                 sysUserListRequest()
             }
+
+            FluSelectBizDialog{
+                id: selectBizDialogUser
+                title: qsTr("用户选择")
+                choosedTitle: qsTr("已选用户")
+                strId: qsTr("账号")
+                name: qsTr("姓名")
+                orgCodeTxt: qsTr("部门")
+                isMoreQuery: true
+                isSingleSelect: true
+                queryClickListener: sysUserListRequest
+                buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
+                onNegativeClicked: {
+                }
+                onPositiveClicked:
+                    (data)=>{
+                        var textBox = data.map(function(item) {
+                           return item.name
+                        }).join(", ")
+                        textBoxUser.text = textBox
+
+                        var text = data.map(function(item) {
+                           return item.id
+                        }).join(", ")
+                        textUser.text = qsTr("选中值:") + text
+                    }
+            }
         }
+
+        // FluIconButton{
+        //     iconSource: FluentIcons.Search
+        //     iconSize: 15
+        //     text: qsTr("选择")
+        //     display: Button.TextBesideIcon
+        //     onClicked:{
+        //         sysUserListRequest()
+        //     }
+        // }
 
         FluText{
             id:textUser
             height: 32
             text: qsTr("选中值:")
             verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluSelectBizDialog{
-            id: selectBizDialogUser
-            strTitle: qsTr("用户选择")
-            strChoosedTitle: qsTr("已选用户")
-            strId: qsTr("账号")
-            strName: qsTr("姓名")
-            strOrgCodeTxt: qsTr("部门")
-            isMoreQuery: true
-            isSingleSelect: true
-            queryClickListener: sysUserListRequest
-            buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
-            onNegativeClicked: {
-            }
-            onPositiveClicked:
-                (data)=>{
-                    var textBox = data.map(function(item) {
-                       return item.name
-                    }).join(", ")
-                    textBoxUser.text = textBox
-
-                    var text = data.map(function(item) {
-                       return item.id
-                    }).join(", ")
-                    textUser.text = qsTr("选中值:") + text
-                }
         }
     }
 }
