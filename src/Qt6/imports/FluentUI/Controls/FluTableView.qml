@@ -23,7 +23,7 @@ Rectangle {
     property color selectedBorderColor: FluTheme.primaryColor
     property color selectedColor: FluTools.withOpacity(FluTheme.primaryColor,0.3)
     property alias view: table_view
-    property int editRow: -1
+    property var editRows: ({})
     property var columnWidthProvider: function(column) {
         var columnModel = control.columnSource[column]
         var width = columnModel.width
@@ -397,7 +397,7 @@ Rectangle {
                     property var tableView: control
                     property var display
                     property var model: item_table_mouse._model
-                    property var config : model.columnModel
+                    property var config: model.columnModel
                     property var value: null
                     property int row: model.row
                     property int column: model.column
@@ -407,15 +407,15 @@ Rectangle {
                     }
                     signal editTextChaged(string text)
                     sourceComponent: {
-                        if(editRow !== model.row || item_table_loader.isObject) {
+                        if(item_table_mouse.isHide || !editRows[model.row] || item_table_loader.isObject) {
                             return undefined
                         }
 
-                        var modelIndex = table_view.index(model.row, model.column)
-                        var item = table_view.itemAtIndex(modelIndex)
-                        if (item && item.loaderEdit && item.loaderEdit.item) { //临时方案 尽量防止编辑控件弹窗2次
-                            return undefined
-                        }
+                        // var modelIndex = table_view.index(model.row, model.column)
+                        // var item = table_view.itemAtIndex(modelIndex)
+                        // if (item && item.loaderEdit && item.loaderEdit.item) { //临时方案 尽量防止编辑控件弹窗2次
+                        //     return undefined
+                        // }
 
                         return d.getEditDelegate(model.column)
                     }

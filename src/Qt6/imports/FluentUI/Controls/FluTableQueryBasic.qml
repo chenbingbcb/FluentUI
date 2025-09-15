@@ -26,15 +26,12 @@ FluContentPage{
     property var getDataByParamsListener: function(){} //表单行数据查询回调
     property var getDictItemsListener: function(dictCode){} //字典编码查询回调
     property var listUrlListener: function(listUrl, fields, pageNo){} //组件请求数据回调
-    property var sysUserListListener: function(queryParams, display){} //用户控件查询回调
-    property var sysDepartListListener: function(queryParams, display){} //部门控件查询回调
+    property var sysUserListListener: function(control, queryParams, display){} //用户控件查询回调
+    property var sysDepartListListener: function(control, queryParams, display){} //部门控件查询回调
     signal dictItemsUpdated(string key, var dictItems) //字典数据更新通知
-    signal userDataUpdated(var result, var display) //用户控件数据更新
-    signal departDataUpdated(var result, var display) //部门控件数据更新
     property var sysAllDictItems: ({}) //所有字典数据)
     ///////////////////////////////////////以上参数由应用层赋值
-    property bool isLineEditModel: false //是否行编辑模式
-    property bool isSingleSaveModel: false //是否单个保存模式
+    property string tableModel: "modalSingleModel" //modalSingleModel:弹窗单行保存 modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
     property alias pageNo: gagination.pageCurrent
     property alias pageSize: gagination.__itemPerPage
     property QtObject tableView
@@ -75,12 +72,9 @@ FluContentPage{
             })
         }
 
-        //modalSingleModel:弹窗单行保存/modalAllModel:弹窗一起保存/editSingleModel:可编辑单行保存/editAllModel:可编辑一起保存/
-        isLineEditModel = tableConfig.tableModel === "editSingleModel" || tableConfig.tableModel === "editAllModel"
-        isSingleSaveModel = tableConfig.tableModel === "editSingleModel" || tableConfig.tableModel === "modalSingleModel"
+        tableModel = tableConfig.tableModel
         queryForm = comQueryForm.createObject(gagination.parent)
         tableView = comTableView.createObject(gagination.parent, {columnSource: temp}) //FluTableView作为Component后, 其parent要跟原来的一样
-
     }
 
     onTableDataChanged: {
@@ -213,10 +207,12 @@ FluContentPage{
                     }
 
                     FluFilledButton{
+                        visible: tableModel === "modalAllModel" || tableModel === "editAllModel"
                         Layout.rightMargin: 10
                         text: qsTr("保存")
                         onClicked: {
-                            if (isSingleSaveModel) {
+                            if (tableModel === "modalAllModel") {
+                                showWarning(qsTr("弹窗一起保存模式暂未支持"))
                                 return
                             }
                         }
@@ -236,16 +232,18 @@ FluContentPage{
                     iconSource: FluentIcons.Edit
                     iconSize: 15
                     onClicked: {
-                        if (isLineEditModel) {
-                            visible = false
-                            saveButton.visible = true
-                            cancelButton.visible = true
-                            tableView.editRow = row
+                        if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                            if (tableModel === "editSingleModel") {
+                                visible = false
+                                saveButton.visible = true
+                                cancelButton.visible = true
+                            }
+                            tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: true, writable: true})
                         } else {
                             getDataByParamsListener(row)
-
                             if (tableFormDlg) {
                                 tableFormDlg.title = qsTr("编辑")
+                                tableFormDlg.editRow = row
                             }
                         }
 
@@ -255,7 +253,7 @@ FluContentPage{
                     }
                 }
                 FluIconButton{
-                    visible: !isLineEditModel
+                    visible: tableModel === "modalSingleModel" || tableModel === "modalAllModel"
                     iconSource: FluentIcons.BulletedList
                     iconSize: 15
                     onClicked: {
@@ -296,12 +294,8 @@ FluContentPage{
                     iconSource: FluentIcons.Save
                     iconSize: 15
                     onClicked: {
-                        if (!isSingleSaveModel) {
-                            return
-                        }
-
                         // tableView.closeEditor()
-                        tableView.editRow = -1
+                        tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
                         var rowObj = tableView.getRow(row)
                         updateFormDataListener(rowObj)
                     }
@@ -325,7 +319,7 @@ FluContentPage{
                             editButton.visible = true
                             saveButton.visible = false
                             cancelButton.visible = false
-                            tableView.editRow = -1
+                            tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
                         }
                     }
                 }
@@ -361,7 +355,7 @@ FluContentPage{
         onRequestPage:
             (page,count)=> {
                 // tableView.closeEditor()
-                tableView.editRow = -1
+                tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
                 tableView.resetPosition()
                 getTableDataListener()
             }
@@ -398,6 +392,7 @@ FluContentPage{
             property var childTableConfig: [] //子表配置
             property var tabFields: []
             property var formRowData
+            property int editRow: -1
 
             Component.onCompleted: {
 
@@ -476,13 +471,18 @@ FluContentPage{
                     }
 
                     FluFilledButton{
-                        visible: title === qsTr("编辑") && isSingleSaveModel
+                        visible: title === qsTr("编辑")
                         Layout.rightMargin: 10
                         text: qsTr("保存")
                         onClicked: {
                             control.close()
 
-                            var rowObj = {}
+                            var rowObj = tableView.getRow(editRow)
+                            if (!rowObj) {
+                                console.error("tableView.getRow null: " + editRow)
+                                return
+                            }
+
                             var loaderItem
                             for (var i = 0; i < tabRepeater.count; i++) {
                                 loaderItem = tabRepeater.itemAt(i).loaderItem
@@ -857,17 +857,15 @@ FluContentPage{
                     return
                 }
 
-                var temp = []
                 var values = value.split(",")
                 values.forEach(function(v) {
                     for(var i = 0; i < model.length; i++) {
                         if (model[i].value === v) {
-                            temp.push(model[i])
+                            toggleSelection(model[i])
                             break
                         }
                     }
                 })
-                selectedItems = temp
             }
         }
     }
@@ -1001,6 +999,7 @@ FluContentPage{
                     textValueMap[item.text] = item.value
                     return {text: item.text, value: item.value}
                 })
+
                 var values = value.split(",")
                 values.forEach(function(v) {
                     for(var i = 0; i < model.length; i++) {
@@ -1084,10 +1083,17 @@ FluContentPage{
             id: control
             readOnly: true
             placeholderText: "请选择"
-            onPressed: selectBiz.queryClickImpl()
+            onPressed: {
+                selectBiz.queryClickImpl()
+                selectBiz.open()
+            }
 
             function initDisplay() {
                 text = value
+                if (!text) {
+                    return
+                }
+
                 var display = "realname"
                 var queryParams = {
                     pageNo: 1
@@ -1095,29 +1101,26 @@ FluContentPage{
                     , username: text
                 }
 
-                sysUserListListener(queryParams, display)
+                sysUserListListener(control, queryParams, display)
             }
 
-            Connections{
-                target: root
-                function onUserDataUpdated(result, display) {
-                    if (display) {
-                        var choosed = []
-                        text = result.records.map(function(item) {
-                            choosed.push({id: item.username, name: item.realname})
-                            return item[display]
-                         }).join(", ")
-                        selectBiz.initChoosed(choosed)
-                        return
-                    }
-
-                    result = Object.assign({}, result)
-                    result.records = result.records.map(function(item) {
-                        return {id: item.username, name: item.realname, orgCodeTxt: item.orgCodeTxt || ""}
-                    })
-                    selectBiz.loadData(result)
-                    selectBiz.open()
+            function sysUserListResp(result, display) {
+                if (display) {
+                    var choosed = []
+                    text = result.records.map(function(item) {
+                        choosed.push({id: item.username, name: item.realname})
+                        return item[display]
+                     }).join(", ")
+                    selectBiz.initChoosed(choosed)
+                    return
                 }
+
+                result = Object.assign({}, result)
+                result.records = result.records.map(function(item) {
+                    return {id: item.username, name: item.realname, orgCodeTxt: item.orgCodeTxt || ""}
+                })
+                selectBiz.loadData(result)
+                selectBiz.open()
             }
 
             FluSelectBizDialog {
@@ -1175,7 +1178,7 @@ FluContentPage{
                         queryParams["phone"] = strPhone
                     }
 
-                    sysUserListListener(queryParams)
+                    sysUserListListener(control, queryParams)
                 }
             }
         }
@@ -1187,10 +1190,17 @@ FluContentPage{
             id: control
             readOnly: true
             placeholderText: "请选择"
-            onPressed: selectBiz.queryClickImpl()
+            onPressed: {
+                selectBiz.queryClickImpl()
+                selectBiz.open()
+            }
 
             function initDisplay() {
                 text = value
+                if (!text) {
+                    return
+                }
+
                 var display = "departName"
                 var queryParams = {
                     pageNo: 1
@@ -1198,29 +1208,25 @@ FluContentPage{
                     , id: text
                 }
 
-                sysDepartListListener(queryParams, display)
+                sysDepartListListener(control, queryParams, display)
             }
 
-            Connections{
-                target: root
-                function onDepartDataUpdated(result, display) {
-                    if (display) {
-                        var choosed = []
-                        text = result.records.map(function(item) {
-                            choosed.push({id: item.id, name: item.departName})
-                            return item[display]
-                         }).join(", ")
-                        selectBiz.initChoosed(choosed)
-                        return
-                    }
-
-                    result = Object.assign({}, result)
-                    result.records = result.records.map(function(item) {
-                        return {id: item.id, name: item.departName}
-                    })
-                    selectBiz.loadData(result)
-                    selectBiz.open()
+            function sysDepartListResp(result, display) {
+                if (display) {
+                    var choosed = []
+                    text = result.records.map(function(item) {
+                        choosed.push({id: item.id, name: item.departName})
+                        return item[display]
+                     }).join(", ")
+                    selectBiz.initChoosed(choosed)
+                    return
                 }
+
+                result = Object.assign({}, result)
+                result.records = result.records.map(function(item) {
+                    return {id: item.id, name: item.departName}
+                })
+                selectBiz.loadData(result)
             }
 
             FluSelectBizDialog{
@@ -1263,7 +1269,7 @@ FluContentPage{
                         queryParams["departName"] = name
                     }
 
-                    sysDepartListListener(queryParams)
+                    sysDepartListListener(control, queryParams)
                 }
             }
         }

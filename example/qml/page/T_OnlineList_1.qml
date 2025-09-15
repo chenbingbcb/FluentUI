@@ -134,7 +134,7 @@ FluTableQueryBasic{
     }
 
     function getFormConfigRequest() {
-        if (formConfig || isLineEditModel) {
+        if (formConfig || (tableModel === "editSingleModel" || tableModel === "editAllModel")) {
             return
         }
 
@@ -377,8 +377,8 @@ FluTableQueryBasic{
         }
     }
 
-    function sysUserListRequest(queryParams, display) {
-        var callable = comNetworkSysUserList.createObject(root, {display: display})
+    function sysUserListRequest(control, queryParams, display) {
+        var callable = comNetworkSysUserList.createObject(root, {control: control, display: display})
         var networkParams = Network.get(GlobalModel.basicUrl + sysUserListUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
@@ -393,6 +393,7 @@ FluTableQueryBasic{
     Component {
         id: comNetworkSysUserList
         NetworkCallable{
+            property var control
             property var display
             onStart: {
                 showLoading()
@@ -418,13 +419,13 @@ FluTableQueryBasic{
                         return
                     }
 
-                    userDataUpdated(jsResult.result, display)
+                    control.sysUserListResp(jsResult.result, display)
                 }
         }
     }
 
-    function sysDepartListRequest(queryParams, display) {
-        var callable = comNetworkSysDepartList.createObject(root, {display: display})
+    function sysDepartListRequest(control, queryParams, display) {
+        var callable = comNetworkSysDepartList.createObject(root, {control: control, display: display})
         var networkParams = Network.get(GlobalModel.basicUrl + sysDepartListUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
@@ -439,6 +440,7 @@ FluTableQueryBasic{
     Component {
         id: comNetworkSysDepartList
         NetworkCallable{
+            property var control
             property var display
             onStart: {
                 showLoading()
@@ -464,7 +466,7 @@ FluTableQueryBasic{
                         return
                     }
 
-                    departDataUpdated(jsResult.result, display)
+                    control.sysDepartListResp(jsResult.result, display)
                 }
         }
     }
