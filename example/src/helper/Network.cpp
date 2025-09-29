@@ -84,7 +84,14 @@ NetworkParams::NetworkParams(QString url, Type type, Method method, QObject *par
 }
 
 NetworkParams *NetworkParams::add(const QString &key, const QVariant &val) {
-    _paramMap.insert(key, val);
+    if (val.canConvert<QJSValue>()) {
+        //对象类型在qml层传进来后val.typeName()的输出是QJSValue类型(QVariant官方文档未提到支持QJSValue)
+        QJSValue jsValue = val.value<QJSValue>();
+        QJsonValue jsonValue = qjsEngine(this)->fromScriptValue<QJsonValue>(jsValue);
+        _paramMap.insert(key, jsonValue);
+    } else {
+        _paramMap.insert(key, val);
+    }
     return this;
 }
 

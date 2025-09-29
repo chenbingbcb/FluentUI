@@ -21,7 +21,9 @@ FluTableQueryBasic{
     // }
     // isLocalConfig: false //是否本地配置 默认false 表示配置由web后端提供
     getTableDataListener: getTableDataRequest
+    addFormDataListener: addFormDataRequest
     updateFormDataListener: updateFormDataRequest
+    updateAllListener: updateAllRequest
     delDataByParamsListener: delDataByParamsRequest
     getDataByParamsListener: getDataByParamsRequest
     getDictItemsListener: getDictItemsRequest
@@ -34,7 +36,9 @@ FluTableQueryBasic{
     property string getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/043780fa095ff1b2bec4dc406d76f023"
     property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/043780fa095ff1b2bec4dc406d76f023"
     property string getTableDataUrl: "/online/genFormAPI/getTableData/1920671189235699714"
+    property string addFormDataUrl: "/online/genFormAPI/addFormData/1920671189235699714"
     property string updateFormDataUrl: "/online/genFormAPI/updateFormData/1920671189235699714"
+    property string updateAllUrl: "/demo/testDemo2/updateAll"
     property string delDataByParamsUrl: "/online/genFormAPI/delDataByParams/1920671189235699714"
     property string getDataByParamsUrl: "/online/genFormAPI/getDataByParams/1920671189235699714"
     property string getDictItemsUrl: "/sys/dict/getDictItems/"
@@ -173,21 +177,69 @@ FluTableQueryBasic{
             }
     }
 
-    function updateFormDataRequest(rowObj) {
+    function addFormDataRequest(updateObj, noRefresh) {
+        var networkParams = Network.postJson(GlobalModel.basicUrl + addFormDataUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
+
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
+        }
+
+        addFormDataCallable.noRefresh = noRefresh
+        networkParams.go(addFormDataCallable)
+    }
+
+    NetworkCallable{
+        id: addFormDataCallable
+        property var noRefresh
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(addFormDataUrl + " failed: " + result))
+                    return
+                }
+
+                if (!noRefresh) {
+                    getTableDataRequest()
+                }
+            }
+    }
+
+    function updateFormDataRequest(updateObj, noRefresh) {
         var networkParams = Network.putJson(GlobalModel.basicUrl + updateFormDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
 
-        // var obj = tableView.getRow(row)
-        for(var key in rowObj) {
-            networkParams.add(key, rowObj[key])
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
         }
 
+        updateFormDataCallable.noRefresh = noRefresh
         networkParams.go(updateFormDataCallable)
     }
 
     NetworkCallable{
         id: updateFormDataCallable
+        property var noRefresh //默认刷新
         onStart: {
             showLoading()
         }
@@ -208,6 +260,50 @@ FluTableQueryBasic{
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
                     showError(qsTr(updateFormDataUrl + " failed: " + result))
+                    return
+                }
+
+                if (!noRefresh) {
+                    getTableDataRequest()
+                }
+            }
+    }
+
+    function updateAllRequest(updateObj) {
+        var networkParams = Network.putJson(GlobalModel.basicUrl + updateAllUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
+
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
+        }
+
+        networkParams.go(updateAllCallable)
+    }
+
+    NetworkCallable{
+        id: updateAllCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(updateAllUrl + " failed: " + result))
                     return
                 }
 

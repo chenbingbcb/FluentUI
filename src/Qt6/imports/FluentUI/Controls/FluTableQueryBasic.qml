@@ -21,7 +21,9 @@ FluContentPage{
     }*/
     property bool isLocalConfig: false //是否本地配置 默认false 表示配置由web后端提供
     property var getTableDataListener: function(){} //列表查询回调
+    property var addFormDataListener: function(){} //新增回调
     property var updateFormDataListener: function(){} //更新回调
+    property var updateAllListener: function(){} //批量更新回调
     property var delDataByParamsListener: function(){} //删除回调
     property var getDataByParamsListener: function(){} //表单行数据查询回调
     property var getDictItemsListener: function(dictCode){} //字典编码查询回调
@@ -40,21 +42,26 @@ FluContentPage{
     property var queryParams: ({}) //查询字段参数
     property var dictItemsMap: ({}) //字典数据
     property var listUrlMap: ({}) //url数据
-
-    Component.onCompleted: {
-
-    }
+    property var editFieldColumn: ({})
 
     onTableConfigChanged: {
+        editFieldColumn = {}
         var temp = []
         tableConfig.columns.forEach(function(item) {
+            editFieldColumn[item.dataIndex] = -1
             if (item.ifShow !== false) {
+                if (item.editRow === true) { //ifShow和editRow都要符合
+                    editFieldColumn[item.dataIndex] = temp.length //记录在columnSource中的位置
+                }
+
                 // var dataIndex = typeof item.format === "string" && item.format.startsWith("column|") ? item.format.slice(7) : item.dataIndex
                 temp.push({
                     title: item.title,
                     dataIndex: item.dataIndex,
                     format: item.format,
                     width: item.width || 100,
+                    editRow: item.editRow,
+                    required: item.editRule,
                     componentProps: item.editComponentProps,
                     editDelegate: getComponentByType(item.editComponent, item.editComponentProps)
                 })
@@ -66,7 +73,7 @@ FluContentPage{
             var actionColumn = tableConfig.actionColumn
             temp.push({
                 title: actionColumn.title,
-                dataIndex: actionColumn.dataIndex,
+                dataIndex: "action",
                 width: actionColumn.width || 100,
                 frozen: true
             })
@@ -74,7 +81,7 @@ FluContentPage{
 
         tableModel = tableConfig.tableModel
         queryForm = comQueryForm.createObject(gagination.parent)
-        tableView = comTableView.createObject(gagination.parent, {columnSource: temp}) //FluTableView作为Component后, 其parent要跟原来的一样
+        tableView = comTableView.createObject(gagination.parent, {columnSource: temp}) //父对象用root会有问题 所以用gagination.parent 说明它竟然不是root!
     }
 
     onTableDataChanged: {
@@ -202,7 +209,36 @@ FluContentPage{
                     FluFilledButton{
                         text: qsTr("新增")
                         onClicked: {
-                            tableView.insertRow(0,{})
+                            if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                                var uuid = FluTools.uuid()
+                                var rowObj = {
+                                    _key: uuid
+                                    , _minimumHeight: 50
+                                    , action: tableView.customItem(com_action, {newRow: uuid})
+                                }
+                                for (var field in editFieldColumn) {
+                                    rowObj[field] = ""
+                                }
+
+                                for (var key in tableView.editedRows) {
+                                    var row = tableView.editedRows[key]
+                                    if (row !== undefined) {
+                                        tableView.editedRows[key] = row + 1
+                                    }
+                                }
+                                tableView.editedRows[uuid] = 0
+                                tableView.insertRow(0, rowObj)
+                            } else {
+                                if (tableFormDlg) {
+                                    tableFormDlg.title = qsTr("编辑")
+                                    tableFormDlg.formRowData = {}
+                                    tableFormDlg.open()
+                                }
+                            }
+
+                            for (var listUrl in listUrlMap) {
+                                listUrlListener(listUrl, listUrlMap[listUrl], 1)
+                            }
                         }
                     }
 
@@ -215,6 +251,48 @@ FluContentPage{
                                 showWarning(qsTr("弹窗一起保存模式暂未支持"))
                                 return
                             }
+
+                            var updateObj = {
+                                insertRecords: []
+                                , updateRecords: []
+                                , removeRecords: []
+                            }
+                            var sysUpdateFieldNames = {}
+                            for (var key in tableView.editedRows) {
+                                var row = tableView.editedRows[key]
+                                var rowObj = tableView.getRow(row)
+                                var temp = {}
+                                for (var field in editFieldColumn) {
+                                    var column = editFieldColumn[field]
+                                    if (column === -1) {
+                                        continue
+                                    }
+
+                                    var config = tableView.columnSource[column]
+                                    if (config.required === true && !rowObj[field]) {
+                                        showError(config.title + qsTr("不能为空"))
+                                        return
+                                    }
+                                    temp[field] = rowObj[field]
+                                    sysUpdateFieldNames[field] = true
+                                }
+
+                                if (rowObj.id) {
+                                    temp.id = rowObj.id //必须
+                                    updateObj.sysUpdateFieldNames = Object.keys(sysUpdateFieldNames)
+                                    updateObj.updateRecords.push(temp)
+                                } else {
+                                    updateObj.insertRecords.push(temp)
+                                }
+                            }
+
+                            if (updateObj.updateRecords.length <= 0 && updateObj.insertRecords.length <= 0) {
+                                return
+                            }
+
+                            tableView.editedRows = {}
+                            updateAllListener(updateObj)
+                            console.debug(JSON.stringify(updateObj, null, 2))
                         }
                     }
                 }
@@ -227,23 +305,40 @@ FluContentPage{
         Item{
             RowLayout{
                 anchors.centerIn: parent
+                Component.onCompleted: {
+                    if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                        if (tableView.editedRows[model.rowModel._key] !== row) {
+                            return
+                        }
+
+                        if (tableModel === "editSingleModel") {
+                            editButton.visible = false
+                            saveButton.visible = true
+                            cancelButton.visible = true
+                        }
+                    }
+                }
+
                 FluIconButton{
                     id: editButton
                     iconSource: FluentIcons.Edit
                     iconSize: 15
                     onClicked: {
                         if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                            if (tableView.editedRows[model.rowModel._key] === row) {
+                                return
+                            }
+
                             if (tableModel === "editSingleModel") {
                                 visible = false
                                 saveButton.visible = true
                                 cancelButton.visible = true
                             }
-                            tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: true, writable: true})
+                            tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
                         } else {
                             getDataByParamsListener(row)
                             if (tableFormDlg) {
                                 tableFormDlg.title = qsTr("编辑")
-                                tableFormDlg.editRow = row
                             }
                         }
 
@@ -282,8 +377,10 @@ FluContentPage{
                         negativeText: qsTr("取消")
                         positiveText: qsTr("确认")
                         onPositiveClicked:{
-                            delDataByParamsListener(row)
-                            // tableView.closeEditor()
+                            var rowObj = tableView.getRow(row)
+                            if (rowObj.id) {
+                                delDataByParamsListener(row)
+                            }
                             tableView.removeRow(row)
                         }
                     }
@@ -294,10 +391,36 @@ FluContentPage{
                     iconSource: FluentIcons.Save
                     iconSize: 15
                     onClicked: {
-                        // tableView.closeEditor()
-                        tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
                         var rowObj = tableView.getRow(row)
-                        updateFormDataListener(rowObj)
+                        var updateObj = {}
+                        var sysUpdateFieldNames = []
+                        for (var field in editFieldColumn) {
+                            var column = editFieldColumn[field]
+                            if (column === -1) {
+                                continue
+                            }
+
+                            var config = tableView.columnSource[column]
+                            if (config.required === true && !rowObj[field]) {
+                                showError(config.title + qsTr("不能为空"))
+                                return
+                            }
+                            updateObj[field] = rowObj[field]
+                            sysUpdateFieldNames.push(field)
+                        }
+
+                        if (rowObj.id) {
+                            updateObj.id = rowObj.id //必须
+                            updateObj.sysUpdateFieldNames = sysUpdateFieldNames
+                            updateFormDataListener(updateObj, true)
+                        } else {
+                            addFormDataListener(updateObj, true)
+                        }
+
+                        editButton.visible = true
+                        saveButton.visible = false
+                        cancelButton.visible = false
+                        tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
                     }
                 }
                 FluIconButton{
@@ -319,7 +442,7 @@ FluContentPage{
                             editButton.visible = true
                             saveButton.visible = false
                             cancelButton.visible = false
-                            tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
+                            tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
                         }
                     }
                 }
@@ -355,7 +478,7 @@ FluContentPage{
         onRequestPage:
             (page,count)=> {
                 // tableView.closeEditor()
-                tableView.editRows = Object.defineProperty(tableView.editRows, row, {value: false, writable: true})
+                tableView.editedRows = {}
                 tableView.resetPosition()
                 getTableDataListener()
             }
@@ -392,7 +515,6 @@ FluContentPage{
             property var childTableConfig: [] //子表配置
             property var tabFields: []
             property var formRowData
-            property int editRow: -1
 
             Component.onCompleted: {
 
@@ -422,7 +544,7 @@ FluContentPage{
                 var loaderItem
                 for (var i = 0; i < tabRepeater.count; i++) {
                     loaderItem = tabRepeater.itemAt(i).loaderItem
-                    loaderItem.value = formRowData[loaderItem.config.field]
+                    loaderItem.value = formRowData[loaderItem.config.field] || null
                     if (loaderItem.item.initDisplay) {
                         loaderItem.item.initDisplay()
                     }
@@ -430,7 +552,7 @@ FluContentPage{
 
                 for (var j = 0; j < repeater.count; j++) {
                     loaderItem = repeater.itemAt(j).loaderItem
-                    loaderItem.value = formRowData[loaderItem.config.field]
+                    loaderItem.value = formRowData[loaderItem.config.field] || null
                     if (loaderItem.item.initDisplay) {
                         loaderItem.item.initDisplay()
                     }
@@ -476,25 +598,56 @@ FluContentPage{
                         text: qsTr("保存")
                         onClicked: {
                             control.close()
-
-                            var rowObj = tableView.getRow(editRow)
-                            if (!rowObj) {
-                                console.error("tableView.getRow null: " + editRow)
-                                return
-                            }
-
+                            var newData = Object.assign({}, formRowData)
+                            var sysUpdateFieldNames = []
                             var loaderItem
                             for (var i = 0; i < tabRepeater.count; i++) {
                                 loaderItem = tabRepeater.itemAt(i).loaderItem
-                                rowObj[loaderItem.config.field] = loaderItem.value || null
+                                if (loaderItem.config.required === true && !loaderItem.value) {
+                                    showError(loaderItem.config.label + qsTr("不能为空"))
+                                    return
+                                }
+
+                                if (newData.id) {
+                                    if (newData[loaderItem.config.field] !== loaderItem.value) {
+                                        newData[loaderItem.config.field] = loaderItem.value
+                                        sysUpdateFieldNames.push(loaderItem.config.field)
+                                    }
+                                } else {
+                                    if (loaderItem.value) {
+                                        newData[loaderItem.config.field] = loaderItem.value
+                                    }
+                                }
                             }
 
                             for (var j = 0; j < repeater.count; j++) {
                                 loaderItem = repeater.itemAt(j).loaderItem
-                                rowObj[loaderItem.config.field] = loaderItem.value || null
+                                if (loaderItem.config.required === true && !loaderItem.value) {
+                                    showError(loaderItem.config.label + qsTr("不能为空"))
+                                    return
+                                }
+
+                                if (newData.id) {
+                                    if (newData[loaderItem.config.field] !== loaderItem.value) {
+                                        newData[loaderItem.config.field] = loaderItem.value
+                                        sysUpdateFieldNames.push(loaderItem.config.field)
+                                    }
+                                } else {
+                                    if (loaderItem.value) {
+                                        newData[loaderItem.config.field] = loaderItem.value
+                                    }
+                                }
                             }
 
-                            updateFormDataListener(rowObj)
+                            if (newData.id) {
+                                if (sysUpdateFieldNames.length <= 0) {
+                                    return
+                                }
+                                newData.sysUpdateFieldNames = sysUpdateFieldNames
+                                updateFormDataListener(newData)
+                            } else {
+                                addFormDataListener(newData)
+                            }
                         }
                     }
 
@@ -506,19 +659,6 @@ FluContentPage{
                         onClicked:{
                             control.close()
                         }
-                    }
-                }
-
-                Component {
-                    id: comToggleButton
-                    FluToggleButton {
-                        id: tabToggleButton
-                        text: ""
-                        contentDescription: ""
-                        controlBackground.border.width: 0
-                        controlBackground.gradient: null
-                        clickListener: function() {}
-                        property var items: []
                     }
                 }
 
@@ -621,13 +761,19 @@ FluContentPage{
             Layout.preferredHeight: item instanceof FluMultilineTextBox ? item.contentHeight + 16 : 32
             property alias loaderItem: loader
 
-            FluText{
+            FluText {
                 id: label
                 anchors{
                     left: parent.left
                     top: parent.top
                 }
-                text: modelData.label
+                text: {
+                    if (modelData.required === true) {
+                        return "<font color='red'>*</font>" + modelData.label
+                    } else {
+                        return modelData.label
+                    }
+                }
                 width: 120
                 height: 32
                 verticalAlignment: Qt.AlignVCenter
@@ -644,7 +790,7 @@ FluContentPage{
                     leftMargin: 5
                     rightMargin: 5
                 }
-                // enabled: !modelData.dynamicDisabled
+                enabled: !modelData.dynamicDisabled
                 property var config: modelData
                 property var value: null
                 sourceComponent: getComponentByType(config.component, config.componentProps)
@@ -658,7 +804,7 @@ FluContentPage{
             id: control
             placeholderText: qsTr("请输入")
 
-            onTextEdited: {
+            onTextChanged: {
                 value = control.text
             }
 
@@ -674,7 +820,7 @@ FluContentPage{
             id: control
             wrapMode: Text.WrapAnywhere
 
-            onEditingFinished: {
+            onTextChanged: {
                 value = control.text
             }
 
@@ -696,7 +842,11 @@ FluContentPage{
             }
 
             function initDisplay() {
-                control.checked = value.toLowerCase() === "true"
+                if (typeof value === "string") {
+                    control.checked = value.toLowerCase() === "true"
+                } else {
+                    control.checked = false
+                }
             }
         }
     }
