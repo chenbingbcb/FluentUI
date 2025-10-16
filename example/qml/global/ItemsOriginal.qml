@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick 2.15
 import FluentUI 1.0
+import Qt.labs.folderlistmodel
 
 FluObject{
     id:original_items
@@ -11,88 +12,40 @@ FluObject{
     property var paneItemModel
     property int paneItemIndex: 0
     property int paneItemIcon: 0
-    property var paneItemMap: [
-        {key:qsTr("OnlineList_1")}
-        , {key:qsTr("SelectDemo")}
-        , {key:qsTr("AccountMgr")}
-        , {key:qsTr("Buttons")}
-        , {key:qsTr("Text")}
-        , {key:qsTr("Image")}
-        , {key:qsTr("Slider")}
-        , {key:qsTr("CheckBox")}
-        , {key:qsTr("RadioButton")}
-        , {key:qsTr("ToggleSwitch")}
-        , {key:qsTr("GroupBox")}
-        , {key:qsTr("TextBox")}
-        , {key:qsTr("TimePicker")}
-        , {key:qsTr("DatePicker")}
-        , {key:qsTr("CalendarPicker")}
-        , {key:qsTr("ColorPicker")}
-        , {key:qsTr("ShortcutPicker")}
-        , {key:qsTr("InfoBar")}
-        , {key:qsTr("Progress")}
-        , {key:qsTr("RatingControl")}
-        , {key:qsTr("Badge")}
-        , {key:qsTr("Rectangle")}
-        , {key:qsTr("Clip")}
-        , {key:qsTr("Carousel")}
-        , {key:qsTr("Expander")}
-        , {key:qsTr("Watermark")}
-        , {key:qsTr("StaggeredLayout")}
-        , {key:qsTr("SplitLayout")}
-        , {key:qsTr("StatusLayout")}
-        , {key:qsTr("Dialog")}
-        , {key:qsTr("ComboBox")}
-        , {key:qsTr("Tooltip")}
-        , {key:qsTr("Menu")}
-        , {key:qsTr("Sheet")}
-        , {key:qsTr("Pivot")}
-        , {key:qsTr("BreadcrumbBar")}
-        , {key:qsTr("TabView")}
-        , {key:qsTr("TreeView")}
-        , {key:qsTr("TableView")}
-        , {key:qsTr("Pagination")}
-        , {key:qsTr("MultiWindow")}
-        , {key:qsTr("FlipView")}
-        , {key:qsTr("Acrylic")}
-        , {key:qsTr("Theme")}
-        , {key:qsTr("Typography")}
-        , {key:qsTr("Icons")}
-        , {key:qsTr("BarChart")}
-        , {key:qsTr("LineChart")}
-        , {key:qsTr("PieChart")}
-        , {key:qsTr("PolarAreaChart")}
-        , {key:qsTr("BubbleChart")}
-        , {key:qsTr("ScatterChart")}
-        , {key:qsTr("RadarChart")}
-        , {key:qsTr("OpenGL")}
-        , {key:qsTr("CustomPlot")}
-        , {key:qsTr("QRCode")}
-        , {key:qsTr("Tour")}
-        , {key:qsTr("Timeline")}
-        , {key:qsTr("Captcha")}
-        , {key:qsTr("Network")}
-        , {key:qsTr("RemoteLoader")}
-        // , {key:qsTr("HotLoader")}
-        // , {key:qsTr("Test Crash")}
-        // , {key:qsTr("About")}
-        , {key:qsTr("Settings")}
-        , {key:qsTr("FluentPro")}
-        , {key:qsTr("Home")}
-    ]
+
+    FolderListModel {
+        id: folderModel
+        folder: "qrc:/example/qml/page"
+        property var urlMap: ({})
+        onStatusChanged: {
+            if (folderModel.status === FolderListModel.Ready) {
+                for (var i = 0; i < folderModel.count; i++) {
+                    urlMap[folderModel.get(i, "fileName")] = true //标记已实现的component页面文件
+                }
+            }
+        }
+    }
 
     Component {
         id: com_pane_item
         FluPaneItem {
             title: element.meta.menuTitle || element.meta.title
             menuDelegate: paneItemMenu
-            onTap:{
-                navigationView.push(url, {title: element.meta.title})
+            onTap: {
+                var wholeUrl = folderModel.folder + "/T_Home.qml"
+                if (folderModel.urlMap[url] === true) {
+                    wholeUrl = folderModel.folder + "/" + url
+                }
+                navigationView.push(wholeUrl, {tabTitle: element.meta.title, menuConfig: element})
             }
+
             Component.onCompleted: {
                 icon = element.meta.icon ? FluentIcons.GlobalNavButton + paneItemIcon++ : 0
-                var i = paneItemIndex < paneItemMap.length ? paneItemIndex++ : paneItemMap.length - 1
-                url = "qrc:/example/qml/page/T_%1.qml".arg(paneItemMap[i] ? paneItemMap[i].key : "Home")
+                if (element.component === "online/onlineList/List") { //在线表单基于同个qml文件
+                    url = "online-onlineList.qml"
+                } else {
+                    url = element.name + ".qml"
+                }
             }
         }
     }

@@ -31,16 +31,15 @@ FluTableQueryBasic{
     sysUserListListener: sysUserListRequest
     sysDepartListListener: sysDepartListRequest
 
-    objectName: "T_OnlineList_1"
     sysAllDictItems: GlobalModel.sysAllDictItems
-    property string getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/043780fa095ff1b2bec4dc406d76f023"
-    property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/043780fa095ff1b2bec4dc406d76f023"
-    property string getTableDataUrl: "/online/genFormAPI/getTableData/1920671189235699714"
-    property string addFormDataUrl: "/online/genFormAPI/addFormData/1920671189235699714"
-    property string updateFormDataUrl: "/online/genFormAPI/updateFormData/1920671189235699714"
+    property string getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/0"
+    property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/0"
+    property string getTableDataUrl: "/demo/testDemo2/list"
+    property string addFormDataUrl: "/demo/testDemo2/add"
+    property string updateFormDataUrl: "/demo/testDemo2/updateMainSub"
     property string updateAllUrl: "/demo/testDemo2/updateAll"
-    property string delDataByParamsUrl: "/online/genFormAPI/delDataByParams/1920671189235699714"
-    property string getDataByParamsUrl: "/online/genFormAPI/getDataByParams/1920671189235699714"
+    property string delDataByParamsUrl: "/demo/testDemo2/deleteByParams"
+    property string getDataByParamsUrl: "/demo/testDemo2/queryByParams"
     property string getDictItemsUrl: "/sys/dict/getDictItems/"
     property string sysUserListUrl: "/sys/user/list"
     property string sysDepartListUrl: "/sys/sysDepart/list"
@@ -93,7 +92,7 @@ FluTableQueryBasic{
         var networkParams = Network.get(GlobalModel.basicUrl + getTableDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
-        .addQuery("order", "asc")
+        .addQuery("order", "desc")
         .addQuery("column", "createTime")
         .addQuery("pageNo", pageNo)
         .addQuery("pageSize", pageSize)
@@ -383,7 +382,7 @@ FluTableQueryBasic{
                     return
                 }
 
-                formRowData = jsResult.result
+                rowFormData = jsResult.result
             }
     }
 

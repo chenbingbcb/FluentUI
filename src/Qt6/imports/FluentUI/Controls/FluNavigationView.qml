@@ -899,12 +899,12 @@ Item {
         }
     }
     function gotoTab(){
-        var index = tab_view.findTabModelByTitle(loader_content.item.title)
+        var index = tab_view.findTabModelByTitle(loader_content.item.tabTitle)
         if (-1 !== index) {
             tab_view.onPressed(index)
             return
         }
-        tab_view.appendTab("qrc:/example/res/image/favicon.ico", loader_content.item.title/*, loader_content.item*/)
+        tab_view.appendTab("qrc:/example/res/image/favicon.ico", loader_content.item.tabTitle/*, loader_content.item*/)
     }
     Connections{
         target: tab_view

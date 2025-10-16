@@ -17,7 +17,7 @@ FluContentPage{
     property var formConfig/*: { //编辑表单配置
         schemas: [] //控件配置
     }*/
-    property var formRowData/*: { //表单行数据
+    property var rowFormData/*: { //单行表单数据
     }*/
     property bool isLocalConfig: false //是否本地配置 默认false 表示配置由web后端提供
     property var getTableDataListener: function(){} //列表查询回调
@@ -33,6 +33,10 @@ FluContentPage{
     signal dictItemsUpdated(string key, var dictItems) //字典数据更新通知
     property var sysAllDictItems: ({}) //所有字典数据)
     ///////////////////////////////////////以上参数由应用层赋值
+    property var menuConfig //菜单配置
+    property string tableId: ""
+    property string formId: ""
+    property string menuId: ""
     property string tableModel: "modalSingleModel" //modalSingleModel:弹窗单行保存 modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
     property alias pageNo: gagination.pageCurrent
     property alias pageSize: gagination.__itemPerPage
@@ -43,6 +47,15 @@ FluContentPage{
     property var dictItemsMap: ({}) //字典数据
     property var listUrlMap: ({}) //url数据
     property var editFieldColumn: ({})
+
+    onMenuConfigChanged: {
+        var paths = menuConfig.path.split("/")
+        if (paths && paths.length > 1) {
+            formId = paths[paths.length - 1]
+            tableId = paths[paths.length - 2]
+        }
+        menuId = menuConfig.meta.menuId || menuConfig.id
+    }
 
     onTableConfigChanged: {
         editFieldColumn = {}
@@ -99,7 +112,7 @@ FluContentPage{
                 tabConfig = schema
                 formConfig.schemas.splice(i, 1);
             } else if (schema.component === "childTable") {
-                childTableConfig.push(schema);
+                childTableConfig.unshift(schema);
                 formConfig.schemas.splice(i, 1);
             } else if (schema.ifShow === false) {
                 formConfig.schemas.splice(i, 1);
@@ -112,8 +125,8 @@ FluContentPage{
                                                       })
     }
 
-    onFormRowDataChanged: {
-        tableFormDlg.formRowData = formRowData
+    onRowFormDataChanged: {
+        tableFormDlg.rowFormData = rowFormData
         tableFormDlg.open()
     }
 
@@ -124,7 +137,7 @@ FluContentPage{
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                topMargin: 20
+                // topMargin: 20
             }
 
             GridLayout{
@@ -185,7 +198,7 @@ FluContentPage{
                     anchors{ //使控件位于GridLayout右下方
                         right: parent.right
                         bottom: parent.bottom
-                        bottomMargin: 5
+                        bottomMargin: tableConfig.formConfig.schemas.length > 0 ? 5 : 0
                     }
 
                     FluButton{
@@ -231,7 +244,7 @@ FluContentPage{
                             } else {
                                 if (tableFormDlg) {
                                     tableFormDlg.title = qsTr("编辑")
-                                    tableFormDlg.formRowData = {}
+                                    tableFormDlg.rowFormData = {}
                                     tableFormDlg.open()
                                 }
                             }
@@ -514,7 +527,7 @@ FluContentPage{
             property var tabConfig: ({}) //标签配置
             property var childTableConfig: [] //子表配置
             property var tabFields: []
-            property var formRowData
+            property var rowFormData
 
             Component.onCompleted: {
 
@@ -540,11 +553,11 @@ FluContentPage{
             //     }
             // }
 
-            onFormRowDataChanged: {
+            onRowFormDataChanged: {
                 var loaderItem
                 for (var i = 0; i < tabRepeater.count; i++) {
                     loaderItem = tabRepeater.itemAt(i).loaderItem
-                    loaderItem.value = formRowData[loaderItem.config.field] || null
+                    loaderItem.value = rowFormData[loaderItem.config.field] || null
                     if (loaderItem.item.initDisplay) {
                         loaderItem.item.initDisplay()
                     }
@@ -552,7 +565,7 @@ FluContentPage{
 
                 for (var j = 0; j < repeater.count; j++) {
                     loaderItem = repeater.itemAt(j).loaderItem
-                    loaderItem.value = formRowData[loaderItem.config.field] || null
+                    loaderItem.value = rowFormData[loaderItem.config.field] || null
                     if (loaderItem.item.initDisplay) {
                         loaderItem.item.initDisplay()
                     }
@@ -560,190 +573,249 @@ FluContentPage{
             }
 
             onOpened: {
-                for(var i = 0;i<tabButtons.buttons.length;i++) {
+                for(var i = 0; i < tabButtons.buttons.length; i++) {
                     var button = tabButtons.buttons[i]
                     if(tabConfig.componentProps && tabConfig.componentProps.activeKey === button.contentDescription){
                         tabButtons.currentIndex = i
                         tabFields = tabConfig.componentProps.tabPanels[tabButtons.currentIndex].fields
                     }
                 }
+
+                // tableButtons.currentIndex = 0
             }
 
-            ColumnLayout{
-                anchors{
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                }
-
-                RowLayout{
+            Flickable{
+                clip: true
+                anchors.fill: parent
+                ScrollBar.vertical: FluScrollBar {}
+                boundsBehavior: Flickable.StopAtBounds
+                contentHeight: container.height
+                ColumnLayout{
+                    id: container
                     anchors{
                         left: parent.left
                         right: parent.right
+                        top: parent.top
                     }
 
-                    FluText{
-                        font: FluTextStyle.Subtitle
-                        text: title
-                        leftPadding: 10
-                    }
+                    RowLayout{
+                        anchors{
+                            left: parent.left
+                            right: parent.right
+                        }
 
-                    Item {
-                        Layout.fillWidth: true
-                    }
+                        FluText{
+                            font: FluTextStyle.Subtitle
+                            text: title
+                            leftPadding: 10
+                        }
 
-                    FluFilledButton{
-                        visible: title === qsTr("编辑")
-                        Layout.rightMargin: 10
-                        text: qsTr("保存")
-                        onClicked: {
-                            control.close()
-                            var newData = Object.assign({}, formRowData)
-                            var sysUpdateFieldNames = []
-                            var loaderItem
-                            for (var i = 0; i < tabRepeater.count; i++) {
-                                loaderItem = tabRepeater.itemAt(i).loaderItem
-                                if (loaderItem.config.required === true && !loaderItem.value) {
-                                    showError(loaderItem.config.label + qsTr("不能为空"))
-                                    return
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        FluFilledButton{
+                            visible: title === qsTr("编辑")
+                            Layout.rightMargin: 10
+                            text: qsTr("保存")
+                            onClicked: {
+                                control.close()
+                                var newData = Object.assign({}, rowFormData)
+                                var sysUpdateFieldNames = []
+                                var loaderItem
+                                for (var i = 0; i < tabRepeater.count; i++) {
+                                    loaderItem = tabRepeater.itemAt(i).loaderItem
+                                    if (loaderItem.config.required === true && !loaderItem.value) {
+                                        showError(loaderItem.config.label + qsTr("不能为空"))
+                                        return
+                                    }
+
+                                    if (newData.id) {
+                                        if (newData[loaderItem.config.field] !== loaderItem.value) {
+                                            newData[loaderItem.config.field] = loaderItem.value
+                                            sysUpdateFieldNames.push(loaderItem.config.field)
+                                        }
+                                    } else {
+                                        if (loaderItem.value) {
+                                            newData[loaderItem.config.field] = loaderItem.value
+                                        }
+                                    }
+                                }
+
+                                for (var j = 0; j < repeater.count; j++) {
+                                    loaderItem = repeater.itemAt(j).loaderItem
+                                    if (loaderItem.config.required === true && !loaderItem.value) {
+                                        showError(loaderItem.config.label + qsTr("不能为空"))
+                                        return
+                                    }
+
+                                    if (newData.id) {
+                                        if (newData[loaderItem.config.field] !== loaderItem.value) {
+                                            newData[loaderItem.config.field] = loaderItem.value
+                                            sysUpdateFieldNames.push(loaderItem.config.field)
+                                        }
+                                    } else {
+                                        if (loaderItem.value) {
+                                            newData[loaderItem.config.field] = loaderItem.value
+                                        }
+                                    }
                                 }
 
                                 if (newData.id) {
-                                    if (newData[loaderItem.config.field] !== loaderItem.value) {
-                                        newData[loaderItem.config.field] = loaderItem.value
-                                        sysUpdateFieldNames.push(loaderItem.config.field)
+                                    if (sysUpdateFieldNames.length <= 0) {
+                                        return
                                     }
+                                    newData.sysUpdateFieldNames = sysUpdateFieldNames
+                                    updateFormDataListener(newData)
                                 } else {
-                                    if (loaderItem.value) {
-                                        newData[loaderItem.config.field] = loaderItem.value
-                                    }
+                                    addFormDataListener(newData)
                                 }
                             }
+                        }
 
-                            for (var j = 0; j < repeater.count; j++) {
-                                loaderItem = repeater.itemAt(j).loaderItem
-                                if (loaderItem.config.required === true && !loaderItem.value) {
-                                    showError(loaderItem.config.label + qsTr("不能为空"))
-                                    return
-                                }
-
-                                if (newData.id) {
-                                    if (newData[loaderItem.config.field] !== loaderItem.value) {
-                                        newData[loaderItem.config.field] = loaderItem.value
-                                        sysUpdateFieldNames.push(loaderItem.config.field)
-                                    }
-                                } else {
-                                    if (loaderItem.value) {
-                                        newData[loaderItem.config.field] = loaderItem.value
-                                    }
-                                }
-                            }
-
-                            if (newData.id) {
-                                if (sysUpdateFieldNames.length <= 0) {
-                                    return
-                                }
-                                newData.sysUpdateFieldNames = sysUpdateFieldNames
-                                updateFormDataListener(newData)
-                            } else {
-                                addFormDataListener(newData)
+                        FluIconButton{
+                            iconSource: FluentIcons.ChromeClose
+                            iconSize: 15
+                            text: qsTr("Close")
+                            display: Button.IconOnly
+                            onClicked:{
+                                control.close()
                             }
                         }
                     }
 
-                    FluIconButton{
-                        iconSource: FluentIcons.ChromeClose
-                        iconSize: 15
-                        text: qsTr("Close")
-                        display: Button.IconOnly
-                        onClicked:{
-                            control.close()
-                        }
-                    }
-                }
-
-                FluRadioButtons{
-                    id: tabButtons
-                    spacing: 0
-                    orientation: Qt.Horizontal
-                    Component.onCompleted: {
-                        for (var i = 0; i < tabConfig.componentProps.tabPanels.length; i++) {
-                            var panel = tabConfig.componentProps.tabPanels[i]
-                            var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
-                            obj.text = panel.tab
-                            obj.controlBackground.border.width = 0
-                            obj.controlBackground.gradient = null
-                            obj.contentDescription = panel.key
-                            obj.clickListener = function() {
-                                for(var i = 0;i<tabButtons.buttons.length;i++) {
-                                    var button = tabButtons.buttons[i]
-                                    if(this === button){
-                                        tabButtons.currentIndex = i
-                                        tabFields = tabConfig.componentProps.tabPanels[tabButtons.currentIndex].fields
-                                        break
-                                    }
-                                }
-                            }
-                            tabButtons.buttons.push(obj)
-                        }
-                        control.onOpened() //提前加载tabFields的控件
-                    }
-                }
-
-                FluDivider{
-                    Layout.fillWidth: true
-                }
-
-                GridLayout{
-                    id: tabPanel
-                    columns: 24
-                    columnSpacing: 0
-                    anchors{
-                        left: parent.left
-                        right: parent.right
-                    }
-
-                    Repeater {
-                        id: tabRepeater
-                        model: tabFields
-                        delegate: comDelegate
-                        // onItemAdded: (index, item) => {
-                        //                  //顺序在repeater.onItemAdded之后 全部添加完后执行字典编码查询回调
-                        //                  if (index === model.length - 1) {
-                        //                      for (var dictCode in dictItemsMap) {
-                        //                          getDictItemsListener(dictCode)
-                        //                      }
-                        //                  }
-                        //              }
+                    FluRadioButtons{
+                        id: tabButtons
+                        spacing: 0
+                        orientation: Qt.Horizontal
                         Component.onCompleted: {
-
+                            tabConfig.componentProps.tabPanels = tabConfig.componentProps.tabPanels || []
+                            for (var i = 0; i < tabConfig.componentProps.tabPanels.length; i++) {
+                                var panel = tabConfig.componentProps.tabPanels[i]
+                                var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
+                                obj.text = panel.tab
+                                obj.controlBackground.border.width = 0
+                                obj.controlBackground.gradient = null
+                                obj.contentDescription = panel.key
+                                obj.clickListener = function() {
+                                    for(var i = 0; i < tabButtons.buttons.length; i++) {
+                                        var button = tabButtons.buttons[i]
+                                        if(this === button){
+                                            tabButtons.currentIndex = i
+                                            tabFields = tabConfig.componentProps.tabPanels[tabButtons.currentIndex].fields
+                                            break
+                                        }
+                                    }
+                                }
+                                tabButtons.buttons.push(obj)
+                            }
+                            // control.onOpened //提前加载tabFields的控件
                         }
                     }
 
-                    Item {
+                    FluDivider{
                         Layout.fillWidth: true
                     }
-                }
 
-                GridLayout{
-                    columns: 24
-                    columnSpacing: 0
-                    anchors{
-                        left: parent.left
-                        right: parent.right
+                    GridLayout{
+                        id: tabPanel
+                        columns: 24
+                        columnSpacing: 0
+                        anchors{
+                            left: parent.left
+                            right: parent.right
+                        }
+
+                        Repeater {
+                            id: tabRepeater
+                            model: tabFields
+                            delegate: comDelegate
+                            // onItemAdded: (index, item) => {
+                            //                  //顺序在repeater.onItemAdded之后 全部添加完后执行字典编码查询回调
+                            //                  if (index === model.length - 1) {
+                            //                      for (var dictCode in dictItemsMap) {
+                            //                          getDictItemsListener(dictCode)
+                            //                      }
+                            //                  }
+                            //              }
+                            Component.onCompleted: {
+
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
                     }
 
-                    Repeater {
-                        id: repeater
-                        model: formConfig.schemas
-                        delegate: comDelegate
-                        onItemAdded: (index, item) => {
+                    GridLayout{
+                        columns: 24
+                        columnSpacing: 0
+                        anchors{
+                            left: parent.left
+                            right: parent.right
+                        }
 
-                                     }
+                        Repeater {
+                            id: repeater
+                            model: formConfig.schemas
+                            delegate: comDelegate
+                            onItemAdded: (index, item) => {
+
+                                         }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
                     }
 
-                    Item {
-                        Layout.fillWidth: true
+                    //子表
+                    FluLoader {
+                        anchors{
+                            left: parent.left
+                            right: parent.right
+                        }
+                        sourceComponent: childTableConfig.length > 0 ? comChildTable : undefined
+                    }
+
+                    Component {
+                        id: comChildTable
+                        ColumnLayout {
+                            FluRadioButtons{
+                                id: tableButtons
+                                spacing: 0
+                                orientation: Qt.Horizontal
+                                Component.onCompleted: {
+                                    for (var i = 0; i < childTableConfig.length; i++) {
+                                        var config = childTableConfig[i]
+                                        var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tableButtons)
+                                        obj.text = config.label
+                                        obj.controlBackground.border.width = 0
+                                        obj.controlBackground.gradient = null
+                                        obj.clickListener = function() {
+                                            for(var i = 0; i < tableButtons.buttons.length; i++) {
+                                                var button = tableButtons.buttons[i]
+                                                if(this === button){
+                                                    tableButtons.currentIndex = i
+                                                    break
+                                                }
+                                            }
+                                        }
+                                        tableButtons.buttons.push(obj)
+                                    }
+                                    tableButtons.currentIndex = 0
+                                }
+                            }
+
+                            FluDivider{
+                                Layout.fillWidth: true
+                            }
+
+                            Component.onCompleted: {
+
+                            }
+                        }
                     }
                 }
             }

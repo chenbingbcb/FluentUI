@@ -359,7 +359,7 @@ Rectangle {
                     property int row: model.row
                     property int column: model.column
                     property var display: {
-                        var value = ""
+                        var value = model.rowModel[columnModel.dataIndex]
                         var format = columnModel.format
                         if (typeof format === "string") {
                             if (format.startsWith("column|")) {
@@ -372,7 +372,7 @@ Rectangle {
                             }
                         }
 
-                        return value || model.rowModel[columnModel.dataIndex]
+                        return value || ""
                     }
                     property bool isObject: typeof(display) == "object"
                     property var options: {

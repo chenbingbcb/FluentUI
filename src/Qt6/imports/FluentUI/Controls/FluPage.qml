@@ -8,6 +8,7 @@ Page {
     property int launchMode: FluPageType.SingleTop
     property bool animationEnabled: FluTheme.animationEnabled
     property string url : ""
+    property string tabTitle : ""
     id: control
     StackView.onRemoved: destroy()
     padding: 5
