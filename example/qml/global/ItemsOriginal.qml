@@ -588,7 +588,7 @@ FluObject{
     //         onTap: { navigationView.push(url) }
     //     }
     //     FluPaneItem{
-    //         title: qsTr("Network")
+    //         title: qsTr("FluNetwork")
     //         menuDelegate: paneItemMenu
     //         url: "qrc:/example/qml/page/T_Network.qml"
     //         onTap: { navigationView.push(url) }

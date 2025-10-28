@@ -8,12 +8,12 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QByteArray>
-#include "src/stdafx.h"
-#include "src/singleton.h"
+#include "stdafx.h"
+#include "singleton.h"
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
-namespace NetworkType {
+namespace FluNetworkType {
     Q_NAMESPACE
     enum CacheMode {
         NoCache = 0x0000,
@@ -24,17 +24,17 @@ namespace NetworkType {
 
     Q_ENUM_NS(CacheMode)
 
-    QML_NAMED_ELEMENT(NetworkType)
+    QML_NAMED_ELEMENT(FluNetworkType)
 }
 
 /**
- * @brief The NetworkCallable class
+ * @brief The FluNetworkCallable class
  */
-class NetworkCallable : public QObject {
+class FluNetworkCallable : public QObject {
     Q_OBJECT
-    QML_NAMED_ELEMENT(NetworkCallable)
+    QML_NAMED_ELEMENT(FluNetworkCallable)
 public:
-    explicit NetworkCallable(QObject *parent = nullptr);
+    explicit FluNetworkCallable(QObject *parent = nullptr);
 
     Q_SIGNAL void start();
 
@@ -67,42 +67,42 @@ public:
 };
 
 /**
- * @brief The NetworkParams class
+ * @brief The FluNetworkParams class
  */
-class NetworkParams : public QObject {
+class FluNetworkParams : public QObject {
     Q_OBJECT
-    QML_NAMED_ELEMENT(NetworkParams)
+    QML_NAMED_ELEMENT(FluNetworkParams)
 public:
     enum Method { METHOD_GET, METHOD_HEAD, METHOD_POST, METHOD_PUT, METHOD_PATCH, METHOD_DELETE };
     enum Type { TYPE_NONE, TYPE_FORM, TYPE_JSON, TYPE_JSONARRAY, TYPE_BODY };
 
-    explicit NetworkParams(QObject *parent = nullptr);
+    explicit FluNetworkParams(QObject *parent = nullptr);
 
-    NetworkParams(QString url, Type type, Method method, QObject *parent = nullptr);
+    FluNetworkParams(QString url, Type type, Method method, QObject *parent = nullptr);
 
-    Q_INVOKABLE NetworkParams *addQuery(const QString &key, const QVariant &val);
+    Q_INVOKABLE FluNetworkParams *addQuery(const QString &key, const QVariant &val);
 
-    Q_INVOKABLE NetworkParams *addHeader(const QString &key, const QVariant &val);
+    Q_INVOKABLE FluNetworkParams *addHeader(const QString &key, const QVariant &val);
 
-    Q_INVOKABLE NetworkParams *add(const QString &key, const QVariant &val);
+    Q_INVOKABLE FluNetworkParams *add(const QString &key, const QVariant &val);
 
-    Q_INVOKABLE NetworkParams *addFile(const QString &key, const QVariant &val);
+    Q_INVOKABLE FluNetworkParams *addFile(const QString &key, const QVariant &val);
 
-    Q_INVOKABLE NetworkParams *setBody(QString val);
+    Q_INVOKABLE FluNetworkParams *setBody(QString val);
 
-    Q_INVOKABLE NetworkParams *setTimeout(int val);
+    Q_INVOKABLE FluNetworkParams *setTimeout(int val);
 
-    Q_INVOKABLE NetworkParams *setRetry(int val);
+    Q_INVOKABLE FluNetworkParams *setRetry(int val);
 
-    Q_INVOKABLE NetworkParams *setCacheMode(int val);
+    Q_INVOKABLE FluNetworkParams *setCacheMode(int val);
 
-    Q_INVOKABLE NetworkParams *toDownload(QString destPath, bool append = false);
+    Q_INVOKABLE FluNetworkParams *toDownload(QString destPath, bool append = false);
 
-    Q_INVOKABLE NetworkParams *bind(QObject *target);
+    Q_INVOKABLE FluNetworkParams *bind(QObject *target);
 
-    Q_INVOKABLE NetworkParams *openLog(QVariant val);
+    Q_INVOKABLE FluNetworkParams *openLog(QVariant val);
 
-    Q_INVOKABLE void go(NetworkCallable *result);
+    Q_INVOKABLE void go(FluNetworkCallable *result);
 
     QString buildCacheKey() const;
 
@@ -128,77 +128,77 @@ public:
     int _timeout = -1;
     int _retry = -1;
     QVariant _openLog;
-    int _cacheMode = NetworkType::CacheMode::NoCache;
+    int _cacheMode = FluNetworkType::CacheMode::NoCache;
 };
 
 /**
- * @brief The Network class
+ * @brief The FluNetwork class
  */
-class Network : public QObject {
+class FluNetwork : public QObject {
     Q_OBJECT
     Q_PROPERTY_AUTO(int, timeout)
     Q_PROPERTY_AUTO(int, retry)
     Q_PROPERTY_AUTO(QString, cacheDir)
     Q_PROPERTY_AUTO(bool, openLog)
-    QML_NAMED_ELEMENT(Network)
+    QML_NAMED_ELEMENT(FluNetwork)
     QML_SINGLETON
 
 private:
-    explicit Network(QObject *parent = nullptr);
+    explicit FluNetwork(QObject *parent = nullptr);
 
 public:
-    SINGLETON(Network)
+    SINGLETON(FluNetwork)
 
-    static Network *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
+    static FluNetwork *create(QQmlEngine *qmlEngine, QJSEngine *jsEngine) {
         return getInstance();
     }
 
-    Q_INVOKABLE NetworkParams *get(const QString &url);
+    Q_INVOKABLE FluNetworkParams *get(const QString &url);
 
-    Q_INVOKABLE NetworkParams *head(const QString &url);
+    Q_INVOKABLE FluNetworkParams *head(const QString &url);
 
-    Q_INVOKABLE NetworkParams *postBody(const QString &url);
+    Q_INVOKABLE FluNetworkParams *postBody(const QString &url);
 
-    Q_INVOKABLE NetworkParams *putBody(const QString &url);
+    Q_INVOKABLE FluNetworkParams *putBody(const QString &url);
 
-    Q_INVOKABLE NetworkParams *patchBody(const QString &url);
+    Q_INVOKABLE FluNetworkParams *patchBody(const QString &url);
 
-    Q_INVOKABLE NetworkParams *deleteBody(const QString &url);
+    Q_INVOKABLE FluNetworkParams *deleteBody(const QString &url);
 
-    Q_INVOKABLE NetworkParams *postForm(const QString &url);
+    Q_INVOKABLE FluNetworkParams *postForm(const QString &url);
 
-    Q_INVOKABLE NetworkParams *putForm(const QString &url);
+    Q_INVOKABLE FluNetworkParams *putForm(const QString &url);
 
-    Q_INVOKABLE NetworkParams *patchForm(const QString &url);
+    Q_INVOKABLE FluNetworkParams *patchForm(const QString &url);
 
-    Q_INVOKABLE NetworkParams *deleteForm(const QString &url);
+    Q_INVOKABLE FluNetworkParams *deleteForm(const QString &url);
 
-    Q_INVOKABLE NetworkParams *postJson(const QString &url);
+    Q_INVOKABLE FluNetworkParams *postJson(const QString &url);
 
-    Q_INVOKABLE NetworkParams *putJson(const QString &url);
+    Q_INVOKABLE FluNetworkParams *putJson(const QString &url);
 
-    Q_INVOKABLE NetworkParams *patchJson(const QString &url);
+    Q_INVOKABLE FluNetworkParams *patchJson(const QString &url);
 
-    Q_INVOKABLE NetworkParams *deleteJson(const QString &url);
+    Q_INVOKABLE FluNetworkParams *deleteJson(const QString &url);
 
-    Q_INVOKABLE NetworkParams *postJsonArray(const QString &url);
+    Q_INVOKABLE FluNetworkParams *postJsonArray(const QString &url);
 
-    Q_INVOKABLE NetworkParams *putJsonArray(const QString &url);
+    Q_INVOKABLE FluNetworkParams *putJsonArray(const QString &url);
 
-    Q_INVOKABLE NetworkParams *patchJsonArray(const QString &url);
+    Q_INVOKABLE FluNetworkParams *patchJsonArray(const QString &url);
 
-    Q_INVOKABLE NetworkParams *deleteJsonArray(const QString &url);
+    Q_INVOKABLE FluNetworkParams *deleteJsonArray(const QString &url);
 
     Q_INVOKABLE void setInterceptor(QJSValue interceptor);
 
-    void handle(NetworkParams *params, NetworkCallable *result);
+    void handle(FluNetworkParams *params, FluNetworkCallable *result);
 
-    void handleDownload(NetworkParams *params, NetworkCallable *result);
+    void handleDownload(FluNetworkParams *params, FluNetworkCallable *result);
 
 private:
     static void sendRequest(QNetworkAccessManager *manager, QNetworkRequest request,
-                            NetworkParams *params, QNetworkReply *&reply, bool isFirst,
-                            const QPointer<NetworkCallable> &callable);
+                            FluNetworkParams *params, QNetworkReply *&reply, bool isFirst,
+                            const QPointer<FluNetworkCallable> &callable);
 
     static void addQueryParam(QUrl *url, const QMap<QString, QVariant> &params);
 
@@ -214,9 +214,9 @@ private:
 
     static QString headerList2String(const QList<QNetworkReply::RawHeaderPair> &data);
 
-    static void printRequestStartLog(const QNetworkRequest &request, NetworkParams *params);
+    static void printRequestStartLog(const QNetworkRequest &request, FluNetworkParams *params);
 
-    static void printRequestEndLog(const QNetworkRequest &request, NetworkParams *params,
+    static void printRequestEndLog(const QNetworkRequest &request, FluNetworkParams *params,
                                    QNetworkReply *&reply, const QString &response);
 
     static QString map2String(const QMap<QString, QVariant> &map);
@@ -228,14 +228,15 @@ public:
 /**
  * AES加密
  */
-class AesEncryptor : public QObject
+class FluAesEncryptor : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    SINGLETON(AesEncryptor)
+    SINGLETON(FluAesEncryptor)
+    QML_NAMED_ELEMENT(FluAesEncryptor)
 public:
-    explicit AesEncryptor(QObject *parent = nullptr) : QObject(parent) {}
+    explicit FluAesEncryptor(QObject *parent = nullptr) : QObject(parent) {}
 
     /**
      * 加密方法

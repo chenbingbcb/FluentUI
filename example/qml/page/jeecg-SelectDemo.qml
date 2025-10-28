@@ -20,7 +20,7 @@ FluContentPage{
     property var sysPostList: []
 
     Component.onCompleted: {
-        Network.get(GlobalModel.basicUrl + "/sys/dict/getDictItems" + dictCode)
+        FluNetwork.get(GlobalModel.basicUrl + "/sys/dict/getDictItems" + dictCode)
         .addHeader("S-Token",GlobalModel.token)
         .bind(root)
         .go(getDictItemsCallable)
@@ -29,7 +29,7 @@ FluContentPage{
     }
 
     function sysPostListRequest() {
-        Network.get(GlobalModel.basicUrl + sysPostListUrl)
+        FluNetwork.get(GlobalModel.basicUrl + sysPostListUrl)
         .addHeader("S-Token",GlobalModel.token)
         .addQuery("superQueryMatchType", "or")
         .addQuery("field", "code,name")
@@ -40,7 +40,7 @@ FluContentPage{
     }
 
     function sysDepartListRequest() {
-        var networkParams = Network.get(GlobalModel.basicUrl + sysDepartListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysDepartListUrl)
         .addHeader("S-Token",GlobalModel.token)
         .addQuery("superQueryParams", encodeURI('[{"rule":"like","type":"input","val":"125000","field":"orgCode"},{"rule":"like","type":"input","val":"105008","field":"orgCode"}]'))
         .addQuery("superQueryMatchType", "or")
@@ -66,7 +66,7 @@ FluContentPage{
     }
 
     function sysUserListRequest() {
-        var networkParams = Network.get(GlobalModel.basicUrl + sysUserListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysUserListUrl)
         .addHeader("S-Token",GlobalModel.token)
         .addQuery("field", "id,realname,username,orgCodeTxt")
         .addQuery("order", "desc")
@@ -102,7 +102,7 @@ FluContentPage{
         networkParams.go(sysUserListCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:getDictItemsCallable
         onStart: {
             showLoading()
@@ -136,7 +136,7 @@ FluContentPage{
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:sysPostListCallable
         onStart: {
             showLoading()
@@ -169,7 +169,7 @@ FluContentPage{
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:sysDepartListCallable
         onStart: {
             showLoading()
@@ -202,7 +202,7 @@ FluContentPage{
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:sysUserListCallable
         onStart: {
             showLoading()

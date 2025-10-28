@@ -52,13 +52,13 @@ FluTableQueryBasic{
     }
 
     function requestConfig() {
-        Network.get(GlobalModel.basicUrl + getColumnsUrl)
+        FluNetwork.get(GlobalModel.basicUrl + getColumnsUrl)
         .addHeader("S-Token", GlobalModel.token)
         .bind(root)
         .go(getColumnsCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: getColumnsCallable
         onStart: {
             showLoading()
@@ -89,7 +89,7 @@ FluTableQueryBasic{
     }
 
     function getTableDataRequest() {
-        var networkParams = Network.get(GlobalModel.basicUrl + getTableDataUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + getTableDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         .addQuery("order", "desc")
@@ -106,7 +106,7 @@ FluTableQueryBasic{
         networkParams.go(getTableDataCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: getTableDataCallable
         onStart: {
             showLoading()
@@ -141,13 +141,13 @@ FluTableQueryBasic{
             return
         }
 
-        Network.get(GlobalModel.basicUrl + getFormConfigUrl)
+        FluNetwork.get(GlobalModel.basicUrl + getFormConfigUrl)
         .addHeader("S-Token", GlobalModel.token)
         .bind(root)
         .go(getFormConfigCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: getFormConfigCallable
         onStart: {
             showLoading()
@@ -177,7 +177,7 @@ FluTableQueryBasic{
     }
 
     function addFormDataRequest(updateObj, noRefresh) {
-        var networkParams = Network.postJson(GlobalModel.basicUrl + addFormDataUrl)
+        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addFormDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
@@ -190,7 +190,7 @@ FluTableQueryBasic{
         networkParams.go(addFormDataCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: addFormDataCallable
         property var noRefresh
         onStart: {
@@ -223,7 +223,7 @@ FluTableQueryBasic{
     }
 
     function updateFormDataRequest(updateObj, noRefresh) {
-        var networkParams = Network.putJson(GlobalModel.basicUrl + updateFormDataUrl)
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateFormDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
@@ -236,7 +236,7 @@ FluTableQueryBasic{
         networkParams.go(updateFormDataCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: updateFormDataCallable
         property var noRefresh //默认刷新
         onStart: {
@@ -269,7 +269,7 @@ FluTableQueryBasic{
     }
 
     function updateAllRequest(updateObj) {
-        var networkParams = Network.putJson(GlobalModel.basicUrl + updateAllUrl)
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateAllUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
@@ -281,7 +281,7 @@ FluTableQueryBasic{
         networkParams.go(updateAllCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: updateAllCallable
         onStart: {
             showLoading()
@@ -312,14 +312,14 @@ FluTableQueryBasic{
 
     function delDataByParamsRequest(row) {
         var obj = tableView.getRow(row)
-        var networkParams = Network.deleteJson(GlobalModel.basicUrl + delDataByParamsUrl)
+        var networkParams = FluNetwork.deleteJson(GlobalModel.basicUrl + delDataByParamsUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         .addQuery("id", obj.id)
         .go(delDataByParamsCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: delDataByParamsCallable
         onStart: {
             showLoading()
@@ -350,14 +350,14 @@ FluTableQueryBasic{
 
     function getDataByParamsRequest(row) {
         var obj = tableView.getRow(row)
-        var networkParams = Network.get(GlobalModel.basicUrl + getDataByParamsUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + getDataByParamsUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         .addQuery("id", obj.id)
         .go(getDataByParamsCallable)
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id: getDataByParamsCallable
         onStart: {
             showLoading()
@@ -388,7 +388,7 @@ FluTableQueryBasic{
 
     function getDictItemsRequest(dictCode) {
         var callable = comNetworkDictCode.createObject(root, {dictCode: dictCode})
-        Network.get(GlobalModel.basicUrl + getDictItemsUrl + dictCode)
+        FluNetwork.get(GlobalModel.basicUrl + getDictItemsUrl + dictCode)
         .addHeader("S-Token",GlobalModel.token)
         .bind(root)
         .go(callable)
@@ -396,7 +396,7 @@ FluTableQueryBasic{
 
     Component {
         id: comNetworkDictCode
-        NetworkCallable{
+        FluNetworkCallable{
             property var dictCode
             onStart: {
                 showLoading()
@@ -429,7 +429,7 @@ FluTableQueryBasic{
 
     function listUrlRequest(listUrl, fields, pageNo) {
         var callable = comNetworkListUrl.createObject(root, {listUrl: listUrl})
-        Network.get(GlobalModel.basicUrl + listUrl)
+        FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(root)
         .addHeader("S-Token",GlobalModel.token)
         .addQuery("superQueryMatchType", "or")
@@ -441,7 +441,7 @@ FluTableQueryBasic{
 
     Component {
         id: comNetworkListUrl
-        NetworkCallable{
+        FluNetworkCallable{
             property var listUrl
             onStart: {
                 showLoading()
@@ -474,7 +474,7 @@ FluTableQueryBasic{
 
     function sysUserListRequest(control, queryParams, display) {
         var callable = comNetworkSysUserList.createObject(root, {control: control, display: display})
-        var networkParams = Network.get(GlobalModel.basicUrl + sysUserListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysUserListUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -487,7 +487,7 @@ FluTableQueryBasic{
 
     Component {
         id: comNetworkSysUserList
-        NetworkCallable{
+        FluNetworkCallable{
             property var control
             property var display
             onStart: {
@@ -521,7 +521,7 @@ FluTableQueryBasic{
 
     function sysDepartListRequest(control, queryParams, display) {
         var callable = comNetworkSysDepartList.createObject(root, {control: control, display: display})
-        var networkParams = Network.get(GlobalModel.basicUrl + sysDepartListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysDepartListUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -534,7 +534,7 @@ FluTableQueryBasic{
 
     Component {
         id: comNetworkSysDepartList
-        NetworkCallable{
+        FluNetworkCallable{
             property var control
             property var display
             onStart: {

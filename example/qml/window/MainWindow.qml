@@ -344,7 +344,7 @@ FluWindow {
         }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:callable
         property bool silent: true
         onStart: {
@@ -380,7 +380,7 @@ FluWindow {
 
     function checkUpdate(silent){
         callable.silent = silent
-        Network.get("https://api.github.com/repos/zhuzichu520/FluentUI/releases/latest")
+        FluNetwork.get("https://api.github.com/repos/zhuzichu520/FluentUI/releases/latest")
         .go(callable)
     }
 }

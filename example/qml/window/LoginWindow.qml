@@ -40,7 +40,7 @@ FluWindow {
         property string username: ""
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:loginCallable
         onStart: {
             showLoading()
@@ -72,19 +72,19 @@ FluWindow {
                 settings.username = textbox_uesrname.text
                 GlobalModel.token = jsResult.result.token
 
-                Network.get(GlobalModel.basicUrl + getUserInfoUrl)
+                FluNetwork.get(GlobalModel.basicUrl + getUserInfoUrl)
                 .addHeader("S-Token",GlobalModel.token)
                 .bind(window)
                 .go(getUserInfoUrlCallable)
 
-                Network.get(GlobalModel.basicUrl + getUserPermissionByTokenUrl)
+                FluNetwork.get(GlobalModel.basicUrl + getUserPermissionByTokenUrl)
                 .addHeader("S-Token",GlobalModel.token)
                 .bind(window)
                 .go(getUserPermissionByTokenUrlCallable)
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:captchaCallable
         onStart: {
             showLoading()
@@ -110,7 +110,7 @@ FluWindow {
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:getUserInfoUrlCallable
         onStart: {
             showLoading()
@@ -135,7 +135,7 @@ FluWindow {
             }
     }
 
-    NetworkCallable{
+    FluNetworkCallable{
         id:getUserPermissionByTokenUrlCallable
         onStart: {
             showLoading()
@@ -235,10 +235,10 @@ FluWindow {
 
     function procLogin(captcha = "") {
         textbox_password.text = "csqwe123!@#";
-        var encrypted = AesEncryptor.encrypt(textbox_password.text);
+        var encrypted = FluAesEncryptor.encrypt(textbox_password.text);
         console.log("Encrypted:", encrypted);
 
-        Network.postJson(GlobalModel.basicUrl + loginUrl)
+        FluNetwork.postJson(GlobalModel.basicUrl + loginUrl)
         .add("captcha",captcha)
         .add("checkKey",Date.now())
         .add("password",encrypted)
@@ -249,7 +249,7 @@ FluWindow {
 
     function procCaptcha() {
         var timestamp = Date.now()
-        Network.get(GlobalModel.basicUrl + captchaUrl + timestamp)
+        FluNetwork.get(GlobalModel.basicUrl + captchaUrl + timestamp)
         .addQuery("_t",Math.floor(timestamp/1000))
         .bind(window)
         .go(captchaCallable)

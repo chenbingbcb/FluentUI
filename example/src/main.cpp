@@ -18,7 +18,6 @@
 #include "src/component/FpsItem.h"
 #include "src/component/OpenGLItem.h"
 #include "src/helper/InitializrHelper.h"
-#include "src/helper/Network.h"
 #include "src/helper/SettingsHelper.h"
 #include "src/helper/TranslateHelper.h"
 
@@ -76,11 +75,7 @@ int main(int argc, char *argv[]) {
     qmlRegisterType<CircularReveal>(uri, major, minor, "CircularReveal");
     qmlRegisterType<FileWatcher>(uri, major, minor, "FileWatcher");
     qmlRegisterType<FpsItem>(uri, major, minor, "FpsItem");
-    qmlRegisterType<NetworkCallable>(uri, major, minor, "NetworkCallable");
-    qmlRegisterType<NetworkParams>(uri, major, minor, "NetworkParams");
     qmlRegisterType<OpenGLItem>(uri, major, minor, "OpenGLItem");
-    qmlRegisterUncreatableMetaObject(NetworkType::staticMetaObject, uri, major, minor,
-                                     "NetworkType", "Access to enums & flags only");
 
     QQmlApplicationEngine engine;
     TranslateHelper::getInstance()->init(&engine);
@@ -88,8 +83,6 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("SettingsHelper", SettingsHelper::getInstance());
     engine.rootContext()->setContextProperty("InitializrHelper", InitializrHelper::getInstance());
     engine.rootContext()->setContextProperty("TranslateHelper", TranslateHelper::getInstance());
-    engine.rootContext()->setContextProperty("Network", Network::getInstance());
-    engine.rootContext()->setContextProperty("AesEncryptor", AesEncryptor::getInstance());
 #ifdef FLUENTUI_BUILD_STATIC_LIB
     FluentUI::registerTypes(&engine);
 #endif
