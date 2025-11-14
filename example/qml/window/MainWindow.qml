@@ -282,15 +282,15 @@ FluWindow {
         }
     }
 
-    Shortcut {
-        sequence: "F5"
-        context: Qt.WindowShortcut
-        onActivated: {
-            if(flipable.flipped){
-                loader.reload()
-            }
-        }
-    }
+    // Shortcut {
+    //     sequence: "F5"
+    //     context: Qt.WindowShortcut
+    //     onActivated: {
+    //         if(flipable.flipped){
+    //             loader.reload()
+    //         }
+    //     }
+    // }
 
     Shortcut {
         sequence: "F6"

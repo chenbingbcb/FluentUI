@@ -1,8 +1,8 @@
 // FluCheckComboBox.qml
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
-import FluentUI 1.0
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import FluentUI
 
 Item {
     id: control
@@ -15,6 +15,8 @@ Item {
     property var selectedItems: []
     property bool popupVisible: false
     property var listUrl: qsTr("")
+    property var valField: qsTr("")
+    property var txtField: qsTr("")
     property bool listMore: false
     property int listPageNo: 1
 

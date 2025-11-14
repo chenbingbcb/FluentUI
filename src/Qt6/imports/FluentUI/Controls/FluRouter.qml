@@ -65,7 +65,7 @@ QtObject {
             }
         }
         win  = windowComponent.createObject(null,properties)
-        if(windowRegister){
+        if(windowRegister && windowRegister.hasOwnProperty("_to")){
             windowRegister._to = win
         }
     }

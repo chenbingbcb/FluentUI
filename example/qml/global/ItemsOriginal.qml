@@ -36,7 +36,7 @@ FluObject{
                 if (folderModel.urlMap[url] === true) {
                     wholeUrl = folderModel.folder + "/" + url
                 }
-                navigationView.push(wholeUrl, {tabTitle: element.meta.title, menuConfig: element})
+                navigationView.push(wholeUrl, {tabTitle: element.meta.title, pageConfig: element})
             }
 
             Component.onCompleted: {

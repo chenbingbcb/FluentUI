@@ -202,7 +202,6 @@
         <file>res/template/src/qml.qrc.in</file>
         <file>res/template/src/zh_CN.ts.in</file>
         <file>res/template/src/README.md.in</file>
-        <file>qml/global/GlobalModel.qml</file>
         <file>qml/page/T_Sheet.qml</file>
         <file>qml/page/T_GroupBox.qml</file>
         <file>res/image/bg_scenic.jpg</file>
@@ -213,10 +212,10 @@
         <file>qml/page/T_CustomPlot.qml</file>
         <file>res/image/logo_pro.png</file>
         <file>qml/page/T_FluentPro.qml</file>
-        <file>qml/page/T_AccountMgr.qml</file>
         <file>qml/page/jeecg-SelectDemo.qml</file>
         <file>qml/page/online-onlineList.qml</file>
         <file>qml/page/demo-oneToMany.qml</file>
+        <file>qml/window/OnlineWindow.qml</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

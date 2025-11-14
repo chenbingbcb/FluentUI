@@ -9,6 +9,7 @@ Page {
     property bool animationEnabled: FluTheme.animationEnabled
     property string url : ""
     property string tabTitle : ""
+    property var pageConfig
     id: control
     StackView.onRemoved: destroy()
     padding: 5

@@ -44,7 +44,8 @@ FluLauncher {
             "/standardWindow":"qrc:/example/qml/window/StandardWindow.qml",
             "/singleInstanceWindow":"qrc:/example/qml/window/SingleInstanceWindow.qml",
             "/pageWindow":"qrc:/example/qml/window/PageWindow.qml",
-            "/hotkey":"qrc:/example/qml/window/HotkeyWindow.qml"
+            "/hotkey":"qrc:/example/qml/window/HotkeyWindow.qml",
+            "/onlineWindow":"qrc:/example/qml/window/OnlineWindow.qml",
         }
         var args = Qt.application.arguments
         if(args.length>=2 && args[1].startsWith("-crashed=")){

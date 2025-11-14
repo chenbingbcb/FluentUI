@@ -363,7 +363,7 @@ Rectangle {
                         var format = columnModel.format
                         if (typeof format === "string") {
                             if (format.startsWith("column|")) {
-                                value = model.rowModel[format.slice(7)]
+                                value = model.rowModel[format.slice(7)] || value
                             } else if (format.startsWith("dict|")) {
                                 value = model.rowModel[columnModel.dataIndex + "_dictText"]
                             } else if (format.startsWith("date|")) {
@@ -791,7 +791,7 @@ Rectangle {
         id:com_column_text //表头配置
         FluText {
             id: column_text
-            text: String(display)
+            text: model.display.required === true ? "<font color='red'>*</font>" + display : String(display)
             anchors.fill: parent
             horizontalAlignment: model.display.horizontalAlignment || Qt.AlignHCenter
             verticalAlignment: model.display.verticalAlignment || Qt.AlignVCenter
@@ -1114,7 +1114,7 @@ Rectangle {
         }
     }
     function insertRow(rowIndex,obj){
-        if(rowIndex>=0 && rowIndex<table_view.rows){
+        if(rowIndex>=0 && rowIndex<=table_view.rows){
             sourceModel.insertRow(rowIndex,obj)
         }
     }
