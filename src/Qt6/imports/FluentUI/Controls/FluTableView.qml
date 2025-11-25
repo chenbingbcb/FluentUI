@@ -365,10 +365,23 @@ Rectangle {
                             if (format.startsWith("column|")) {
                                 value = model.rowModel[format.slice(7)] || value
                             } else if (format.startsWith("dict|")) {
-                                value = model.rowModel[columnModel.dataIndex + "_dictText"]
+                                if (value) {
+                                    var dictItems = GlobalModel.sysAllDictItems[format.slice(5)]
+                                    var values = value.split(",")
+                                    var temp = values.map(function(v) {
+                                        for (var i = 0; i < dictItems.length; i++) {
+                                            if (dictItems[i].value === v) {
+                                                return dictItems[i].text
+                                            }
+                                        }
+                                    })
+                                    value = temp.toString()
+                                }
                             } else if (format.startsWith("date|")) {
-                                var whole = Date.fromLocaleString(FluApp.locale, model.rowModel[columnModel.dataIndex], "yyyy-MM-dd hh:mm:ss")
-                                value = whole.toLocaleString(FluApp.locale, format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5))
+                                if (value) {
+                                    var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
+                                    value = whole.toLocaleString(FluApp.locale, format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5))
+                                }
                             }
                         }
 

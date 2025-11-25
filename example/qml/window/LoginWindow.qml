@@ -234,9 +234,9 @@ FluWindow {
     }
 
     function procLogin(captcha = "") {
-        textbox_password.text = "csqwe123!@#";
-        var encrypted = FluAesEncryptor.encrypt(textbox_password.text);
-        console.log("Encrypted:", encrypted);
+        textbox_password.text = "csqwe123!@#" //写死方便调试
+        var encrypted = FluAesEncryptor.encrypt(textbox_password.text)
+        console.log("Encrypted:", encrypted)
 
         FluNetwork.postJson(GlobalModel.basicUrl + loginUrl)
         .add("captcha",captcha)

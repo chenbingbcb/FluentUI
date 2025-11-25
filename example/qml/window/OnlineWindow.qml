@@ -10,7 +10,7 @@ FluWindow {
     minimumHeight: 668
 
     Component.onCompleted: {
-        showMaximized()
+        // showMaximized()
     }
 
     onInitArgument:
