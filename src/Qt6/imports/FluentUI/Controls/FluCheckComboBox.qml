@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import FluentUI
 
-Item {
+FluFrame {
     id: control
     implicitWidth: 300
     height: 32
@@ -35,14 +35,36 @@ Item {
     }
 
     // 输入框显示
-    FluMultilineTextBox {
-        id: textBox
-        readOnly: true
-        text: control.displayText
-        placeholderText: control.placeholder
+    Flickable {
+        id: scroll
+        clip: true
         anchors.fill: parent
-        rightPadding: 30
-        verticalAlignment: TextInput.AlignVCenter
+        anchors.rightMargin: 30
+        ScrollBar.vertical: srcollBar
+        boundsBehavior: Flickable.StopAtBounds
+        TextArea.flickable: FluMultilineTextBox {
+            id: textBox
+            text: control.displayText
+            placeholderText: control.placeholder
+            readOnly: true
+            wrapMode: Text.WrapAnywhere
+            activeFocusOnPress: false
+            verticalAlignment: TextInput.AlignVCenter
+            rightPadding: 12
+        }
+    }
+
+    FluScrollBar {
+        id: srcollBar
+        policy: scroll.contentHeight > scroll.height + 2 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+        anchors{
+            right: scroll.right
+            rightMargin: 1
+            top: scroll.top
+            bottom: scroll.bottom
+            topMargin: 3
+            bottomMargin: 3
+        }
     }
 
     // 下拉按钮
@@ -58,11 +80,12 @@ Item {
     // 下拉菜单
     FluPopup {
         id: popup
+        parent: control
         modal: false
-        parent: textBox
+        closePolicy: Popup.CloseOnPressOutsideParent
         width: control.width
         height: Math.min(300, listView.contentHeight + searchBox.height + 20)
-        y: textBox.y + textBox.height + 2
+        y: control.y + control.height + 2
 
         contentItem: ColumnLayout {
             // spacing: 10

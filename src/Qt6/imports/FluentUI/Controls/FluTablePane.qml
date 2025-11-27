@@ -22,7 +22,8 @@ ColumnLayout {
     property var queryFormConfig: tableConfig.formConfig || ({}) //查询表单配置
     property var queryParams: ({}) //查询字段参数
     property var windowFormData
-    property string tableId: ""
+    property string addFormDataUrl: ""
+    property string updateFormDataUrl: ""
     property int tableIndex: 0 //当前table索引 默认0
     property var removeRecords: [] //删除的table记录
     property alias tableView: tableView
@@ -326,9 +327,9 @@ ColumnLayout {
                             if (rowObj.id) {
                                 updateObj.id = rowObj.id //必须
                                 updateObj.sysUpdateFieldNames = sysUpdateFieldNames
-                                updateFormDataListener(tableId, updateObj, true)
+                                updateFormDataListener(updateFormDataUrl, updateObj, true)
                             } else {
-                                addFormDataListener(tableId, updateObj, true)
+                                addFormDataListener(addFormDataUrl, updateObj, true)
                             }
 
                             editButton.visible = true

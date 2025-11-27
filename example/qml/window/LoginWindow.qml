@@ -76,11 +76,6 @@ FluWindow {
                 .addHeader("S-Token",GlobalModel.token)
                 .bind(window)
                 .go(getUserInfoUrlCallable)
-
-                FluNetwork.get(GlobalModel.basicUrl + getUserPermissionByTokenUrl)
-                .addHeader("S-Token",GlobalModel.token)
-                .bind(window)
-                .go(getUserPermissionByTokenUrlCallable)
             }
     }
 
@@ -132,6 +127,11 @@ FluWindow {
                 }
 
                 GlobalModel.sysAllDictItems = jsResult.result.sysAllDictItems
+
+                FluNetwork.get(GlobalModel.basicUrl + getUserPermissionByTokenUrl)
+                .addHeader("S-Token",GlobalModel.token)
+                .bind(window)
+                .go(getUserPermissionByTokenUrlCallable)
             }
     }
 

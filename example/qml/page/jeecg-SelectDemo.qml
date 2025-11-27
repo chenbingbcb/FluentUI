@@ -235,225 +235,174 @@ FluContentPage{
             }
     }
 
-    Row {
-        id:rowDictSelectTag
-        spacing: 10
-        anchors{
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            topMargin: 20
-        }
-
-        FluText{
-            height: 32
-            text: qsTr("单选字典下拉:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluComboBox {
-            id:comboBoxDictSelectTag
-            model: ListModel {ListElement { text: "" }}
-            // delegate: ItemDelegate {
-            //     width: parent.width
-            //     text: modelData.text
+    ColumnLayout {
+        RowLayout {
+            id:rowDictSelectTag
+            spacing: 10
+            // anchors{
+            //     left: parent.left
+            //     right: parent.right
+            //     top: parent.top
+            //     topMargin: 20
             // }
-            // displayText: currentIndex === 0 ? "" : model.get(currentIndex).text
-            onActivated: {
-                if(index === 0) {
-                    textDictSelectTag.text = qsTr("选中值: 类型object")
-                } else {
-                    var value = model.get(index).value
-                    textDictSelectTag.text = qsTr("选中值: ") + value + qsTr("类型") + typeof value
+
+            FluText{
+                height: 32
+                text: qsTr("单选字典下拉:")
+                verticalAlignment: Qt.AlignVCenter
+            }
+
+            FluComboBox {
+                id:comboBoxDictSelectTag
+                model: ListModel {ListElement { text: "" }}
+                // delegate: ItemDelegate {
+                //     width: parent.width
+                //     text: modelData.text
+                // }
+                // displayText: currentIndex === 0 ? "" : model.get(currentIndex).text
+                onActivated: {
+                    if(index === 0) {
+                        textDictSelectTag.text = qsTr("选中值: 类型object")
+                    } else {
+                        var value = model.get(index).value
+                        textDictSelectTag.text = qsTr("选中值: ") + value + qsTr("类型") + typeof value
+                    }
                 }
             }
-        }
 
-        FluText{
-            id:textDictSelectTag
-            height: 32
-            text: qsTr("选中值: 类型object")
-            verticalAlignment: Qt.AlignVCenter
-        }
-    }
-
-    Row {
-        id:rowMultiSelectTag
-        spacing: 10
-        anchors{
-            left: parent.left
-            right: parent.right
-            top: rowDictSelectTag.bottom
-            topMargin: 5
-        }
-
-        FluText{
-            height: 32
-            text: qsTr("多选字典下拉:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluCheckComboBox {
-            id: comboMultiSelectTag
-            placeholder: qsTr("请做出你的选择")
-            onSelectionChanged: {
-                console.log("选中项:", selectedItems)
-                var str = selectedItems.map(function(item) {
-                    return item.value
-                }).join(",")
-                textMultiSelectTag.text = qsTr("选中值: ") + str
+            FluText{
+                id:textDictSelectTag
+                height: 32
+                text: qsTr("选中值: 类型object")
+                verticalAlignment: Qt.AlignVCenter
             }
         }
 
-        FluText{
-            id:textMultiSelectTag
-            height: 32
-            text: qsTr("选中值:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-    }
+        RowLayout {
+            id:rowMultiSelectTag
+            spacing: 10
+            // anchors{
+            //     left: parent.left
+            //     right: parent.right
+            //     top: rowDictSelectTag.bottom
+            //     topMargin: 5
+            // }
 
-    Row {
-        id:rowSearchSelect
-        spacing: 10
-        anchors{
-            left: parent.left
-            right: parent.right
-            top: rowMultiSelectTag.bottom
-            topMargin: 5
-        }
-
-        FluText{
-            height: 32
-            text: qsTr("字典搜索-url:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluCheckComboBox {
-            id: comboSearchSelect
-            listMore: true
-            placeholder: qsTr("请做出你的选择")
-            onSelectionChanged: {
-                console.log("选中项:", selectedItems)
-                var str = selectedItems.map(function(item) {
-                    return item.value
-                }).join(",")
-                textSearchSelect.text = qsTr("选中值: ") + str
+            FluText{
+                height: 32
+                text: qsTr("多选字典下拉:")
+                verticalAlignment: Qt.AlignVCenter
             }
-            onMoreButtonClicked: {
-                sysPostListRequest()
-            }
-        }
 
-        FluText{
-            id:textSearchSelect
-            height: 32
-            text: qsTr("选中值:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-    }
-
-    Row {
-        id:rowSysDepart
-        spacing: 10
-        anchors{
-            left: parent.left
-            right: parent.right
-            top: rowSearchSelect.bottom
-            topMargin: 5
-        }
-
-        FluText{
-            height: 32
-            text: qsTr("选择部门(不展示组织架构):")
-            verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluMultilineTextBox {
-            id: textBoxSysDepart
-            readOnly: true
-            placeholderText: "请点击选择"
-            onPressed:{
-                sysDepartListRequest()
-            }
-        }
-
-        // FluIconButton{
-        //     iconSource: FluentIcons.Search
-        //     iconSize: 15
-        //     text: qsTr("选择")
-        //     display: Button.TextBesideIcon
-        //     onClicked:{
-        //         sysDepartListRequest()
-        //     }
-        // }
-
-        FluText{
-            id:textSysDepart
-            height: 32
-            text: qsTr("选中值:")
-            verticalAlignment: Qt.AlignVCenter
-        }
-
-        FluSelectBizDialog{
-            id: selectBizDialogDepart
-            title: qsTr("部门选择")
-            choosedTitle: qsTr("已选部门")
-            strId: qsTr("部门代号")
-            name: qsTr("部门名称")
-            queryClickListener: sysDepartListRequest
-            buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
-            onNegativeClicked: {
-            }
-            onPositiveClicked:
-                (data)=>{
-                    var textBox = data.map(function(item) {
-                       return item.name
-                    }).join(", ")
-                    textBoxSysDepart.text = textBox
-
-                    var text = data.map(function(item) {
-                       return item.id
-                    }).join(", ")
-                    textSysDepart.text = qsTr("选中值:") + text
+            FluCheckComboBox {
+                id: comboMultiSelectTag
+                placeholder: qsTr("请做出你的选择")
+                onSelectionChanged: {
+                    console.log("选中项:", selectedItems)
+                    var str = selectedItems.map(function(item) {
+                        return item.value
+                    }).join(",")
+                    textMultiSelectTag.text = qsTr("选中值: ") + str
                 }
-        }
-    }
+            }
 
-    Row {
-        id:rowUser
-        spacing: 10
-        anchors{
-            left: parent.left
-            right: parent.right
-            top: rowSysDepart.bottom
-            topMargin: 5
+            FluText{
+                id:textMultiSelectTag
+                height: 32
+                text: qsTr("选中值:")
+                verticalAlignment: Qt.AlignVCenter
+            }
         }
 
-        FluText{
-            height: 32
-            text: qsTr("选择用户:")
-            verticalAlignment: Qt.AlignVCenter
+        RowLayout {
+            id:rowSearchSelect
+            spacing: 10
+            // anchors{
+            //     left: parent.left
+            //     right: parent.right
+            //     top: rowMultiSelectTag.bottom
+            //     topMargin: 5
+            // }
+
+            FluText{
+                height: 32
+                text: qsTr("字典搜索-url:")
+                verticalAlignment: Qt.AlignVCenter
+            }
+
+            FluCheckComboBox {
+                id: comboSearchSelect
+                listMore: true
+                placeholder: qsTr("请做出你的选择")
+                onSelectionChanged: {
+                    console.log("选中项:", selectedItems)
+                    var str = selectedItems.map(function(item) {
+                        return item.value
+                    }).join(",")
+                    textSearchSelect.text = qsTr("选中值: ") + str
+                }
+                onMoreButtonClicked: {
+                    sysPostListRequest()
+                }
+            }
+
+            FluText{
+                id:textSearchSelect
+                height: 32
+                text: qsTr("选中值:")
+                verticalAlignment: Qt.AlignVCenter
+            }
         }
 
-        FluMultilineTextBox {
-            id: textBoxUser
-            readOnly: true
-            placeholderText: "请点击选择"
-            onPressed:{
-                sysUserListRequest()
+        RowLayout {
+            id:rowSysDepart
+            spacing: 10
+            // anchors{
+            //     left: parent.left
+            //     right: parent.right
+            //     top: rowSearchSelect.bottom
+            //     topMargin: 5
+            // }
+
+            FluText{
+                height: 32
+                text: qsTr("选择部门(不展示组织架构):")
+                verticalAlignment: Qt.AlignVCenter
+            }
+
+            FluMultilineTextBox {
+                id: textBoxSysDepart
+                readOnly: true
+                placeholderText: "请点击选择"
+                onPressed:{
+                    sysDepartListRequest()
+                }
+            }
+
+            // FluIconButton{
+            //     iconSource: FluentIcons.Search
+            //     iconSize: 15
+            //     text: qsTr("选择")
+            //     display: Button.TextBesideIcon
+            //     onClicked:{
+            //         sysDepartListRequest()
+            //     }
+            // }
+
+            FluText{
+                id:textSysDepart
+                height: 32
+                text: qsTr("选中值:")
+                verticalAlignment: Qt.AlignVCenter
             }
 
             FluSelectBizDialog{
-                id: selectBizDialogUser
-                title: qsTr("用户选择")
-                choosedTitle: qsTr("已选用户")
-                strId: qsTr("账号")
-                name: qsTr("姓名")
-                orgCodeTxt: qsTr("部门")
-                isMoreQuery: true
-                isSingleSelect: true
-                queryClickListener: sysUserListRequest
+                id: selectBizDialogDepart
+                title: qsTr("部门选择")
+                choosedTitle: qsTr("已选部门")
+                strId: qsTr("部门代号")
+                name: qsTr("部门名称")
+                queryClickListener: sysDepartListRequest
                 buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
                 onNegativeClicked: {
                 }
@@ -462,31 +411,84 @@ FluContentPage{
                         var textBox = data.map(function(item) {
                            return item.name
                         }).join(", ")
-                        textBoxUser.text = textBox
+                        textBoxSysDepart.text = textBox
 
                         var text = data.map(function(item) {
                            return item.id
                         }).join(", ")
-                        textUser.text = qsTr("选中值:") + text
+                        textSysDepart.text = qsTr("选中值:") + text
                     }
             }
         }
 
-        // FluIconButton{
-        //     iconSource: FluentIcons.Search
-        //     iconSize: 15
-        //     text: qsTr("选择")
-        //     display: Button.TextBesideIcon
-        //     onClicked:{
-        //         sysUserListRequest()
-        //     }
-        // }
+        RowLayout {
+            id:rowUser
+            spacing: 10
+            // anchors{
+            //     left: parent.left
+            //     right: parent.right
+            //     top: rowSysDepart.bottom
+            //     topMargin: 5
+            // }
 
-        FluText{
-            id:textUser
-            height: 32
-            text: qsTr("选中值:")
-            verticalAlignment: Qt.AlignVCenter
+            FluText{
+                height: 32
+                text: qsTr("选择用户:")
+                verticalAlignment: Qt.AlignVCenter
+            }
+
+            FluMultilineTextBox {
+                id: textBoxUser
+                readOnly: true
+                placeholderText: "请点击选择"
+                onPressed:{
+                    sysUserListRequest()
+                }
+
+                FluSelectBizDialog{
+                    id: selectBizDialogUser
+                    title: qsTr("用户选择")
+                    choosedTitle: qsTr("已选用户")
+                    strId: qsTr("账号")
+                    name: qsTr("姓名")
+                    orgCodeTxt: qsTr("部门")
+                    isMoreQuery: true
+                    isSingleSelect: true
+                    queryClickListener: sysUserListRequest
+                    buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
+                    onNegativeClicked: {
+                    }
+                    onPositiveClicked:
+                        (data)=>{
+                            var textBox = data.map(function(item) {
+                               return item.name
+                            }).join(", ")
+                            textBoxUser.text = textBox
+
+                            var text = data.map(function(item) {
+                               return item.id
+                            }).join(", ")
+                            textUser.text = qsTr("选中值:") + text
+                        }
+                }
+            }
+
+            // FluIconButton{
+            //     iconSource: FluentIcons.Search
+            //     iconSize: 15
+            //     text: qsTr("选择")
+            //     display: Button.TextBesideIcon
+            //     onClicked:{
+            //         sysUserListRequest()
+            //     }
+            // }
+
+            FluText{
+                id:textUser
+                height: 32
+                text: qsTr("选中值:")
+                verticalAlignment: Qt.AlignVCenter
+            }
         }
     }
 }

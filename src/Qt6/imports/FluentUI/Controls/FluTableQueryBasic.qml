@@ -33,8 +33,8 @@ FluScrollablePage{
     property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/%1/%2".arg(formId).arg(menuId)
     property string getDataByParamsUrl: "/online/genFormAPI/getDataByParams/" + tableId
     property string delDataByParamsUrl: "/online/genFormAPI/delDataByParams/" + tableId
-    property string addFormDataUrl: "/online/genFormAPI/addFormData/"
-    property string updateFormDataUrl: "/online/genFormAPI/updateFormData/"
+    property string addFormDataUrl: "/online/genFormAPI/addFormData/" + tableId
+    property string updateFormDataUrl: "/online/genFormAPI/updateFormData/" + tableId
     property string updateAllUrl: "/demo/testDemo2/updateAll" //临时配置
     property string getDictItemsUrl: "/sys/dict/getDictItems/"
     property var getColumnsListener: getColumnsRequest //列表配置回调
@@ -268,8 +268,8 @@ FluScrollablePage{
             }
     }
 
-    function addFormDataRequest(tableId, updateObj, noRefresh) {
-        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addFormDataUrl + tableId)
+    function addFormDataRequest(addFormDataUrl, updateObj, noRefresh) {
+        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addFormDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
@@ -278,14 +278,14 @@ FluScrollablePage{
             networkParams.add(key, updateObj[key])
         }
 
-        addFormDataCallable.tableId = tableId
+        addFormDataCallable.addFormDataUrl = addFormDataUrl
         addFormDataCallable.noRefresh = noRefresh
         networkParams.go(addFormDataCallable)
     }
 
     FluNetworkCallable{
         id: addFormDataCallable
-        property var tableId
+        property var addFormDataUrl
         property var noRefresh
         onStart: {
             showLoading()
@@ -306,7 +306,7 @@ FluScrollablePage{
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(addFormDataUrl + tableId + " failed: " + result))
+                    showError(qsTr(addFormDataUrl + " failed: " + result))
                     return
                 }
 
@@ -323,8 +323,8 @@ FluScrollablePage{
             }
     }
 
-    function updateFormDataRequest(tableId, updateObj, noRefresh) {
-        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateFormDataUrl + tableId)
+    function updateFormDataRequest(updateFormDataUrl, updateObj, noRefresh) {
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateFormDataUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
@@ -333,14 +333,14 @@ FluScrollablePage{
             networkParams.add(key, updateObj[key])
         }
 
-        updateFormDataCallable.tableId = tableId
+        updateFormDataCallable.updateFormDataUrl = updateFormDataUrl
         updateFormDataCallable.noRefresh = noRefresh
         networkParams.go(updateFormDataCallable)
     }
 
     FluNetworkCallable{
         id: updateFormDataCallable
-        property var tableId
+        property var updateFormDataUrl
         property var noRefresh //默认刷新
         onStart: {
             showLoading()
@@ -361,7 +361,7 @@ FluScrollablePage{
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(updateFormDataUrl + tableId + " failed: " + result))
+                    showError(qsTr(updateFormDataUrl + " failed: " + result))
                     return
                 }
 
@@ -557,7 +557,8 @@ FluScrollablePage{
                                                             , tableConfig: tableConfig
                                                             , tableModel: tableModel
                                                             , windowFormData: windowFormData
-                                                            , tableId: tableId
+                                                            , addFormDataUrl: addFormDataUrl
+                                                            , updateFormDataUrl: updateFormDataUrl
                                                             , tableIndex: tableIndex
                                                             , getTableDataListener: getTableDataRequest
                                                             , getFormConfigListener: getFormConfigRequest
@@ -790,9 +791,9 @@ FluScrollablePage{
                             }
 
                             newData.sysUpdateFieldNames = sysUpdateFieldNames
-                            updateFormDataRequest(windowFormData.parentTableId, newData)
+                            updateFormDataRequest(windowFormData.updateFormDataUrl, newData)
                         } else {
-                            addFormDataRequest(windowFormData.parentTableId, newData)
+                            addFormDataRequest(windowFormData.addFormDataUrl, newData)
                         }
                     }
 
@@ -983,7 +984,7 @@ FluScrollablePage{
                     Layout.alignment: Qt.AlignRight | Qt.AlignTop
                     Layout.topMargin: 5
                     Layout.bottomMargin: 5
-                    Layout.preferredHeight: loader.item instanceof FluMultilineTextBox ? loader.item.contentHeight + 16 : 32
+                    Layout.preferredHeight: loader.item instanceof FluFormTextArea ? 48 : 32
                     Layout.fillWidth: true
                     property alias loaderItem: loader
 
@@ -1069,12 +1070,13 @@ FluScrollablePage{
     function openFormWindow(isNew, formTitle) {
         FluRouter.navigate("/onlineWindow", {
                                windowFormData: {
-                                   parentTableId: tableId
-                                   , formConfig: formConfig
+                                   formConfig: formConfig
                                    , tabConfig: tabConfig
                                    , childTableConfig: isNew ? [] : childTableConfig
                                    , rowFormData: isNew ? {} : rowFormData
                                    , formTitle: formTitle
+                                   , addFormDataUrl: addFormDataUrl
+                                   , updateFormDataUrl: updateFormDataUrl
                                }
                            }, root)
     }
