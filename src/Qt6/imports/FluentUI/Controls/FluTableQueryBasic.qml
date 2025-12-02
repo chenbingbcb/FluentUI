@@ -485,10 +485,10 @@ FluScrollablePage{
     }
 
     onWindowFormDataChanged: {
-        parentTableForm = comParentTableForm.createObject(rootLayout)
+        parentTableForm = comParentTableForm.createObject(rootLayout, {
+                                                              customAfterFormListener: customAfterForm
+                                                          })
         parentTableForm.title = windowFormData.formTitle
-
-        customAfterForm()
 
         for (var i = 0; i < windowFormData.childTableConfig.length; i++) { //子表
             var componentProps = windowFormData.childTableConfig[i].componentProps
@@ -552,25 +552,26 @@ FluScrollablePage{
             console.error(comTablePane.errorString())
             return
         }
-        tablePane = comTablePane.createObject(rootLayout, {columnSource: temp
-                                                            , editFieldColumn: editFieldColumn
-                                                            , tableConfig: tableConfig
-                                                            , tableModel: tableModel
-                                                            , windowFormData: windowFormData
-                                                            , addFormDataUrl: addFormDataUrl
-                                                            , updateFormDataUrl: updateFormDataUrl
-                                                            , tableIndex: tableIndex
-                                                            , getTableDataListener: getTableDataRequest
-                                                            , getFormConfigListener: getFormConfigRequest
-                                                            , getDataByParamsListener: getDataByParamsRequest
-                                                            , delDataByParamsListener: delDataByParamsRequest
-                                                            , addFormDataListener: addFormDataRequest
-                                                            , updateFormDataListener: updateFormDataRequest
-                                                            , updateAllListener: updateAllRequest
-                                                            , openFormWindowListener: openFormWindow
-                                                            , tableCustomActionListener: tableCustomActionListener
-                                                            , rowCustomActionListener: rowCustomAction
-                                                        })
+        tablePane = comTablePane.createObject(rootLayout, {
+                                                  columnSource: temp
+                                                  , editFieldColumn: editFieldColumn
+                                                  , tableConfig: tableConfig
+                                                  , tableModel: tableModel
+                                                  , windowFormData: windowFormData
+                                                  , addFormDataUrl: addFormDataUrl
+                                                  , updateFormDataUrl: updateFormDataUrl
+                                                  , tableIndex: tableIndex
+                                                  , getTableDataListener: getTableDataRequest
+                                                  , getFormConfigListener: getFormConfigRequest
+                                                  , getDataByParamsListener: getDataByParamsRequest
+                                                  , delDataByParamsListener: delDataByParamsRequest
+                                                  , addFormDataListener: addFormDataRequest
+                                                  , updateFormDataListener: updateFormDataRequest
+                                                  , updateAllListener: updateAllRequest
+                                                  , openFormWindowListener: openFormWindow
+                                                  , tableCustomActionListener: tableCustomAction
+                                                  , rowCustomActionListener: rowCustomAction
+                                              })
         tablePanes[tableIndex] = tablePane
     }
 
@@ -607,7 +608,6 @@ FluScrollablePage{
                 formConfig.schemas.splice(i, 1);
             }
         }
-        // parentTableForm = comParentTableForm.createObject(root)
     }
 
     ColumnLayout {
@@ -622,6 +622,7 @@ FluScrollablePage{
             Layout.fillWidth: true
             property string title: qsTr("编辑")
             property var tabFields: []
+            property var customAfterFormListener: function() {} //表单后面自定义组件回调
 
             Component.onCompleted: {
                 var fields = []
@@ -675,6 +676,8 @@ FluScrollablePage{
                         loaderItem.item.initDisplay()
                     }
                 }
+
+                customAfterFormListener(loaderCustomAfterForm)
             }
 
             // Connections{
@@ -919,7 +922,11 @@ FluScrollablePage{
                 }
             }
 
-            //子表
+            FluLoader {
+                id: loaderCustomAfterForm
+            }
+
+            //子表tab
             FluLoader {
                 Layout.fillWidth: true
                 sourceComponent: windowFormData.childTableConfig.length > 0 ? comChildTableTab : undefined
@@ -1082,7 +1089,7 @@ FluScrollablePage{
     }
 
     // table自定义操作回调 开口暴露给应用层自定义
-    function tableCustomActionListener(tableIndex, loaderTableCustomAction) {
+    function tableCustomAction(tableIndex, loaderTableCustomAction) {
         loaderTableCustomAction.setSource("FluIconButton.qml", {iconSource: FluentIcons.Wifi})
     }
 
@@ -1091,9 +1098,8 @@ FluScrollablePage{
         loaderRowCustomAction.setSource("FluIconButton.qml", {iconSource: FluentIcons.Wifi})
     }
 
-    // 表单后面的组件 开口暴露给应用层自定义
-    function customAfterForm() {
-        var com = Qt.createComponent("FluIconButton.qml")
-        com.createObject(rootLayout, {iconSource: FluentIcons.Wifi})
+    // 表单后面自定义组件回调 开口暴露给应用层自定义
+    function customAfterForm(loaderCustomAfterForm) {
+        loaderCustomAfterForm.setSource("FluIconButton.qml", {iconSource: FluentIcons.Wifi})
     }
 }

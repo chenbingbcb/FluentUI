@@ -119,6 +119,10 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
 
+        Component.onCompleted: {
+            tableCustomActionListener(tableIndex, loaderTableCustomAction)
+        }
+
         FluFilledButton{
             visible: defaultButtons.add ? defaultButtons.add.visible : true
             text: qsTr("新增")
@@ -232,7 +236,6 @@ ColumnLayout {
                             }
                         }
 
-                        tableCustomActionListener(tableIndex, loaderTableCustomAction)
                         rowCustomActionListener(row, loaderRowCustomAction)
                     }
 
