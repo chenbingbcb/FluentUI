@@ -8,6 +8,7 @@ FluWindow {
     id:window
     minimumWidth: 1000
     minimumHeight: 668
+    launchMode: FluWindowType.SingleInstance
 
     Component.onCompleted: {
         // showMaximized()
@@ -15,12 +16,18 @@ FluWindow {
 
     onInitArgument:
         (argument)=>{
-            // root.pageConfig = argument.pageConfig
-            Object.assign(root, argument)
+            Object.assign(formPane, argument)
         }
 
-    FluTableQueryBasic{
-        id:root
-    }
+    FluScrollablePage {
+        id: root
+        anchors.fill: parent
+        Component.onCompleted: {
+            // showMaximized()
+        }
 
+        FluFormPane {
+            id: formPane
+        }
+    }
 }

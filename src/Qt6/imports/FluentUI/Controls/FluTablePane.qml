@@ -5,31 +5,398 @@ import QtQuick.Window
 import FluentUI
 
 ColumnLayout {
-    property var getTableDataListener: function() {} //列表数据回调
-    property var getFormConfigListener: function() {} //表单配置回调
-    property var getDataByParamsListener: function() {} //单行表单数据回调
-    property var delDataByParamsListener: function() {} //删除回调
-    property var addFormDataListener: function() {} //新增回调
-    property var updateFormDataListener: function() {} //更新回调
-    property var updateAllListener: function() {} //批量更新回调
-    property var openFormWindowListener: function() {} //打开表单窗口回调
+    id:root
+    property var tableConfig/*: { //查询列表配置
+        formConfig: {} //查询字段配置
+        columns: [] //列表表头配置
+    }*/
+    property var formConfig/*: { //编辑表单配置
+        schemas: [] //控件配置
+    }*/
+    property string tableId: ""
+    property string formId: ""
+    property string menuId: ""
+    property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/%1/%2".arg(formId).arg(menuId)
+    property string getTableDataUrl: "/online/genFormAPI/getTableData/" + tableId
+    property string getDataByParamsUrl: "/online/genFormAPI/getDataByParams/" + tableId
+    property string delDataByParamsUrl: "/online/genFormAPI/delDataByParams/" + tableId
+    property string addFormDataUrl: "/online/genFormAPI/addFormData/" + tableId
+    property string updateFormDataUrl: "/online/genFormAPI/updateFormData/" + tableId
+    property string updateAllUrl: "/demo/testDemo2/updateAll" //临时配置
     property var tableCustomActionListener: function() {} //table自定义操作列回调
     property var rowCustomActionListener: function() {} //row自定义操作回调
-    property var editFieldColumn: ({})
-    property var tableConfig: ({})
-    property string tableModel: "modalSingleModel"
+    property var customAfterFormListener: function() {} //表单后面自定义组件回调
+    property var childTableCustomConfig: [] //子表自定义配置
+
+    property var childTableConfig: [] //子表配置
+    property var tabConfig: ({}) //标签配置
+    property int defaultCellWidth: 100
+    property int defaultCellHeight: 50
+    //modalSingleModel:弹窗单行保存(默认) modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
+    property string tableModel: formPane ? "editAllModel" : (tableConfig.tableModel || "modalSingleModel") //子表的模式由web端写死
     property var defaultButtons: tableConfig.defaultButtons || ({})
     property var queryFormConfig: tableConfig.formConfig || ({}) //查询表单配置
+    property var editFieldColumn: ({})
     property var queryParams: ({}) //查询字段参数
-    property var windowFormData
-    property string addFormDataUrl: ""
-    property string updateFormDataUrl: ""
-    property int tableIndex: 0 //当前table索引 默认0
+    property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
     property var removeRecords: [] //删除的table记录
+    property var _to
     property alias tableView: tableView
-    property alias columnSource: tableView.columnSource
-    property alias gagination: gagination
     Layout.fillWidth: true
+
+    Component.onDestruction: {
+        if (_to) { //关闭关联的form窗口
+            _to.close()
+        }
+    }
+
+    onTableConfigChanged: {
+        var temp = []
+        tableConfig.columns.forEach(function(item) {
+            editFieldColumn[item.dataIndex] = -1
+            if (item.ifShow !== false) {
+                if (item.editRow === true) { //ifShow和editRow都要符合
+                    editFieldColumn[item.dataIndex] = temp.length //记录在columnSource中的位置
+                }
+
+                // var dataIndex = typeof item.format === "string" && item.format.startsWith("column|") ? item.format.slice(7) : item.dataIndex
+                temp.push({
+                    title: item.title,
+                    dataIndex: item.dataIndex,
+                    format: item.format,
+                    width: item.width || defaultCellWidth,
+                    minimumWidth: item.width || defaultCellWidth,
+                    editRow: item.editRow,
+                    required: item.editRule,
+                    componentProps: item.editComponentProps,
+                    editDelegate: getComponentByType(item.editComponent, item.editComponentProps)
+                })
+            }
+        })
+
+        //最后一列操作列固定
+        if (typeof tableConfig.actionColumn === "object") {
+            var actionColumn = tableConfig.actionColumn
+            temp.push({
+                title: actionColumn.title,
+                dataIndex: "action",
+                width: actionColumn.width || defaultCellWidth,
+                minimumWidth: actionColumn.width || defaultCellWidth,
+                frozen: true
+            })
+        }
+
+        if (temp.length === 0) {
+            var emptyColumn = [ //兜底容错 目前columnSource在无数据时会引起crash 待深入排查
+                        {
+                            title: qsTr(""),
+                            dataIndex: "emptyColumn",
+                            width: defaultCellWidth
+                        }
+                    ]
+            temp.push(emptyColumn)
+        }
+
+        tableView.columnSource = temp
+    }
+
+    onFormConfigChanged: {
+        formConfig.schemas = formConfig.schemas || []
+        childTableConfig = []
+        for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
+            var schema = formConfig.schemas[i]
+            //分离不同类型的配置
+            if (schema.component === "Tab") {
+                tabConfig = schema
+                formConfig.schemas.splice(i, 1)
+            } else if (schema.component === "childTable") {
+                if (schema.ifShow !== false) {
+                    childTableConfig.unshift(schema)
+                    if (childTableCustomConfig.length > 0) { //子表自定义配置合并
+                        var pop = childTableCustomConfig.pop()
+                        Object.assign(childTableConfig[0], pop)
+                    }
+                }
+                formConfig.schemas.splice(i, 1)
+            } else if (schema.ifShow === false) {
+                formConfig.schemas.splice(i, 1)
+            }
+        }
+    }
+
+    function getFormConfigRequest() {
+        if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+            return
+        }
+
+        FluNetwork.get(GlobalModel.basicUrl + getFormConfigUrl)
+        .addHeader("S-Token", GlobalModel.token)
+        .bind(root)
+        .go(getFormConfigCallable)
+    }
+
+    FluNetworkCallable{
+        id: getFormConfigCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(getFormConfigUrl + " failed: " + result))
+                    return
+                }
+
+                formConfig = jsResult.result
+            }
+    }
+
+    function getTableDataRequest() {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + getTableDataUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        .addQuery("order", "desc")
+        .addQuery("column", "createTime")
+        .addQuery("pageNo", gagination.pageCurrent)
+        .addQuery("pageSize", gagination.__itemPerPage)
+        if (formPane && formPane.relatedField && formPane.rowFormData) {
+            networkParams.addQuery(formPane.relatedField, formPane.rowFormData.id)
+        }
+
+        for(var key in queryParams) {
+            if (queryParams[key].text !== "") {
+                networkParams.addQuery(key, queryParams[key].text)
+            }
+        }
+
+        networkParams.go(getTableDataCallable)
+    }
+
+    FluNetworkCallable{
+        id: getTableDataCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(getTableDataUrl + " failed: " + result))
+                    return
+                }
+
+                var tableData = jsResult.result
+                var dataSource = []
+                tableData.records.forEach(function(record) {
+                    record._key = FluTools.uuid()
+                    record._minimumHeight = defaultCellHeight
+                    record.action = tableView.customItem(comAction)
+                    dataSource.push(record)
+                })
+
+                tableView.dataSource = dataSource
+                tableView.editedRows = {}
+                gagination.itemCount = tableData.total || 0
+                gagination.__itemPerPage = tableData.size || 10
+            }
+    }
+
+    function delDataByParamsRequest(row) {
+        var obj = tableView.getRow(row)
+        var networkParams = FluNetwork.deleteJson(GlobalModel.basicUrl + delDataByParamsUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        .addQuery("id", obj.id)
+        .go(delDataByParamsCallable)
+    }
+
+    FluNetworkCallable{
+        id: delDataByParamsCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(delDataByParamsUrl + " failed: " + result))
+                    return
+                }
+
+                getTableDataRequest()
+            }
+    }
+
+    function addFormDataRequest(updateObj, noRefresh) {
+        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addFormDataUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
+
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
+        }
+
+        addFormDataCallable.noRefresh = noRefresh
+        networkParams.go(addFormDataCallable)
+    }
+
+    FluNetworkCallable{
+        id: addFormDataCallable
+        property var noRefresh
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(addFormDataUrl + " failed: " + result))
+                    return
+                }
+
+                if (!noRefresh) {
+                    getTableDataRequest()
+                }
+            }
+    }
+
+    function updateFormDataRequest(updateObj, noRefresh) {
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateFormDataUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
+
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
+        }
+
+        updateFormDataCallable.noRefresh = noRefresh
+        networkParams.go(updateFormDataCallable)
+    }
+
+    FluNetworkCallable{
+        id: updateFormDataCallable
+        property var noRefresh //默认刷新
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(updateFormDataUrl + " failed: " + result))
+                    return
+                }
+
+                if (!noRefresh) {
+                    getTableDataRequest()
+                }
+            }
+    }
+
+    function updateAllRequest(updateObj) {
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateAllUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        // .openLog(true)
+
+        for(var key in updateObj) {
+            networkParams.add(key, updateObj[key])
+        }
+
+        networkParams.go(updateAllCallable)
+    }
+
+    FluNetworkCallable{
+        id: updateAllCallable
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onCache:
+            (result)=>{
+                console.debug("onCache: "+result)
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(updateAllUrl + " failed: " + result))
+                    return
+                }
+
+                getTableDataRequest()
+            }
+    }
 
     FluFrame{
         Layout.fillWidth: true
@@ -101,14 +468,14 @@ ColumnLayout {
                         for(var key in queryParams) {
                             queryParams[key].text = ""
                         }
-                        getTableDataListener()
+                        getTableDataRequest()
                     }
                 }
 
                 FluButton{
                     text: qsTr("查询")
                     onClicked: {
-                        getTableDataListener()
+                        getTableDataRequest()
                     }
                 }
             }
@@ -118,10 +485,6 @@ ColumnLayout {
     RowLayout{
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
-
-        Component.onCompleted: {
-            tableCustomActionListener(tableIndex, loaderTableCustomAction)
-        }
 
         FluFilledButton{
             visible: defaultButtons.add ? defaultButtons.add.visible : true
@@ -147,19 +510,19 @@ ColumnLayout {
                     tableView.editedRows[uuid] = 0
                     tableView.insertRow(0, rowObj)
                 } else {
-                    openFormWindowListener(true, qsTr("编辑"))
+                    openFormWindow(-1, qsTr("新增"))
                 }
             }
         }
 
         FluFilledButton{
-            visible: (tableModel === "modalAllModel" || tableModel === "editAllModel") && !windowFormData //子表的保存跟表单一起
+            visible: tableModel === "editAllModel" && !formPane //子表的保存跟表单一起
             text: qsTr("保存")
             onClicked: {
-                if (tableModel === "modalAllModel") {
-                    showError(qsTr("弹窗一起保存模式暂未支持"))
-                    return
-                }
+                // if (tableModel === "modalAllModel") {
+                //     showError(qsTr("弹窗一起保存模式暂未支持"))
+                //     return
+                // }
 
                 var updateObj = {
                     insertRecords: []
@@ -200,12 +563,15 @@ ColumnLayout {
                 }
 
                 tableView.editedRows = {}
-                updateAllListener(updateObj)
+                updateAllRequest(updateObj)
             }
         }
 
         FluLoader {
             id: loaderTableCustomAction
+            Component.onCompleted: {
+                tableCustomActionListener(loaderTableCustomAction)
+            }
         }
     }
 
@@ -216,13 +582,19 @@ ColumnLayout {
         // Layout.fillHeight: true
         Layout.preferredHeight: defaultCellHeight * 10 + 42 //42为表头高度
         startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
-        property alias comAction: comAction
+
+        Component.onCompleted: {
+            getFormConfigRequest()
+            getTableDataRequest()
+
+        }
 
         Component{
             id:comAction
             Item{
                 RowLayout{
                     anchors.centerIn: parent
+                    spacing: 0
                     Component.onCompleted: {
                         if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
                             if (tableView.editedRows[model.rowModel._key] !== row) {
@@ -235,8 +607,6 @@ ColumnLayout {
                                 cancelButton.visible = true
                             }
                         }
-
-                        rowCustomActionListener(row, loaderRowCustomAction)
                     }
 
                     FluIconButton{
@@ -257,7 +627,7 @@ ColumnLayout {
                                 }
                                 tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
                             } else {
-                                getDataByParamsListener(row, qsTr("编辑"))
+                                openFormWindow(row, qsTr("编辑"))
                             }
                         }
                     }
@@ -267,7 +637,7 @@ ColumnLayout {
                         iconSource: FluentIcons.BulletedList
                         iconSize: 15
                         onClicked: {
-                            getDataByParamsListener(row, qsTr("详情"))
+                            openFormWindow(row, qsTr("详情"))
                         }
                     }
 
@@ -288,10 +658,10 @@ ColumnLayout {
                             onPositiveClicked:{
                                 var rowObj = tableView.getRow(row)
                                 if (rowObj.id) {
-                                    if (windowFormData && windowFormData.childTableConfig.length > 0) {
+                                    if (formPane && formPane.formPaneData.childTableConfig.length > 0) {
                                         removeRecords.push(rowObj)
                                     } else {
-                                        delDataByParamsListener(row)
+                                        delDataByParamsRequest(row)
                                     }
                                 }
 
@@ -330,9 +700,9 @@ ColumnLayout {
                             if (rowObj.id) {
                                 updateObj.id = rowObj.id //必须
                                 updateObj.sysUpdateFieldNames = sysUpdateFieldNames
-                                updateFormDataListener(updateFormDataUrl, updateObj, true)
+                                updateFormDataRequest(updateObj)
                             } else {
-                                addFormDataListener(addFormDataUrl, updateObj, true)
+                                addFormDataRequest(updateObj)
                             }
 
                             editButton.visible = true
@@ -369,6 +739,9 @@ ColumnLayout {
 
                     FluLoader {
                         id: loaderRowCustomAction
+                        Component.onCompleted: {
+                            rowCustomActionListener(row, loaderRowCustomAction)
+                        }
                     }
                 }
             }
@@ -391,7 +764,60 @@ ColumnLayout {
                 // tableView.closeEditor()
                 tableView.editedRows = {}
                 tableView.resetPosition()
-                getTableDataListener()
+                getTableDataRequest()
             }
+    }
+
+    function openFormWindow(row, formTitle) { //row为-1时表示新增
+        FluRouter.navigate("/onlineWindow", {
+                               formPaneData: {
+                                   formConfig: formConfig
+                                   , tabConfig: tabConfig
+                                   , childTableConfig: row > -1 ? childTableConfig : []
+                                   , row: row
+                                   , title: formTitle
+                                   , parent: root
+                               }
+                           }, root)
+    }
+
+    function getComponentByType(component, componentProps) {
+        var url = ""
+        switch (component) {
+            case "Input":
+                url = "FluFormInput.qml"
+                break
+            case "Textarea":
+                url = "FluFormTextArea.qml"
+                break
+            case "Switch":
+                url = "FluFormSwitch.qml"
+                break
+            case "DatePicker":
+                url = componentProps.showTime === true ? "FluFormDateTimePicker.qml" : "FluFormDatePicker.qml"
+                break
+            case "TimePicker":
+                url = "FluFormTimePicker.qml"
+                break
+            case "SearchSelect":
+                url = "FluFormSearchSelect.qml"
+                break
+            case "DictSelectTag":
+                url = componentProps.type === "radio" ? "FluFormDictSelectTagRadio.qml" : "FluFormDictSelectTag.qml"
+                break
+            case "MultiSelectTag":
+                url = componentProps.type === "checkbox" ? "FluFormMultiSelectTagCheckBox.qml" : "FluFormMultiSelectTag.qml"
+                break
+            case "SelectMultiUser":
+                url = "FluFormSelectMultiUser.qml"
+                break
+            case "SelectMultiDep":
+                url = "FluFormSelectMultiDep.qml"
+                break
+            default:
+                url = "FluFormUnsupported.qml"
+        }
+
+        return Qt.createComponent(url)
     }
 }
