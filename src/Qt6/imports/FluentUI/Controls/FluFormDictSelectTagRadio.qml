@@ -6,47 +6,43 @@ import FluentUI
 FluFormControl {
     Rectangle {
         anchors.fill: parent
+        radius: 4
+        color: FluTheme.dark ? Qt.rgba(62/255,62/255,62/255,1) : Qt.rgba(254/255,254/255,254/255,1)
         FluRadioButtons {
-            id: radioButtons
+            id: control
+            anchors.verticalCenter: parent.verticalCenter
             orientation: Qt.Horizontal
-            // property var dictItems: GlobalModel.sysAllDictItems[dictCode]
-            property var dictCode: {
+
+            Component.onCompleted: {
                 var componentProps = config.componentProps
                 if (componentProps && componentProps.dictCode) {
-                    // dictItemsMap[componentProps.dictCode] = true
-                    return componentProps.dictCode
-                }
-            }
-
-            // onDictItemsChanged: {
-            Component.onCompleted: {
-                radioButtons.buttons = []
-                var dictItems = GlobalModel.sysAllDictItems[dictCode] || []
-                dictItems.forEach(function(item) {
-                    var obj = Qt.createQmlObject("import FluentUI; FluRadioButton{property var value}", radioButtons)
-                    obj.text = item.text
-                    obj.value = item.value
-                    obj.clickListener = function() {
-                        for(var i = 0; i < radioButtons.buttons.length; i++){
-                            var button = radioButtons.buttons[i]
-                            if(this === button){
-                                radioButtons.currentIndex = i
-                                value = button.value
-                                break
+                    var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
+                    dictItems.forEach(function(item) {
+                        var obj = Qt.createQmlObject("import FluentUI; FluRadioButton{property var value}", control)
+                        obj.text = item.text
+                        obj.value = item.value
+                        obj.clickListener = function() {
+                            for(var i = 0; i < control.buttons.length; i++){
+                                var button = control.buttons[i]
+                                if(this === button){
+                                    control.currentIndex = i
+                                    value = button.value
+                                    break
+                                }
                             }
                         }
-                    }
-                    radioButtons.buttons.push(obj)
-                })
+                        control.buttons.push(obj)
+                    })
+                }
             }
         }
     }
 
     function initDisplay() {
-        for(var i = 0; i < radioButtons.buttons.length; i++){
-            var button = radioButtons.buttons[i]
+        for(var i = 0; i < control.buttons.length; i++){
+            var button = control.buttons[i]
             if (button.value === value) {
-                radioButtons.currentIndex = i
+                control.currentIndex = i
                 break
             }
         }

@@ -704,6 +704,14 @@ Item {
             }
         }
     }
+    Shortcut {
+        sequence: "F5"
+        context: Qt.WindowShortcut
+        onActivated: {
+            var item = d.stackItems[d.stackItems.length-1]
+            loader_content.setSource(item._ext.url,item._ext.argument)
+        }
+    }
     Item {
         id:nav_app_bar
         width: parent.width

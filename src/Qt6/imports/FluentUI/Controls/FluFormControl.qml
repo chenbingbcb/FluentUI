@@ -4,8 +4,8 @@ import QtQuick.Layouts
 import FluentUI
 
 Item {
-    // property var config: parent.config || {} //同时支持自定义的属性和继承FluLoader的config属性
-    // property var value: parent.value || null //同时支持自定义的属性和继承FluLoader的value属性
+    // property var config: ({}) //来自动态FluLoader的config属性 或者静态实例化时再定义
+    // property var value: null //来自动态FluLoader的value属性 或者静态实例化时再定义
 
     function initDisplay() {
     }

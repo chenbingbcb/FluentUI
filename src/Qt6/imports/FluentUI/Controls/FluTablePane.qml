@@ -29,7 +29,7 @@ ColumnLayout {
     property var childTableCustomConfig: [] //子表自定义配置
 
     property var childTableConfig: [] //子表配置
-    property var tabConfig: ({}) //标签配置
+    property var tabConfig //标签配置
     property int defaultCellWidth: 100
     property int defaultCellHeight: 50
     //modalSingleModel:弹窗单行保存(默认) modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
@@ -68,7 +68,7 @@ ColumnLayout {
                     minimumWidth: item.width || defaultCellWidth,
                     editRow: item.editRow,
                     required: item.editRule,
-                    componentProps: item.editComponentProps,
+                    // componentProps: item.editComponentProps,
                     editDelegate: getComponentByType(item.editComponent, item.editComponentProps)
                 })
             }
@@ -177,8 +177,9 @@ ColumnLayout {
         }
 
         for(var key in queryParams) {
-            if (queryParams[key].text !== "") {
-                networkParams.addQuery(key, queryParams[key].text)
+            var loaderItem = queryParams[key]
+            if (loaderItem.value) {
+                networkParams.addQuery(key, loaderItem.value)
             }
         }
 
@@ -398,6 +399,57 @@ ColumnLayout {
             }
     }
 
+    Component {
+        id: comDelegate
+        Item {
+            property var columnSpan: modelData.colProps ? (modelData.colProps.span || 8) : 8
+            property alias loaderItem: loader
+            visible: modelData.ifShow !== false
+            Layout.columnSpan: columnSpan
+            Layout.preferredWidth: parent.width / (24 / columnSpan)
+            Layout.alignment: Qt.AlignRight | Qt.AlignTop
+            Layout.topMargin: 5
+            Layout.bottomMargin: 5
+            Layout.preferredHeight: loader.item instanceof FluFormTextArea ? 48 : 32
+            Layout.fillWidth: true
+
+            FluText {
+                id: label
+                anchors{
+                    left: parent.left
+                    top: parent.top
+                }
+                text: {
+                    if (modelData.required === true) {
+                        return "<font color='red'>*</font>" + modelData.label
+                    } else {
+                        return modelData.label
+                    }
+                }
+                width: 120
+                height: 32
+                verticalAlignment: Qt.AlignVCenter
+                horizontalAlignment: Qt.AlignRight
+            }
+
+            FluLoader {
+                id: loader
+                anchors{
+                    left: label.right
+                    right: parent.right
+                    top: parent.top
+                    bottom: parent.bottom
+                    leftMargin: 5
+                    rightMargin: 5
+                }
+                enabled: !modelData.dynamicDisabled
+                property var config: modelData
+                property var value: null
+                sourceComponent: getComponentByType(config.component, config.componentProps)
+            }
+        }
+    }
+
     FluFrame{
         Layout.fillWidth: true
 
@@ -411,43 +463,9 @@ ColumnLayout {
 
             Repeater {
                 model: queryFormConfig.schemas
-                delegate: Item {
-                    Layout.columnSpan: modelData.colProps.span
-                    Layout.preferredWidth: parent.width / (24 / modelData.colProps.span)
-                    Layout.alignment: Qt.AlignRight
-                    Layout.topMargin: 5
-                    Layout.bottomMargin: 5
-                    height: label.height
-                    property alias queryParam: textBoxQueryParam
-                    FluText{
-                        id: label
-                        anchors{
-                            left: parent.left
-                            top: parent.top
-                            bottom: parent.bottom
-                        }
-                        text: modelData.label
-                        height: 32
-                        width: queryFormConfig.labelWidth | 120
-                        verticalAlignment: Qt.AlignVCenter
-                        horizontalAlignment: Qt.AlignRight
-                    }
-
-                    FluTextBox {
-                        id: textBoxQueryParam
-                        anchors{
-                            left: label.right
-                            right: parent.right
-                            top: parent.top
-                            bottom: parent.bottom
-                            leftMargin: 5
-                            rightMargin: 5
-                        }
-                        placeholderText: qsTr("请输入")
-                    }
-                }
+                delegate: comDelegate
                 onItemAdded: (index, item) => {
-                                 queryParams[model[index].field.trim()] = item.queryParam
+                                 queryParams[model[index].field.trim()] = item.loaderItem
                              }
             }
 
@@ -466,7 +484,10 @@ ColumnLayout {
                     text: qsTr("重置")
                     onClicked: {
                         for(var key in queryParams) {
-                            queryParams[key].text = ""
+                            var loaderItem = queryParams[key]
+                            loaderItem.value = null
+                            var config = loaderItem.config
+                            loaderItem.sourceComponent = getComponentByType(config.component, config.componentProps)
                         }
                         getTableDataRequest()
                     }
@@ -584,9 +605,7 @@ ColumnLayout {
         startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
 
         Component.onCompleted: {
-            getFormConfigRequest()
             getTableDataRequest()
-
         }
 
         Component{
@@ -769,7 +788,7 @@ ColumnLayout {
     }
 
     function openFormWindow(row, formTitle) { //row为-1时表示新增
-        FluRouter.navigate("/onlineWindow", {
+        FluRouter.navigate("/onlineFormWindow", {
                                formPaneData: {
                                    formConfig: formConfig
                                    , tabConfig: tabConfig
@@ -782,9 +801,14 @@ ColumnLayout {
     }
 
     function getComponentByType(component, componentProps) {
+        if (!component) {
+            return null
+        }
+
         var url = ""
         switch (component) {
             case "Input":
+            case "SInput":
                 url = "FluFormInput.qml"
                 break
             case "Textarea":

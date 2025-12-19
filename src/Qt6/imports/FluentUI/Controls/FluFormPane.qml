@@ -20,40 +20,42 @@ ColumnLayout{
     Layout.fillWidth: true
 
     onFormPaneDataChanged: {
-        var fields = []
-        var tabConfig = formPaneData.tabConfig
-        var tabPanels = tabConfig.componentProps.tabPanels || []
-        tabPanels.forEach(function(panel, i) {
-            var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
-            obj.text = panel.tab
-            obj.controlBackground.border.width = 0
-            obj.controlBackground.gradient = null
-            obj.clickListener = function() {
-                for(var i = 0; i < tabButtons.buttons.length; i++) {
-                    var button = tabButtons.buttons[i]
-                    if(this === button){
-                        tabButtons.currentIndex = i
-                        break
+        if (formPaneData.tabConfig) {
+            var fields = []
+            var tabConfig = formPaneData.tabConfig
+            var tabPanels = tabConfig.componentProps.tabPanels || []
+            tabPanels.forEach(function(panel, i) {
+                var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
+                obj.text = panel.tab
+                obj.controlBackground.border.width = 0
+                obj.controlBackground.gradient = null
+                obj.clickListener = function() {
+                    for(var i = 0; i < tabButtons.buttons.length; i++) {
+                        var button = tabButtons.buttons[i]
+                        if(this === button){
+                            tabButtons.currentIndex = i
+                            break
+                        }
+                    }
+
+                    for (var k = 0; k < tabRepeater.count; k++) {
+                        var tabItem = tabRepeater.itemAt(k)
+                        tabItem.visible = tabButtons.currentIndex === tabFields[k].tabIndex
                     }
                 }
+                tabButtons.buttons.push(obj)
 
-                for (var k = 0; k < tabRepeater.count; k++) {
-                    var tabItem = tabRepeater.itemAt(k)
-                    tabItem.visible = tabButtons.currentIndex === tabFields[k].tabIndex
+                if(tabConfig.componentProps.activeKey === panel.key){
+                    tabButtons.currentIndex = i
                 }
-            }
-            tabButtons.buttons.push(obj)
-
-            if(tabConfig.componentProps.activeKey === panel.key){
-                tabButtons.currentIndex = i
-            }
-            for (var j = 0; j < panel.fields.length; j++) {
-                var field = panel.fields[j]
-                field.tabIndex = i
-                fields.push(field)
-            }
-        })
-        tabFields = fields
+                for (var j = 0; j < panel.fields.length; j++) {
+                    var field = panel.fields[j]
+                    field.tabIndex = i
+                    fields.push(field)
+                }
+            })
+            tabFields = fields
+        }
 
         if (formPaneData.row > -1) {
             getDataByParamsRequest(formPaneData.row)
@@ -508,14 +510,15 @@ ColumnLayout{
     Component {
         id: comDelegate
         Item {
-            Layout.columnSpan: modelData.colProps.span
-            Layout.preferredWidth: parent.width / (24 / modelData.colProps.span)
+            property var columnSpan: modelData.colProps ? (modelData.colProps.span || 8) : 8
+            property alias loaderItem: loader
+            Layout.columnSpan: columnSpan
+            Layout.preferredWidth: parent.width / (24 / columnSpan)
             Layout.alignment: Qt.AlignRight | Qt.AlignTop
             Layout.topMargin: 5
             Layout.bottomMargin: 5
             Layout.preferredHeight: loader.item instanceof FluFormTextArea ? 48 : 32
             Layout.fillWidth: true
-            property alias loaderItem: loader
 
             FluText {
                 id: label

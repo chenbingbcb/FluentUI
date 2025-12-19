@@ -52,6 +52,7 @@ FluScrollablePage {
 
                 tableConfig = jsResult.result
                 loaderTablePane.sourceComponent = comTablePane
+                loaderTablePane.item.getFormConfigRequest()
             }
     }
 
@@ -93,19 +94,6 @@ FluScrollablePage {
 
                     dictItemsUpdated(dictCode, jsResult.result)
                 }
-        }
-    }
-
-    Shortcut {
-        sequence: "F5" //按F5刷新
-        context: Qt.WindowShortcut
-        onActivated: {
-            // rootLayout.data = []
-            // if (formPaneConfig) {
-            //     formPaneConfig = Object.assign({}, formPaneConfig)
-            // } else {
-            //     pageConfig = Object.assign({}, pageConfig)
-            // }
         }
     }
 

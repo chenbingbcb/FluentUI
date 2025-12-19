@@ -8,21 +8,16 @@ FluFormControl {
         id: control
         anchors.fill: parent
         placeholder: qsTr("请选择")
-        model: {
-            var dictItems = GlobalModel.sysAllDictItems[dictCode]
-            model = dictItems.map(function(item) {
-                textValueMap[item.text] = item.value
-                return {text: item.text, value: item.value}
-            })
-        }
-
         property var textValueMap: ({})
-        // property var dictItems: GlobalModel.sysAllDictItems[dictCode]
-        property var dictCode: {
+
+        Component.onCompleted: {
             var componentProps = config.componentProps
             if (componentProps && componentProps.dictCode) {
-                // dictItemsMap[componentProps.dictCode] = true
-                return componentProps.dictCode
+                var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode] || []
+                model = dictItems.map(function(item) {
+                    textValueMap[item.text] = item.value
+                    return {text: item.text, value: item.value}
+                })
             }
         }
 
@@ -32,28 +27,12 @@ FluFormControl {
                 return textValueMap[text]
              }).join(",")
         }
-
-        // onDictItemsChanged: {
-        // Component.onCompleted: {
-        //     var dictItems = GlobalModel.sysAllDictItems[dictCode]
-        //     model = dictItems.map(function(item) {
-        //         textValueMap[item.text] = item.value
-        //         return {text: item.text, value: item.value}
-        //     })
-        // }
     }
 
     function initDisplay() {
         if (!value) {
             return
         }
-
-        // clearValues()
-        // var dictItems = GlobalModel.sysAllDictItems[dictCode]
-        // model = dictItems.map(function(item) {
-        //     textValueMap[item.text] = item.value
-        //     return {text: item.text, value: item.value}
-        // })
 
         var values = value.split(",")
         values.forEach(function(v) {

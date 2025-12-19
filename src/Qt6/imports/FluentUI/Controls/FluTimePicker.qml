@@ -12,6 +12,7 @@ FluButton {
     property string pmText: qsTr("PM")
     property string hourText: qsTr("Hour")
     property string minuteText: qsTr("Minute")
+    property string secondText: qsTr("Second")
     property string cancelText: qsTr("Cancel")
     property string okText: qsTr("OK")
     signal accepted()
@@ -36,9 +37,11 @@ FluButton {
             }
             hour = text_hour.text === control.hourText ? hour.toString().padStart(2, '0') : text_hour.text
             var minute = text_minute.text === control.minuteText ? now.getMinutes().toString().padStart(2, '0') : text_minute.text
+            var second = text_second.text === control.secondText ? now.getSeconds().toString().padStart(2, '0') : text_second.text
             ampm = text_ampm.text === "%1/%2".arg(control.amText).arg(control.pmText) ? ampm : text_ampm.text
             text_hour.text = hour
             text_minute.text = minute
+            text_second.text = second
             if(isH){
                 text_ampm.text = ampm
             }
@@ -48,7 +51,7 @@ FluButton {
         id:d
         property var window: Window.window
         property bool changeFlag: true
-        property var rowData: ["","",""]
+        property var rowData: ["","","",""]
         visible: false
     }
     onClicked: {
@@ -57,14 +60,21 @@ FluButton {
     Rectangle{
         id: divider_1
         width: 1
-        x: isH ? parent.width/3 : parent.width/2
+        x: isH ? parent.width/4 : parent.width/3
         height: parent.height - 1
         color: dividerColor
     }
     Rectangle{
         id: divider_2
         width: 1
-        x: parent.width*2/3
+        x: isH ? parent.width/2 : parent.width*2/3
+        height: parent.height - 1
+        color: dividerColor
+    }
+    Rectangle{
+        id: divider_3
+        width: 1
+        x: parent.width*3/4
         height: parent.height - 1
         color: dividerColor
         visible: isH
@@ -86,7 +96,7 @@ FluButton {
         id: text_minute
         anchors{
             left: divider_1.right
-            right: isH ? divider_2.left : parent.right
+            right: divider_2.left
             top: parent.top
             bottom: parent.bottom
         }
@@ -96,10 +106,23 @@ FluButton {
         color: control.textColor
     }
     FluText{
+        id: text_second
+        anchors{
+            left: divider_2.right
+            right: isH ? divider_3.left : parent.right
+            top: parent.top
+            bottom: parent.bottom
+        }
+        verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignHCenter
+        text: control.secondText
+        color: control.textColor
+    }
+    FluText{
         id:text_ampm
         visible: isH
         anchors{
-            left: divider_2.right
+            left: divider_3.right
             right: parent.right
             top: parent.top
             bottom: parent.bottom
@@ -162,6 +185,8 @@ FluButton {
                                 return list_view_2
                             if(type === 2)
                                 return list_view_3
+                            if(type === 3)
+                                return list_view_4
                         }
                         Rectangle{
                             anchors.fill: parent
@@ -192,6 +217,9 @@ FluButton {
                                         text_minute.text = model
                                     }
                                     if(type === 2){
+                                        text_second.text = model
+                                    }
+                                    if(type === 3){
                                         text_ampm.text = model
                                     }
                                 }
@@ -216,7 +244,7 @@ FluButton {
                 }
                 ListView{
                     id:list_view_1
-                    Layout.preferredWidth: isH ? 100 : 150
+                    Layout.preferredWidth: isH ? 75 : 100
                     Layout.preferredHeight: parent.height-2
                     Layout.alignment: Qt.AlignVCenter
                     boundsBehavior:Flickable.StopAtBounds
@@ -240,7 +268,7 @@ FluButton {
                 }
                 ListView{
                     id:list_view_2
-                    Layout.preferredWidth: isH ? 99 : 150
+                    Layout.preferredWidth: isH ? 74 : 100
                     Layout.preferredHeight: parent.height-2
                     Layout.alignment: Qt.AlignVCenter
                     model: generateArray(0,59)
@@ -258,13 +286,37 @@ FluButton {
                     }
                 }
                 Rectangle{
+                    Layout.preferredWidth: 1
+                    Layout.preferredHeight: parent.height
+                    color: control.dividerColor
+                }
+                ListView{
+                    id:list_view_3
+                    Layout.preferredWidth: isH ? 74 : 100
+                    Layout.preferredHeight: parent.height-2
+                    Layout.alignment: Qt.AlignVCenter
+                    model: generateArray(0,59)
+                    clip: true
+                    preferredHighlightBegin: 0
+                    preferredHighlightEnd: 0
+                    highlightMoveDuration: 0
+                    ScrollBar.vertical: FluScrollBar {}
+                    boundsBehavior:Flickable.StopAtBounds
+                    delegate: FluLoader{
+                        property var model: modelData
+                        property int type:2
+                        property int position:index
+                        sourceComponent: list_delegate
+                    }
+                }
+                Rectangle{
                     width: 1
                     height: parent.height
                     color: control.dividerColor
                     visible: isH
                 }
                 ListView{
-                    id:list_view_3
+                    id:list_view_4
                     Layout.preferredWidth: 100
                     Layout.preferredHeight: 76
                     model: [control.amText,control.pmText]
@@ -278,7 +330,7 @@ FluButton {
                     boundsBehavior:Flickable.StopAtBounds
                     delegate: FluLoader{
                         property var model: modelData
-                        property int type:2
+                        property int type:3
                         property int position:index
                         sourceComponent: list_delegate
                     }
@@ -328,6 +380,7 @@ FluButton {
                         popup.close()
                         const hours = text_hour.text
                         const minutes = text_minute.text
+                        const seconds = text_second.text
                         const period = text_ampm.text
                         const date = new Date()
                         var hours24 = parseInt(hours);
@@ -340,7 +393,7 @@ FluButton {
                         }
                         date.setHours(hours24);
                         date.setMinutes(parseInt(minutes));
-                        date.setSeconds(0);
+                        date.setSeconds(parseInt(seconds));
                         current = date
                         control.accepted()
                     }
@@ -352,7 +405,8 @@ FluButton {
             d.changeFlag = true
             d.rowData[0] = text_hour.text
             d.rowData[1] = text_minute.text
-            d.rowData[2] = text_ampm.text
+            d.rowData[2] = text_second.text
+            d.rowData[3] = text_ampm.text
             var now = new Date();
             var hour
             var ampm;
@@ -369,12 +423,15 @@ FluButton {
             }
             hour = text_hour.text === control.hourText ? hour.toString().padStart(2, '0') : text_hour.text
             var minute = text_minute.text === control.minuteText ? now.getMinutes().toString().padStart(2, '0') : text_minute.text
+            var second = text_second.text === control.secondText ? now.getSeconds().toString().padStart(2, '0') : text_second.text
             ampm = text_ampm.text === "%1/%2".arg(control.amText).arg(control.pmText) ? ampm : text_ampm.text
             list_view_1.currentIndex = list_view_1.model.indexOf(hour);
             list_view_2.currentIndex = list_view_2.model.indexOf(minute);
-            list_view_3.currentIndex = list_view_3.model.indexOf(ampm);
+            list_view_3.currentIndex = list_view_3.model.indexOf(second);
+            list_view_4.currentIndex = list_view_4.model.indexOf(ampm);
             text_hour.text = hour
             text_minute.text = minute
+            text_second.text = second
             if(isH){
                 text_ampm.text = ampm
             }
@@ -392,7 +449,8 @@ FluButton {
             if(d.changeFlag){
                 text_hour.text = d.rowData[0]
                 text_minute.text = d.rowData[1]
-                text_ampm.text = d.rowData[2]
+                text_second.text = d.rowData[2]
+                text_ampm.text = d.rowData[3]
             }
         }
     }

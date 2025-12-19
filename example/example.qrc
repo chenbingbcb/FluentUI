@@ -214,8 +214,9 @@
         <file>qml/page/T_FluentPro.qml</file>
         <file>qml/page/jeecg-SelectDemo.qml</file>
         <file>qml/page/online-onlineList.qml</file>
+        <file>qml/window/OnlineFormWindow.qml</file>
         <file>qml/page/demo-oneToMany.qml</file>
-        <file>qml/window/OnlineWindow.qml</file>
+        <file>qml/page/system-SysBusiRuleList.qml</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

@@ -6,7 +6,6 @@ import FluentUI
 FluFormControl {
     id: root
     signal dictItemsUpdated(string key, var dictItems) //字典数据更新通知
-    property var listUrlListener: listUrlRequest //组件请求数据回调
 
     function listUrlRequest(listUrl, fields, pageNo) {
         var callable = comNetworkListUrl.createObject(root, {listUrl: listUrl})
@@ -58,37 +57,20 @@ FluFormControl {
         anchors.fill: parent
         placeholder: qsTr("请选择")
         listMore: true
-        listUrl: {
-            // var componentProps = config.componentProps
-            // if (componentProps && componentProps.listUrl) {
-            //     listUrlMap[componentProps.listUrl] = [componentProps.valField, componentProps.txtField]
-            //     return componentProps.listUrl
-            // }
-            if (config.componentProps) {
-                return config.componentProps.listUrl
-            }
-        }
-        valField: {
-            if (config.componentProps) {
-                return config.componentProps.valField
-            }
-        }
-        txtField: {
-            if (config.componentProps) {
-                return config.componentProps.txtField
-            }
-        }
-
         property var textValueMap: ({})
-        property var dictItems
-        property var componentProps: config.componentProps || {}
 
         Component.onCompleted: {
-            listUrlListener(listUrl, [valField, txtField], 1)
+            var componentProps = config.componentProps
+            if (componentProps) {
+                listUrl = componentProps.listUrl
+                valField = componentProps.valField
+                txtField = componentProps.txtField
+                listUrlRequest(listUrl, [valField, txtField], 1)
+            }
         }
 
         onMoreButtonClicked: {
-            listUrlListener(listUrl, [valField, txtField], ++listPageNo)
+            listUrlRequest(listUrl, [valField, txtField], ++listPageNo)
         }
 
         onSelectionChanged: {
@@ -97,24 +79,12 @@ FluFormControl {
                 return textValueMap[text]
              }).join(",")
         }
-
-        // onDictItemsChanged: {
-        //     model = model.concat(dictItems.records.map(function(item) {
-        //         var text = item[txtField]
-        //         var value = item[valField]
-        //         textValueMap[text] = value
-        //         return {text: text, value: value}
-        //     }))
-        //     update()
-        //     initDisplay()
-        // }
     }
 
     Connections{
         target: root
         function onDictItemsUpdated(key, dictItems) {
             if (control.listUrl === key) {
-                // control.dictItems = dictItems
                 control.model = control.model.concat(dictItems.records.map(function(item) {
                     var text = item[control.txtField]
                     var value = item[control.valField]

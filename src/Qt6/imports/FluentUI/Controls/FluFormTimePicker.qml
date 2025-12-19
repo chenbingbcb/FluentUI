@@ -5,38 +5,38 @@ import FluentUI
 
 FluFormControl {
     FluTimePicker {
-        id: control
+        id: timePicker
         anchors.fill: parent
         hourFormat: FluTimePickerType.HH
         hourText: ""
         minuteText: ""
+        secondText: ""
         cancelText: qsTr("取消")
         okText: qsTr("确定")
 
         onAccepted: {
-            var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
-            if (whole) { //相当于格式校验
-                var date = whole.toLocaleDateString(FluApp.locale, "yyyy-MM-dd")
-                var time = current.toLocaleTimeString(FluApp.locale, "hh:mm:ss")
-                var split = time.split(":")
-                if (split.length < 3) {
-                    return
-                }
-                value = date + " " + split[0] +":" + split[1] +":" + split[2]
+            //主动操作pick则用pick值 没pick则用value
+            var dateTime = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
+            if (!dateTime.getTime()) {
+                dateTime = new Date()
             }
+            var date = dateTime.toLocaleDateString(FluApp.locale, "yyyy-MM-dd")
+
+            var time = timePicker.current.toLocaleTimeString(FluApp.locale, "hh:mm:ss")
+            value = date + " " + time
         }
     }
 
     function initDisplay() {
-        var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
-        if (whole) { //相当于格式校验
-            var time = whole.toLocaleTimeString(FluApp.locale, "hh:mm:ss")
-            var split = time.split(":")
-            if (split.length < 2) {
-                return
-            }
-            control.hourText = split[0]
-            control.minuteText = split[1]
+        if (!value) {
+            return
+        }
+
+        var dateTime = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
+        if (dateTime.getTime()) { //用于校验是否有效 因为即便value无效 也会返回一个Date对象
+            timePicker.hourText = dateTime.getHours().toString().padStart(2, '0')
+            timePicker.minuteText = dateTime.getMinutes().toString().padStart(2, '0')
+            timePicker.secondText = dateTime.getSeconds().toString().padStart(2, '0')
         }
     }
 }

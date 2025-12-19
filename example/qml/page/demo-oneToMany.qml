@@ -44,6 +44,7 @@ FluScrollablePage {
 
                 tableConfig = jsResult.result
                 loaderTablePane.sourceComponent = comTablePane
+                loaderTablePane.item.getFormConfigRequest()
             }
     }
 
@@ -60,9 +61,6 @@ FluScrollablePage {
         id: comTablePane
         FluTablePane {
             tableConfig: root.tableConfig
-            tableCustomActionListener: tableCustomAction
-            rowCustomActionListener: rowCustomAction
-            customAfterFormListener: customAfterForm
             getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/0"
             getTableDataUrl: "/demo/testDemo2/list"
             getDataByParamsUrl: "/demo/testDemo2/queryByParams"
@@ -82,6 +80,9 @@ FluScrollablePage {
                     , label: "子表2"
                 }
             ]
+            tableCustomActionListener: tableCustomAction
+            rowCustomActionListener: rowCustomAction
+            customAfterFormListener: customAfterForm
         }
     }
 
