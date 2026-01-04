@@ -9,14 +9,8 @@ ColumnLayout{
     property var formPaneData
     property var tabFields: []
     property var rowFormData: ({}) //单行表单数据
-    property int tableIndex: 0 //当前table索引 默认0
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
-    property string tableId: ""
-    property string menuId: ""
-    property string getColumnsUrl: "/online/genFormAPI/getColumns/%1/%2".arg(tableId).arg(menuId)
-    property var tableConfig
-    property string relatedField: ""
     Layout.fillWidth: true
 
     onFormPaneDataChanged: {
@@ -84,32 +78,6 @@ ColumnLayout{
     //     }
     // }
 
-    onTableConfigChanged: {
-        var comTablePane = Qt.createComponent("FluTablePane.qml")
-        if (comTablePane.status !== Component.Ready) {
-            console.error(comTablePane.errorString())
-            return
-        }
-
-        var properties = {
-            tableConfig: tableConfig
-            , tableId: tableId
-            // , formId: formId
-            // , menuId: menuId
-            , formPane: root
-        }
-
-        if (formPaneData && formPaneData.childTableConfig.length > 0) {
-            var config = formPaneData.childTableConfig[tableIndex]
-            if (config.getTableDataUrl) {
-                properties.getTableDataUrl = config.getTableDataUrl //使用自定义url
-            }
-        }
-
-        tablePane = comTablePane.createObject(root, properties)
-        tablePanes[tableIndex] = tablePane
-    }
-
     function getDataByParamsRequest(row) {
         var obj = formPaneData.parent.tableView.getRow(row)
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + formPaneData.parent.getDataByParamsUrl)
@@ -161,50 +129,6 @@ ColumnLayout{
                         loaderItem.item.initDisplay()
                     }
                 }
-            }
-    }
-
-    function getColumnsRequest() {
-        var url = getColumnsUrl
-        if (formPaneData && formPaneData.childTableConfig.length > 0) {
-            var config = formPaneData.childTableConfig[tableIndex]
-            if (config.getColumnsUrl) {
-                url = config.getColumnsUrl //使用自定义url
-            }
-        }
-
-        FluNetwork.get(GlobalModel.basicUrl + url)
-        .addHeader("S-Token", GlobalModel.token)
-        .bind(root)
-        .go(getColumnsCallable)
-    }
-
-    FluNetworkCallable{
-        id: getColumnsCallable
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(getColumnsUrl + " failed: " + result))
-                    return
-                }
-
-                tableConfig = jsResult.result
             }
     }
 
@@ -349,8 +273,8 @@ ColumnLayout{
                         updateObj.sysUpdateFieldNames = Object.keys(sysUpdateFieldNames)
                         updateObj.updateRecords.push(temp)
                     } else {
-                        if (relatedField && rowFormData.id) {
-                            temp[relatedField] = rowFormData.id
+                        if (tablePane.relatedField && rowFormData.id) {
+                            temp[tablePane.relatedField] = rowFormData.id
                         }
                         updateObj.insertRecords.push(temp)
                     }
@@ -467,9 +391,9 @@ ColumnLayout{
                                     if (tablePanes[i]) {
                                         tablePane = tablePanes[i]
                                         tablePane.visible = true
-                                        tableId = tablePane.tableId
+                                        // tableId = tablePane.tableId
                                     } else {
-                                        parseComponentProps(i)
+                                        procChildTable(i)
                                     }
                                 } else if (tablePanes[i]) {
                                     tablePanes[i].visible = false
@@ -480,24 +404,49 @@ ColumnLayout{
                     }
 
                     tableButtons.currentIndex = 0
-                    parseComponentProps(0)
+                    procChildTable(0)
                 }
 
-                function parseComponentProps(i) {
+                function procChildTable(i) {
                     if (i < 0 || i >= formPaneData.childTableConfig.length) {
                         return
                     }
 
                     var componentProps = formPaneData.childTableConfig[i].componentProps
-                    tableId = componentProps.genTableHeadId || componentProps.defaultValue
-                    menuId = componentProps.genMenuId || 0
+                    var tableId = componentProps.genTableHeadId || componentProps.defaultValue
+                    var menuId = componentProps.genMenuId || 0
                     var fieldStr = componentProps.relatedField || ""
                     var fields = fieldStr.split(":")
-                    if (fields.length > 1) {
-                        relatedField = fields[1]
+                    var relatedField = fields.length > 1 ? fields[1] : ""
+
+                    var comTablePane = Qt.createComponent("FluTablePane.qml")
+                    if (comTablePane.status !== Component.Ready) {
+                        console.error(comTablePane.errorString())
+                        return
                     }
-                    tableIndex = i
-                    getColumnsRequest()
+
+                    var properties = {
+                        formPane: root
+                        , tableModel: "editAllModel" //子表的模式由web端写死
+                        , tableId: tableId
+                        // , formId: formId
+                        , menuId: menuId
+                        , relatedField: relatedField
+                    }
+
+                     //使用自定义url
+                    if (formPaneData && formPaneData.childTableConfig.length > 0) {
+                        var config = formPaneData.childTableConfig[i]
+                        if (config.getColumnsUrl) {
+                            properties.getColumnsUrl = config.getColumnsUrl
+                        }
+                        if (config.getTableDataUrl) {
+                            properties.getTableDataUrl = config.getTableDataUrl
+                        }
+                    }
+
+                    tablePane = comTablePane.createObject(root, properties)
+                    tablePanes[i] = tablePane
                 }
             }
 

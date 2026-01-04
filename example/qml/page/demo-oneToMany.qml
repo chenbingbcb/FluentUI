@@ -7,49 +7,9 @@ import "../global"
 
 FluScrollablePage {
     id:root
-    property var tableConfig
-    property string getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/0"
-
-    function getColumnsRequest() {
-        FluNetwork.get(GlobalModel.basicUrl + getColumnsUrl)
-        .addHeader("S-Token", GlobalModel.token)
-        .bind(root)
-        .go(getColumnsCallable)
-    }
-
-    FluNetworkCallable{
-        id: getColumnsCallable
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(getColumnsUrl + " failed: " + result))
-                    return
-                }
-
-                tableConfig = jsResult.result
-                loaderTablePane.sourceComponent = comTablePane
-                loaderTablePane.item.getFormConfigRequest()
-            }
-    }
 
     Component.onCompleted: {
-        getColumnsRequest()
+        loaderTablePane.sourceComponent = comTablePane
     }
 
     FluLoader {
@@ -60,7 +20,7 @@ FluScrollablePage {
     Component {
         id: comTablePane
         FluTablePane {
-            tableConfig: root.tableConfig
+            getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/0"
             getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/0"
             getTableDataUrl: "/demo/testDemo2/list"
             getDataByParamsUrl: "/demo/testDemo2/queryByParams"
