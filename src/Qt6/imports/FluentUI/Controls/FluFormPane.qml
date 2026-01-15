@@ -7,16 +7,48 @@ import FluentUI
 ColumnLayout{
     id: root
     property var formPaneData
+    property var formConfig: ({}) //表单配置
+    property var childTableConfig: [] //子表配置
+    property var tabConfig: ({}) //标签配置
     property var tabFields: []
     property var rowFormData: ({}) //单行表单数据
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
     Layout.fillWidth: true
 
-    onFormPaneDataChanged: {
-        if (formPaneData.tabConfig) {
+    Component.onCompleted: {
+        if (!formPaneData) {
+            console.error("formPaneData null!")
+            return
+        }
+
+        var childTableConfig = []
+        var formConfig = formPaneData.formConfig || {}
+        formConfig.schemas = formConfig.schemas || []
+        for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
+            var schema = formConfig.schemas[i]
+            //分离不同类型的配置
+            if (schema.component === "Tab") {
+                tabConfig = schema
+                formConfig.schemas.splice(i, 1)
+            } else if (schema.component === "childTable") {
+                if (schema.ifShow !== false) {
+                    childTableConfig.unshift(schema)
+                    var childTableCustomConfig = formPaneData.childTableCustomConfig || []
+                    if (childTableCustomConfig.length > 0) { //子表自定义配置合并
+                        var pop = childTableCustomConfig.pop()
+                        Object.assign(childTableConfig[0], pop)
+                    }
+                }
+                formConfig.schemas.splice(i, 1)
+            } else if (schema.ifShow === false) {
+                formConfig.schemas.splice(i, 1)
+            }
+        }
+        root.formConfig = formConfig
+
+        if (tabConfig.componentProps) {
             var fields = []
-            var tabConfig = formPaneData.tabConfig
             var tabPanels = tabConfig.componentProps.tabPanels || []
             tabPanels.forEach(function(panel, i) {
                 var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
@@ -51,8 +83,9 @@ ColumnLayout{
             tabFields = fields
         }
 
-        if (formPaneData.row > -1) {
-            getDataByParamsRequest(formPaneData.row)
+        if (formPaneData.rowDataId) { //非新增
+            getDataByParamsRequest(formPaneData.rowDataId)
+            root.childTableConfig = childTableConfig
         }
 
         formPaneData.parent.customAfterFormListener(loaderCustomAfterForm)
@@ -78,12 +111,11 @@ ColumnLayout{
     //     }
     // }
 
-    function getDataByParamsRequest(row) {
-        var obj = formPaneData.parent.tableView.getRow(row)
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + formPaneData.parent.getDataByParamsUrl)
+    function getDataByParamsRequest(rowDataId) {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + formPaneData.getDataByParamsUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
-        .addQuery("id", obj.id)
+        .addQuery("id", rowDataId)
         .go(getDataByParamsCallable)
     }
 
@@ -99,16 +131,12 @@ ColumnLayout{
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(formPaneData.parent.getDataByParamsUrl + " failed: " + result))
+                    showError(qsTr(formPaneData.getDataByParamsUrl + " failed: " + result))
                     return
                 }
 
@@ -195,26 +223,24 @@ ColumnLayout{
 
                 if (newData.id) {
                     var childTableUpdate = false //子表是否有更新
-                    if (formPaneData && formPaneData.childTableConfig.length > 0) {
-                        for (var k = 0; k < formPaneData.childTableConfig.length; k++) {
-                            if (!tablePanes[k]) {
-                                continue
-                            }
-
-                            var updateObj = tableUpdateAll(tablePanes[k])
-                            if (updateObj === false) { //当且仅当为false时 表示出错
-                                return
-                            }
-
-                            if (!updateObj) {
-                                continue
-                            }
-
-                            var config = formPaneData.childTableConfig[k]
-                            var field = config.field
-                            newData[field] = updateObj
-                            childTableUpdate = true
+                    for (var k = 0; k < childTableConfig.length; k++) {
+                        if (!tablePanes[k]) {
+                            continue
                         }
+
+                        var updateObj = tableUpdateAll(tablePanes[k])
+                        if (updateObj === false) { //当且仅当为false时 表示出错
+                            return
+                        }
+
+                        if (!updateObj) {
+                            continue
+                        }
+
+                        var config = childTableConfig[k]
+                        var field = config.field
+                        newData[field] = updateObj
+                        childTableUpdate = true
                     }
 
                     if (sysUpdateFieldNames.length <= 0 && !childTableUpdate) {
@@ -347,7 +373,7 @@ ColumnLayout{
 
         Repeater {
             id: repeater
-            model: formPaneData.formConfig.schemas
+            model: formConfig.schemas
             delegate: comDelegate
             onItemAdded: (index, item) => {
 
@@ -366,7 +392,7 @@ ColumnLayout{
     //子表tab
     FluLoader {
         Layout.fillWidth: true
-        sourceComponent: formPaneData.childTableConfig.length > 0 ? comChildTableTab : undefined
+        sourceComponent: childTableConfig.length > 0 ? comChildTableTab : undefined
     }
 
     Component {
@@ -377,8 +403,8 @@ ColumnLayout{
                 spacing: 0
                 orientation: Qt.Horizontal
                 Component.onCompleted: {
-                    for (var i = 0; i < formPaneData.childTableConfig.length; i++) {
-                        var config = formPaneData.childTableConfig[i]
+                    for (var i = 0; i < childTableConfig.length; i++) {
+                        var config = childTableConfig[i]
                         var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tableButtons)
                         obj.text = config.label
                         obj.controlBackground.border.width = 0
@@ -408,11 +434,11 @@ ColumnLayout{
                 }
 
                 function procChildTable(i) {
-                    if (i < 0 || i >= formPaneData.childTableConfig.length) {
+                    if (i < 0 || i >= childTableConfig.length) {
                         return
                     }
 
-                    var componentProps = formPaneData.childTableConfig[i].componentProps
+                    var componentProps = childTableConfig[i].componentProps
                     var tableId = componentProps.genTableHeadId || componentProps.defaultValue
                     var menuId = componentProps.genMenuId || 0
                     var fieldStr = componentProps.relatedField || ""
@@ -435,8 +461,8 @@ ColumnLayout{
                     }
 
                      //使用自定义url
-                    if (formPaneData && formPaneData.childTableConfig.length > 0) {
-                        var config = formPaneData.childTableConfig[i]
+                    if (childTableConfig.length > 0) {
+                        var config = childTableConfig[i]
                         if (config.getColumnsUrl) {
                             properties.getColumnsUrl = config.getColumnsUrl
                         }

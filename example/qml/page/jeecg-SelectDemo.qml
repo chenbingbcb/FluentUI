@@ -114,10 +114,6 @@ FluContentPage{
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -148,10 +144,6 @@ FluContentPage{
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -181,10 +173,6 @@ FluContentPage{
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -194,9 +182,6 @@ FluContentPage{
                     return
                 }
 
-                jsResult.result.records = jsResult.result.records.map(function(item) {
-                    return {id: item.id, name: item.departName}
-                })
                 selectBizDialogDepart.loadData(jsResult.result)
                 selectBizDialogDepart.open()
             }
@@ -214,10 +199,6 @@ FluContentPage{
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -227,9 +208,6 @@ FluContentPage{
                     return
                 }
 
-                jsResult.result.records = jsResult.result.records.map(function(item) {
-                    return {id: item.username, name: item.realname, orgCodeTxt: item.orgCodeTxt || ""}
-                })
                 selectBizDialogUser.loadData(jsResult.result)
                 selectBizDialogUser.open()
             }
@@ -400,8 +378,18 @@ FluContentPage{
                 id: selectBizDialogDepart
                 title: qsTr("部门选择")
                 choosedTitle: qsTr("已选部门")
-                strId: qsTr("部门代号")
-                name: qsTr("部门名称")
+                columnConfig: [
+                    {
+                        title: "部门名称",
+                        dataIndex: 'departName',
+                        width: 300
+                    },
+                    {
+                        title: "部门代号",
+                        dataIndex: 'id',
+                        width: 200
+                    }
+                ]
                 queryClickListener: sysDepartListRequest
                 buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
                 onNegativeClicked: {
@@ -409,7 +397,7 @@ FluContentPage{
                 onPositiveClicked:
                     (data)=>{
                         var textBox = data.map(function(item) {
-                           return item.name
+                           return item.departName
                         }).join(", ")
                         textBoxSysDepart.text = textBox
 
@@ -449,9 +437,23 @@ FluContentPage{
                     id: selectBizDialogUser
                     title: qsTr("用户选择")
                     choosedTitle: qsTr("已选用户")
-                    strId: qsTr("账号")
-                    name: qsTr("姓名")
-                    orgCodeTxt: qsTr("部门")
+                    columnConfig: [
+                        {
+                            title: "姓名",
+                            dataIndex: 'realname',
+                            width: 150
+                        },
+                        {
+                            title: "账号",
+                            dataIndex: 'username',
+                            width: 150
+                        },
+                        {
+                            title: "部门",
+                            dataIndex: 'orgCodeTxt',
+                            width: 200
+                        }
+                    ]
                     isMoreQuery: true
                     isSingleSelect: true
                     queryClickListener: sysUserListRequest
@@ -461,12 +463,12 @@ FluContentPage{
                     onPositiveClicked:
                         (data)=>{
                             var textBox = data.map(function(item) {
-                               return item.name
+                               return item.realname
                             }).join(", ")
                             textBoxUser.text = textBox
 
                             var text = data.map(function(item) {
-                               return item.id
+                               return item.username
                             }).join(", ")
                             textUser.text = qsTr("选中值:") + text
                         }

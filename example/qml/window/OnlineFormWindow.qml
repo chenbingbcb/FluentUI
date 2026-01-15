@@ -16,18 +16,27 @@ FluWindow {
 
     onInitArgument:
         (argument)=>{
-            Object.assign(formPane, argument)
+            // Object.assign(formPane, argument)
+            loaderFormPane.sourceComponent = comFormPane
         }
 
     FluScrollablePage {
         id: root
         anchors.fill: parent
         Component.onCompleted: {
-            // showMaximized()
         }
 
-        FluFormPane {
-            id: formPane
+
+        FluLoader {
+            id: loaderFormPane
+            Layout.fillWidth: true
+        }
+
+        Component {
+            id: comFormPane
+            FluFormPane {
+                formPaneData: argument.formPaneData
+            }
         }
     }
 }

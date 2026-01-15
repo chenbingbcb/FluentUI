@@ -380,7 +380,8 @@ Rectangle {
                             } else if (format.startsWith("date|")) {
                                 if (value) {
                                     var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
-                                    value = whole.toLocaleString(FluApp.locale, format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5))
+                                    var fixFormat = format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5) //不识别大写的年和日
+                                    value = whole.toLocaleString(FluApp.locale, fixFormat)
                                 }
                             }
                         }

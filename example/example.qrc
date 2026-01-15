@@ -217,6 +217,7 @@
         <file>qml/window/OnlineFormWindow.qml</file>
         <file>qml/page/demo-oneToMany.qml</file>
         <file>qml/page/system-SysBusiRuleList.qml</file>
+        <file>qml/page/isystem-user.qml</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

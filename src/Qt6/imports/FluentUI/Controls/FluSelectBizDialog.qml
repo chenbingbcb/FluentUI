@@ -8,9 +8,20 @@ FluPopup {
     id: control
     property string title: ""
     property string choosedTitle: ""
-    property string strId: ""
-    property string name: ""
-    property string orgCodeTxt: ""
+    property var columnConfig: [ //默认值 应用层可自定义 第一项固定用于名称展示 第二项固定用于唯一索引
+        {
+            title: "名称",
+            dataIndex: 'name',
+            width: 300
+        },
+        {
+            title: "id",
+            dataIndex: 'id',
+            width:200
+        }
+    ]
+    property var nameKey: columnConfig[0].dataIndex
+    property var idKey: columnConfig[1].dataIndex
     property var queryClickListener: function(){} //查询回调
 
     property string negativeText: qsTr("关闭")
@@ -79,26 +90,26 @@ FluPopup {
                 FluText{
                     id: textId
                     font: FluTextStyle.Body
-                    text: strId + ":"
+                    text: columnConfig[1].title + ":"
                     leftPadding: 10
                 }
 
                 FluMultilineTextBox {
                     id: textBoxId
-                    placeholderText: strId
+                    placeholderText: columnConfig[1].title
                     implicitWidth: 150
                 }
 
                 FluText{
                     id: textName
                     font: FluTextStyle.Body
-                    text: name + ":"
+                    text: columnConfig[0].title + ":"
                     leftPadding: 10
                 }
 
                 FluTextBox {
                     id: textBoxName
-                    placeholderText: name
+                    placeholderText: columnConfig[0].title
                     implicitWidth: 150
                 }
 
@@ -268,7 +279,7 @@ FluPopup {
                         var obj = choosedTableView.getRow(row)
                         for (var j = 0; j < table_view.rows; j++) {
                             var item = table_view.getRow(j)
-                            if(item.id === obj.id){
+                            if(item[idKey] === obj[idKey]){
                                 item.checkbox = table_view.customItem(getCheckOrRadioComponent(),{checked:false})
                                 table_view.setRow(j,item)
                                 break
@@ -278,7 +289,7 @@ FluPopup {
                         var temp = choosedTableView.dataSource
                         for (var i = temp.length - 1; i >= 0; i--) {
                             var sourceItem = temp[i]
-                            if(sourceItem.id === obj.id){
+                            if(sourceItem[idKey] === obj[idKey]){
                                 temp.splice(i, 1)
                                 choosedTableView.dataSource = temp
                                 return
@@ -302,36 +313,43 @@ FluPopup {
                         }
                         startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
                         columnSource: {
+                            // var temp = [
+                            //             {
+                            //                 title: table_view.customItem(comColumnCheckBox,{checked:false}),
+                            //                 dataIndex: 'checkbox',
+                            //                 width: 50
+                            //             },
+                            //             {
+                            //                 title: name,
+                            //                 dataIndex: 'name',
+                            //                 width: 300
+                            //             },
+                            //             {
+                            //                 title: strId,
+                            //                 dataIndex: 'id',
+                            //                 width:200
+                            //             }
+                            //         ]
+                            // if (control.isSingleSelect) {
+                            //     temp[0].title = ""
+                            // }
+                            // if(orgCodeTxt !== "") { //第三列
+                            //     temp.push({
+                            //         title: orgCodeTxt,
+                            //         dataIndex: 'orgCodeTxt',
+                            //         width: 200
+                            //     })
+                            //     temp[1].width = 150
+                            //     temp[2].width = 150
+                            // }
                             var temp = [
                                         {
-                                            title: table_view.customItem(comColumnCheckBox,{checked:false}),
+                                            title: control.isSingleSelect ? "" : table_view.customItem(comColumnCheckBox,{checked:false}),
                                             dataIndex: 'checkbox',
                                             width: 50
-                                        },
-                                        {
-                                            title: name,
-                                            dataIndex: 'name',
-                                            readOnly:true,
-                                            width: 300
-                                        },
-                                        {
-                                            title: strId,
-                                            dataIndex: 'id',
-                                            width:200
                                         }
                                     ]
-                            if (control.isSingleSelect) {
-                                temp[0].title = ""
-                            }
-                            if(orgCodeTxt !== "") { //第三列
-                                temp.push({
-                                    title: orgCodeTxt,
-                                    dataIndex: 'orgCodeTxt',
-                                    width: 200
-                                })
-                                temp[1].width = 150
-                                temp[2].width = 150
-                            }
+                            temp = temp.concat(columnConfig)
                             return temp
                         }
                     }
@@ -434,9 +452,9 @@ FluPopup {
                         startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
                         columnSource:[
                             {
-                                title: name,
-                                dataIndex: 'name',
-                                readOnly:true,
+                                title: columnConfig[0].title,
+                                dataIndex: nameKey,
+                                // readOnly:true,
                                 width: 200
                             },
                             {
@@ -510,7 +528,7 @@ FluPopup {
         choosedTableView.dataSource.forEach(function(choosed, index) {
             for(var i = 0; i < result.records.length; i++) {
                 var item = result.records[i]
-                if (item.id === choosed.id) {
+                if (item[idKey] === choosed[idKey]) {
                     item.checkbox.options.checked = true
                     break
                 }
@@ -554,7 +572,7 @@ FluPopup {
         var temp = choosedTableView.dataSource
         for (var i = 0; i < temp.length; i++) {
             var sourceItem = temp[i]
-            if(sourceItem.id === obj.id){
+            if(sourceItem[idKey] === obj[idKey]){
                 if (checked) {
                     return //如果存在且勾选 则不添加
                 } else {
@@ -567,9 +585,9 @@ FluPopup {
         if (checked) { //如果不存在且勾选 则添加
             var itemChoosed = {}
             itemChoosed.delete = choosedTableView.customItem(componentDelete)
-            itemChoosed.id = obj.id
-            itemChoosed.name = obj.name
-            // itemChoosed.order = obj.order
+            columnConfig.forEach(function(item) {
+                itemChoosed[item.dataIndex] = obj[item.dataIndex]
+            })
             itemChoosed._minimumHeight = 50
             temp.push(itemChoosed)
         }
@@ -584,9 +602,9 @@ FluPopup {
                 var obj = table_view.getRow(i)
                 var itemChoosed = {}
                 itemChoosed.delete = choosedTableView.customItem(componentDelete)
-                itemChoosed.id = obj.id
-                itemChoosed.name = obj.name
-                // itemChoosed.order = obj.order
+                columnConfig.forEach(function(item) {
+                    itemChoosed[item.dataIndex] = obj[item.dataIndex]
+                })
                 itemChoosed._minimumHeight = 50
                 temp.push(itemChoosed)
             }

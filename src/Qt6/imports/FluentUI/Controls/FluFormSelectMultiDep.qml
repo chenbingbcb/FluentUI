@@ -6,10 +6,8 @@ import FluentUI
 FluFormControl {
     id: control
     property string sysDepartListUrl: "/sys/sysDepart/list"
-    property var sysDepartListListener: sysDepartListRequest //部门控件查询回调
 
     function sysDepartListRequest(control, queryParams, display) {
-        var callable = comNetworkSysDepartList.createObject(control, {control: control, display: display})
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysDepartListUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
@@ -18,41 +16,36 @@ FluFormControl {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        networkParams.go(callable)
+        sysDepartListCallable.control = control
+        sysDepartListCallable.display = display
+        networkParams.go(sysDepartListCallable)
     }
 
-    Component {
-        id: comNetworkSysDepartList
-        FluNetworkCallable {
-            property var control
-            property var display
-            onStart: {
-                showLoading()
-            }
-            onFinish: {
-                hideLoading()
-                FluTools.deleteLater(this)
-            }
-            onError:
-                (status,errorString,result)=>{
-                    showError(qsTr(status+";"+errorString+";"+result))
-                }
-            onCache:
-                (result)=>{
-                    console.debug("onCache: "+result)
-                }
-            onSuccess:
-                (result)=>{
-                    var jsResult = JSON.parse(result)
-                    console.debug(JSON.stringify(jsResult, null, 2))
-                    if (jsResult.code !== 200) {
-                        showError(qsTr(sysDepartListUrl + " failed: " + result))
-                        return
-                    }
-
-                    control.sysDepartListResp(jsResult.result, display)
-                }
+    FluNetworkCallable {
+        id: sysDepartListCallable
+        property var control
+        property var display
+        onStart: {
+            showLoading()
         }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(sysDepartListUrl + " failed: " + result))
+                    return
+                }
+
+                control.sysDepartListResp(jsResult.result, display)
+            }
     }
 
     Flickable {
@@ -93,8 +86,18 @@ FluFormControl {
         id: selectBiz
         title: qsTr("部门选择")
         choosedTitle: qsTr("已选部门")
-        strId: qsTr("部门代号")
-        name: qsTr("部门名称")
+        columnConfig: [
+            {
+                title: "部门名称",
+                dataIndex: 'departName',
+                width: 300
+            },
+            {
+                title: "部门代号",
+                dataIndex: 'id',
+                width: 200
+            }
+        ]
         queryClickListener: queryClickImpl
         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
         onNegativeClicked: {
@@ -102,11 +105,11 @@ FluFormControl {
         onPositiveClicked:
             (data)=>{
                 textBox.text = data.map(function(item) {
-                   return item.name
+                   return item[selectBiz.nameKey]
                 }).join(", ")
 
                 value = data.map(function(item) {
-                   return item.id
+                   return item[selectBiz.idKey]
                 }).join(",")
             }
 
@@ -129,7 +132,7 @@ FluFormControl {
                 queryParams["departName"] = name
             }
 
-            sysDepartListListener(control, queryParams)
+            sysDepartListRequest(control, queryParams, false)
         }
     }
 
@@ -137,17 +140,13 @@ FluFormControl {
         if (display) {
             var choosed = []
             textBox.text = result.records.map(function(item) {
-                choosed.push({id: item.id, name: item.departName})
-                return item[display]
+                choosed.push(item)
+                return item["departName"]
              }).join(", ")
             selectBiz.initChoosed(choosed)
             return
         }
 
-        result = Object.assign({}, result)
-        result.records = result.records.map(function(item) {
-            return {id: item.id, name: item.departName}
-        })
         selectBiz.loadData(result)
     }
 
@@ -157,13 +156,12 @@ FluFormControl {
             return
         }
 
-        var display = "departName"
         var queryParams = {
             pageNo: 1
             , pageSize: textBox.text.split(",").length
             , id: textBox.text
         }
 
-        sysDepartListListener(control, queryParams, display)
+        sysDepartListRequest(control, queryParams, true)
     }
 }

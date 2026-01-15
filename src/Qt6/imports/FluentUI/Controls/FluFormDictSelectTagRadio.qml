@@ -14,26 +14,34 @@ FluFormControl {
             orientation: Qt.Horizontal
 
             Component.onCompleted: {
+                var dictItems = []
                 var componentProps = config.componentProps
-                if (componentProps && componentProps.dictCode) {
-                    var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
-                    dictItems.forEach(function(item) {
-                        var obj = Qt.createQmlObject("import FluentUI; FluRadioButton{property var value}", control)
-                        obj.text = item.text
-                        obj.value = item.value
-                        obj.clickListener = function() {
-                            for(var i = 0; i < control.buttons.length; i++){
-                                var button = control.buttons[i]
-                                if(this === button){
-                                    control.currentIndex = i
-                                    value = button.value
-                                    break
-                                }
+                if (componentProps) {
+                    if (componentProps.dictCode) {
+                        dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode] || []
+                    } else if (componentProps.options && componentProps.options.length) {
+                        dictItems = componentProps.options.map(function(option) {
+                            return { text: option.label, value: option.value }
+                         })
+                    }
+                }
+
+                dictItems.forEach(function(item) {
+                    var obj = Qt.createQmlObject("import FluentUI; FluRadioButton{property var value}", control)
+                    obj.text = item.text
+                    obj.value = item.value
+                    obj.clickListener = function() {
+                        for(var i = 0; i < control.buttons.length; i++){
+                            var button = control.buttons[i]
+                            if(this === button){
+                                control.currentIndex = i
+                                value = button.value
+                                break
                             }
                         }
-                        control.buttons.push(obj)
-                    })
-                }
+                    }
+                    control.buttons.push(obj)
+                })
             }
         }
     }

@@ -52,10 +52,6 @@ FluWindow {
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)

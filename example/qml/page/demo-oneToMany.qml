@@ -40,8 +40,8 @@ FluScrollablePage {
                     , label: "子表2"
                 }
             ]
-            tableCustomActionListener: tableCustomAction
             rowCustomActionListener: rowCustomAction
+            tableCustomActionListener: tableCustomAction
             customAfterFormListener: customAfterForm
         }
     }

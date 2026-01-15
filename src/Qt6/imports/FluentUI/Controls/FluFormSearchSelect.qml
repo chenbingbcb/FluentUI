@@ -8,7 +8,7 @@ FluFormControl {
     signal dictItemsUpdated(string key, var dictItems) //字典数据更新通知
 
     function listUrlRequest(listUrl, fields, pageNo) {
-        var callable = comNetworkListUrl.createObject(root, {listUrl: listUrl})
+        listUrlCallable.listUrl = listUrl
         FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(root)
         .addHeader("S-Token",GlobalModel.token)
@@ -16,40 +16,33 @@ FluFormControl {
         .addQuery("field", fields.toString())
         .addQuery("pageNo", pageNo)
         .addQuery("pageSize", 20)
-        .go(callable)
+        .go(listUrlCallable)
     }
 
-    Component {
-        id: comNetworkListUrl
-        FluNetworkCallable{
-            property var listUrl
-            onStart: {
-                showLoading()
-            }
-            onFinish: {
-                hideLoading()
-                FluTools.deleteLater(this)
-            }
-            onError:
-                (status,errorString,result)=>{
-                    showError(qsTr(status+";"+errorString+";"+result))
-                }
-            onCache:
-                (result)=>{
-                    console.debug("onCache: "+result)
-                }
-            onSuccess:
-                (result)=>{
-                    var jsResult = JSON.parse(result)
-                    console.debug(JSON.stringify(jsResult, null, 2))
-                    if (jsResult.code !== 200) {
-                        showError(qsTr(listUrl + " failed: " + result))
-                        return
-                    }
-
-                    dictItemsUpdated(listUrl, jsResult.result)
-                }
+    FluNetworkCallable{
+        id: listUrlCallable
+        property var listUrl
+        onStart: {
+            showLoading()
         }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(listUrl + " failed: " + result))
+                    return
+                }
+
+                dictItemsUpdated(listUrl, jsResult.result)
+            }
     }
 
     FluCheckComboBox {

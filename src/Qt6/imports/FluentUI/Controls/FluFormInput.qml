@@ -16,5 +16,6 @@ FluFormControl {
 
     function initDisplay() {
         control.text = value
+        control.ensureVisible(0) //文字太多超框时 让开头可见 而非结尾
     }
 }

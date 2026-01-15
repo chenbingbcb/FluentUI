@@ -27,7 +27,7 @@ FluFormControl {
     function initDisplay() {
         for(var i = 0; i < control.model.count; i++) {
             var item = control.model.get(i)
-            if (item.value === value) {
+            if (item.value + "" === value + "") { //都转成字符串判断 因为web端"1"和1相等
                 control.currentIndex = i
                 break
             }

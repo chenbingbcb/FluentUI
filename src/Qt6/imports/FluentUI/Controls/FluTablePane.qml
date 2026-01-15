@@ -19,13 +19,12 @@ ColumnLayout {
     property string addFormDataUrl: "/online/genFormAPI/addFormData/" + tableId //新增单行数据url
     property string updateFormDataUrl: "/online/genFormAPI/updateFormData/" + tableId //更新单行数据url
     property string updateAllUrl: "/demo/testDemo2/updateAll" //更新全部数据url 临时配置
-    property var tableCustomActionListener: function() {} //table自定义操作列回调
+    property var rowActionDelegate: comRowAction //行操作委托
     property var rowCustomActionListener: function() {} //row自定义操作回调
+    property var tableCustomActionListener: function() {} //table自定义操作列回调
     property var customAfterFormListener: function() {} //表单后面自定义组件回调
     property var childTableCustomConfig: [] //子表自定义配置
 
-    property var childTableConfig: [] //子表配置
-    property var tabConfig //标签配置
     property int defaultCellWidth: 100
     property int defaultCellHeight: 50
     //modalSingleModel:弹窗单行保存(默认) modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
@@ -58,27 +57,6 @@ ColumnLayout {
     }
 
     onFormConfigChanged: {
-        formConfig.schemas = formConfig.schemas || []
-        childTableConfig = []
-        for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
-            var schema = formConfig.schemas[i]
-            //分离不同类型的配置
-            if (schema.component === "Tab") {
-                tabConfig = schema
-                formConfig.schemas.splice(i, 1)
-            } else if (schema.component === "childTable") {
-                if (schema.ifShow !== false) {
-                    childTableConfig.unshift(schema)
-                    if (childTableCustomConfig.length > 0) { //子表自定义配置合并
-                        var pop = childTableCustomConfig.pop()
-                        Object.assign(childTableConfig[0], pop)
-                    }
-                }
-                formConfig.schemas.splice(i, 1)
-            } else if (schema.ifShow === false) {
-                formConfig.schemas.splice(i, 1)
-            }
-        }
     }
 
     function getColumnsRequest() {
@@ -99,10 +77,6 @@ ColumnLayout {
         onError:
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
             }
         onSuccess:
             (result)=>{
@@ -140,10 +114,6 @@ ColumnLayout {
         onError:
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
             }
         onSuccess:
             (result)=>{
@@ -192,10 +162,6 @@ ColumnLayout {
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -210,7 +176,7 @@ ColumnLayout {
                 tableData.records.forEach(function(record) {
                     record._key = FluTools.uuid()
                     record._minimumHeight = defaultCellHeight
-                    record.action = tableView.customItem(tableView.comAction)
+                    record.action = tableView.customItem(rowActionDelegate)
                     dataSource.push(record)
                 })
 
@@ -241,10 +207,6 @@ ColumnLayout {
         onError:
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
             }
         onSuccess:
             (result)=>{
@@ -285,10 +247,6 @@ ColumnLayout {
         onError:
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
             }
         onSuccess:
             (result)=>{
@@ -332,10 +290,6 @@ ColumnLayout {
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
             }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
-            }
         onSuccess:
             (result)=>{
                 var jsResult = JSON.parse(result)
@@ -375,10 +329,6 @@ ColumnLayout {
         onError:
             (status,errorString,result)=>{
                 showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onCache:
-            (result)=>{
-                console.debug("onCache: "+result)
             }
         onSuccess:
             (result)=>{
@@ -510,7 +460,7 @@ ColumnLayout {
                     var rowObj = {
                         _key: uuid
                         , _minimumHeight: defaultCellHeight
-                        , action: tableView.customItem(tableView.comAction, {newRow: uuid})
+                        , action: tableView.customItem(rowActionDelegate, {newRow: uuid})
                     }
                     for (var field in editFieldColumn) {
                         rowObj[field] = ""
@@ -605,7 +555,6 @@ ColumnLayout {
         id: comTableView
         FluTableView {
             id: tableView
-            property alias comAction: comAction
             startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
             columnSource: {
                 var temp = []
@@ -638,7 +587,7 @@ ColumnLayout {
                         title: actionColumn.title,
                         dataIndex: "action",
                         width: actionColumn.width || defaultCellWidth,
-                        minimumWidth: actionColumn.width || defaultCellWidth,
+                        // minimumWidth: actionColumn.width || defaultCellWidth,
                         frozen: true
                     })
                 }
@@ -649,161 +598,161 @@ ColumnLayout {
 
                 return temp
             }
+        }
+    }
 
-            Component{
-                id: comAction
-                Item{
-                    RowLayout{
-                        anchors.centerIn: parent
-                        spacing: 0
-                        Component.onCompleted: {
-                            if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
-                                if (tableView.editedRows[model.rowModel._key] !== row) {
-                                    return
-                                }
-
-                                if (tableModel === "editSingleModel") {
-                                    editButton.visible = false
-                                    saveButton.visible = true
-                                    cancelButton.visible = true
-                                }
-                            }
+    Component{
+        id: comRowAction
+        Item{
+            RowLayout{
+                anchors.centerIn: parent
+                spacing: 0
+                Component.onCompleted: {
+                    if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                        if (tableView.editedRows[model.rowModel._key] !== row) {
+                            return
                         }
 
-                        FluIconButton{
-                            id: editButton
-                            visible: defaultButtons.edit ? defaultButtons.edit.visible : true
-                            iconSource: FluentIcons.Edit
-                            iconSize: 15
-                            onClicked: {
-                                if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
-                                    if (tableView.editedRows[model.rowModel._key] === row) {
-                                        return
-                                    }
+                        if (tableModel === "editSingleModel") {
+                            editButton.visible = false
+                            saveButton.visible = true
+                            cancelButton.visible = true
+                        }
+                    }
+                }
 
-                                    if (tableModel === "editSingleModel") {
-                                        visible = false
-                                        saveButton.visible = true
-                                        cancelButton.visible = true
-                                    }
-                                    tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
+                FluIconButton{
+                    id: editButton
+                    visible: defaultButtons.edit ? defaultButtons.edit.visible : true
+                    iconSource: FluentIcons.Edit
+                    iconSize: 15
+                    onClicked: {
+                        if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
+                            if (tableView.editedRows[model.rowModel._key] === row) {
+                                return
+                            }
+
+                            if (tableModel === "editSingleModel") {
+                                visible = false
+                                saveButton.visible = true
+                                cancelButton.visible = true
+                            }
+                            tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
+                        } else {
+                            openFormWindow(row, qsTr("修改"))
+                        }
+                    }
+                }
+
+                FluIconButton{
+                    visible: tableModel === "modalSingleModel" || tableModel === "modalAllModel"
+                    iconSource: FluentIcons.BulletedList
+                    iconSize: 15
+                    onClicked: {
+                        openFormWindow(row, qsTr("详情"))
+                    }
+                }
+
+                FluIconButton{
+                    visible: (defaultButtons.delete ? defaultButtons.delete.visible : true) && editButton.visible
+                    iconSource: FluentIcons.Delete
+                    iconSize: 15
+                    onClicked: {
+                        deleteDialog.open()
+                    }
+                    FluContentDialog{
+                        id: deleteDialog
+                        title: qsTr("删除确认")
+                        message: qsTr("是否确认删除?")
+                        buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
+                        negativeText: qsTr("取消")
+                        positiveText: qsTr("确认")
+                        onPositiveClicked:{
+                            var rowObj = tableView.getRow(row)
+                            if (rowObj.id) {
+                                if (formPane && formPane.childTableConfig.length > 0) {
+                                    removeRecords.push(rowObj)
                                 } else {
-                                    openFormWindow(row, qsTr("编辑"))
+                                    delDataByParamsRequest(row)
                                 }
                             }
+
+                            if (tableView.editedRows[model.rowModel._key] === row) {
+                                delete tableView.editedRows[model.rowModel._key]
+                            }
+                            tableView.removeRow(row)
+                        }
+                    }
+                }
+
+                FluIconButton{
+                    id: saveButton
+                    visible: false
+                    iconSource: FluentIcons.Save
+                    iconSize: 15
+                    onClicked: {
+                        var rowObj = tableView.getRow(row)
+                        var updateObj = {}
+                        var sysUpdateFieldNames = []
+                        for (var field in editFieldColumn) {
+                            var column = editFieldColumn[field]
+                            if (column === -1) {
+                                continue
+                            }
+
+                            var config = tableView.columnSource[column]
+                            if (config.required === true && !rowObj[field]) {
+                                showError(config.title + qsTr("不能为空"))
+                                return
+                            }
+                            updateObj[field] = rowObj[field]
+                            sysUpdateFieldNames.push(field)
                         }
 
-                        FluIconButton{
-                            visible: tableModel === "modalSingleModel" || tableModel === "modalAllModel"
-                            iconSource: FluentIcons.BulletedList
-                            iconSize: 15
-                            onClicked: {
-                                openFormWindow(row, qsTr("详情"))
-                            }
+                        if (rowObj.id) {
+                            updateObj.id = rowObj.id //必须
+                            updateObj.sysUpdateFieldNames = sysUpdateFieldNames
+                            updateFormDataRequest(updateObj)
+                        } else {
+                            addFormDataRequest(updateObj)
                         }
 
-                        FluIconButton{
-                            visible: (defaultButtons.delete ? defaultButtons.delete.visible : true) && editButton.visible
-                            iconSource: FluentIcons.Delete
-                            iconSize: 15
-                            onClicked: {
-                                deleteDialog.open()
-                            }
-                            FluContentDialog{
-                                id: deleteDialog
-                                title: qsTr("删除确认")
-                                message: qsTr("是否确认删除?")
-                                buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
-                                negativeText: qsTr("取消")
-                                positiveText: qsTr("确认")
-                                onPositiveClicked:{
-                                    var rowObj = tableView.getRow(row)
-                                    if (rowObj.id) {
-                                        if (formPane && formPane.formPaneData.childTableConfig.length > 0) {
-                                            removeRecords.push(rowObj)
-                                        } else {
-                                            delDataByParamsRequest(row)
-                                        }
-                                    }
+                        editButton.visible = true
+                        saveButton.visible = false
+                        cancelButton.visible = false
+                        tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
+                    }
+                }
 
-                                    if (tableView.editedRows[model.rowModel._key] === row) {
-                                        delete tableView.editedRows[model.rowModel._key]
-                                    }
-                                    tableView.removeRow(row)
-                                }
-                            }
+                FluIconButton{
+                    id: cancelButton
+                    visible: false
+                    iconSource: FluentIcons.Cancel
+                    iconSize: 15
+                    onClicked: {
+                        cancelDialog.open()
+                    }
+
+                    FluContentDialog{
+                        id: cancelDialog
+                        title: qsTr("取消确认")
+                        message: qsTr("是否取消编辑?")
+                        buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
+                        negativeText: qsTr("取消")
+                        positiveText: qsTr("确认")
+                        onPositiveClicked:{
+                            editButton.visible = true
+                            saveButton.visible = false
+                            cancelButton.visible = false
+                            tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
                         }
+                    }
+                }
 
-                        FluIconButton{
-                            id: saveButton
-                            visible: false
-                            iconSource: FluentIcons.Save
-                            iconSize: 15
-                            onClicked: {
-                                var rowObj = tableView.getRow(row)
-                                var updateObj = {}
-                                var sysUpdateFieldNames = []
-                                for (var field in editFieldColumn) {
-                                    var column = editFieldColumn[field]
-                                    if (column === -1) {
-                                        continue
-                                    }
-
-                                    var config = tableView.columnSource[column]
-                                    if (config.required === true && !rowObj[field]) {
-                                        showError(config.title + qsTr("不能为空"))
-                                        return
-                                    }
-                                    updateObj[field] = rowObj[field]
-                                    sysUpdateFieldNames.push(field)
-                                }
-
-                                if (rowObj.id) {
-                                    updateObj.id = rowObj.id //必须
-                                    updateObj.sysUpdateFieldNames = sysUpdateFieldNames
-                                    updateFormDataRequest(updateObj)
-                                } else {
-                                    addFormDataRequest(updateObj)
-                                }
-
-                                editButton.visible = true
-                                saveButton.visible = false
-                                cancelButton.visible = false
-                                tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
-                            }
-                        }
-
-                        FluIconButton{
-                            id: cancelButton
-                            visible: false
-                            iconSource: FluentIcons.Cancel
-                            iconSize: 15
-                            onClicked: {
-                                cancelDialog.open()
-                            }
-
-                            FluContentDialog{
-                                id: cancelDialog
-                                title: qsTr("取消确认")
-                                message: qsTr("是否取消编辑?")
-                                buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
-                                negativeText: qsTr("取消")
-                                positiveText: qsTr("确认")
-                                onPositiveClicked:{
-                                    editButton.visible = true
-                                    saveButton.visible = false
-                                    cancelButton.visible = false
-                                    tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: undefined, writable: true, enumerable: true})
-                                }
-                            }
-                        }
-
-                        FluLoader {
-                            id: loaderRowCustomAction
-                            Component.onCompleted: {
-                                rowCustomActionListener(row, loaderRowCustomAction)
-                            }
-                        }
+                FluLoader {
+                    id: loaderRowCustomAction
+                    Component.onCompleted: {
+                        rowCustomActionListener(row, loaderRowCustomAction)
                     }
                 }
             }
@@ -830,15 +779,21 @@ ColumnLayout {
             }
     }
 
-    function openFormWindow(row, formTitle) { //row为-1时表示新增
+    function openFormWindow(row, formTitle) {
+        var rowDataId = "" //为空时表示新增
+        if (row > -1) {
+            var obj = tableView.getRow(row)
+            rowDataId = obj.id
+        }
+
         FluRouter.navigate("/onlineFormWindow", {
                                formPaneData: {
                                    formConfig: formConfig
-                                   , tabConfig: tabConfig
-                                   , childTableConfig: row > -1 ? childTableConfig : []
-                                   , row: row
+                                   , rowDataId: rowDataId
                                    , title: formTitle
                                    , parent: root
+                                   , childTableCustomConfig: childTableCustomConfig
+                                   , getDataByParamsUrl: getDataByParamsUrl
                                }
                            }, root)
     }
@@ -847,6 +802,7 @@ ColumnLayout {
         if (!component) {
             return null
         }
+        componentProps = componentProps || {}
 
         var url = ""
         switch (component) {
@@ -869,6 +825,9 @@ ColumnLayout {
             case "SearchSelect":
                 url = "FluFormSearchSelect.qml"
                 break
+            case "RadioGroup":
+                url = "FluFormDictSelectTagRadio.qml"
+                break
             case "DictSelectTag":
                 url = componentProps.type === "radio" ? "FluFormDictSelectTagRadio.qml" : "FluFormDictSelectTag.qml"
                 break
@@ -880,6 +839,9 @@ ColumnLayout {
                 break
             case "SelectMultiDep":
                 url = "FluFormSelectMultiDep.qml"
+                break
+            case "SelectPost":
+                url = "FluFormSelectPost.qml"
                 break
             default:
                 url = "FluFormUnsupported.qml"

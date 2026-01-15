@@ -5,10 +5,12 @@ import FluentUI
 
 FluFormControl {
     id: control
-    property string sysUserListUrl: "/sys/user/list"
+    property string sysPostListUrl: "/sys/sysPost/list"
 
-    function sysUserListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysUserListUrl)
+    function sysPostListRequest(control, queryParams, display) {
+        sysPostListCallable.control = control
+        sysPostListCallable.display = display
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysPostListUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -16,34 +18,36 @@ FluFormControl {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        sysUserListCallable.display = display
-        networkParams.go(sysUserListCallable)
+        networkParams.go(sysPostListCallable)
     }
 
-    FluNetworkCallable {
-        id: sysUserListCallable
-        property var display
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
+    Component {
+        id: sysPostListCallable
+        FluNetworkCallable {
+            property var control
+            property var display
+            onStart: {
+                showLoading()
             }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(sysUserListUrl + " failed: " + result))
-                    return
+            onFinish: {
+                hideLoading()
+            }
+            onError:
+                (status,errorString,result)=>{
+                    showError(qsTr(status+";"+errorString+";"+result))
                 }
+            onSuccess:
+                (result)=>{
+                    var jsResult = JSON.parse(result)
+                    console.debug(JSON.stringify(jsResult, null, 2))
+                    if (jsResult.code !== 200) {
+                        showError(qsTr(sysPostListUrl + " failed: " + result))
+                        return
+                    }
 
-                sysUserListResp(jsResult.result, display)
-            }
+                    control.sysPostListResp(jsResult.result, display)
+                }
+        }
     }
 
     Flickable {
@@ -82,26 +86,25 @@ FluFormControl {
 
     FluSelectBizDialog {
         id: selectBiz
-        title: qsTr("用户选择")
-        choosedTitle: qsTr("已选用户")
+        title: qsTr("职称选择")
+        choosedTitle: qsTr("已选职称")
         columnConfig: [
             {
-                title: "姓名",
-                dataIndex: 'realname',
+                title: "职称名称",
+                dataIndex: 'name',
                 width: 150
             },
             {
-                title: "账号",
-                dataIndex: 'username',
+                title: "职称编码",
+                dataIndex: 'code',
                 width: 150
             },
             {
-                title: "部门",
-                dataIndex: 'orgCodeTxt',
+                title: "成员",
+                dataIndex: 'member',
                 width: 200
             }
         ]
-        isMoreQuery: true
         queryClickListener: queryClickImpl
         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
         onNegativeClicked: {
@@ -121,44 +124,31 @@ FluFormControl {
             var queryParams = {
                 pageNo: selectBiz.getPageNo()
                 , pageSize: selectBiz.getPageSize()
-                , field: "id,realname,username,orgCodeTxt"
+                , field: "id,name,code,member_dictText"
                 , order: "desc"
-                , colunm: "createTime"
+                , colunm: "orgCode"
             }
             var strId = selectBiz.getTextBoxId()
             if (strId !== "") {
                 strId = "*" + strId + "*"
-                queryParams["username"] = strId
+                queryParams["code"] = strId
             }
             var name = selectBiz.getTextBoxName()
             if (name !== "") {
                 name = "*" + name + "*"
-                queryParams["realname"] = name
-            }
-            var sex = selectBiz.getComboBoxSex()
-            if (sex !== 0) {
-                queryParams["sex"] = sex
-            }
-            var strBirthday = selectBiz.getCalendarBirthday()
-            if (strBirthday !== "") {
-                queryParams["birthday"] = strBirthday
-            }
-            var strPhone = selectBiz.getTextBoxPhone()
-            if (strPhone !== "") {
-                strPhone = "*" + strPhone + "*"
-                queryParams["phone"] = strPhone
+                queryParams["name"] = name
             }
 
-            sysUserListRequest(queryParams, false)
+            sysPostListRequest(control, queryParams, false)
         }
     }
 
-    function sysUserListResp(result, display) {
+    function sysPostListResp(result, display) {
         if (display) {
             var choosed = []
             textBox.text = result.records.map(function(item) {
                 choosed.push(item)
-                return item["realname"]
+                return item["name"]
              }).join(", ")
             selectBiz.initChoosed(choosed)
             return
@@ -176,9 +166,9 @@ FluFormControl {
         var queryParams = {
             pageNo: 1
             , pageSize: textBox.text.split(",").length
-            , username: textBox.text
+            , code: textBox.text
         }
 
-        sysUserListRequest(queryParams, true)
+        sysPostListRequest(control, queryParams, true)
     }
 }
