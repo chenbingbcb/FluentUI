@@ -32,6 +32,14 @@ FluScrollablePage {
             tableId: root.tableId
             formId: root.formId
             menuId: root.menuId
+            childTableCustomConfig: [
+                {
+                    tableModel: "editAllModel"
+                }
+                , {
+                    tableModel: "editAllModel"
+                }
+            ]
         }
     }
 }

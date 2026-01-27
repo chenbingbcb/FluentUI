@@ -7,13 +7,15 @@ import FluentUI
 ColumnLayout{
     id: root
     property var formPaneData
+    property var formDataSaveListener: formDataSave //表单数据保存回调
     property var formConfig: ({}) //表单配置
     property var childTableConfig: [] //子表配置
     property var tabConfig: ({}) //标签配置
     property var tabFields: []
-    property var rowFormData: ({}) //单行表单数据
+    property var formData //该行表单数据
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
+    property alias formRepeater: repeater
     Layout.fillWidth: true
 
     Component.onCompleted: {
@@ -34,11 +36,6 @@ ColumnLayout{
             } else if (schema.component === "childTable") {
                 if (schema.ifShow !== false) {
                     childTableConfig.unshift(schema)
-                    var childTableCustomConfig = formPaneData.childTableCustomConfig || []
-                    if (childTableCustomConfig.length > 0) { //子表自定义配置合并
-                        var pop = childTableCustomConfig.pop()
-                        Object.assign(childTableConfig[0], pop)
-                    }
                 }
                 formConfig.schemas.splice(i, 1)
             } else if (schema.ifShow === false) {
@@ -46,10 +43,12 @@ ColumnLayout{
             }
         }
         root.formConfig = formConfig
+        root.childTableConfig = childTableConfig
 
         if (tabConfig.componentProps) {
             var fields = []
             var tabPanels = tabConfig.componentProps.tabPanels || []
+            tabButtons.visible = tabPanels.length > 0
             tabPanels.forEach(function(panel, i) {
                 var obj = Qt.createQmlObject("import FluentUI; FluToggleButton{}", tabButtons)
                 obj.text = panel.tab
@@ -83,11 +82,15 @@ ColumnLayout{
             tabFields = fields
         }
 
-        if (formPaneData.rowDataId) { //非新增
-            getDataByParamsRequest(formPaneData.rowDataId)
-            root.childTableConfig = childTableConfig
+        if (formPaneData.getDataByParamsUrl) {
+            if (formPaneData.rowDataId) { //非新增
+                getDataByParamsRequest(formPaneData.rowDataId)
+            }
+        } else {
+            formData = formPaneData.formData
         }
 
+        procChildTable(0)
         formPaneData.parent.customAfterFormListener(loaderCustomAfterForm)
     }
 
@@ -110,6 +113,25 @@ ColumnLayout{
     //         }
     //     }
     // }
+
+    onFormDataChanged: {
+        var loaderItem = null
+        for (var i = 0; i < tabRepeater.count; i++) {
+            loaderItem = tabRepeater.itemAt(i).loaderItem
+            loaderItem.value = formData[loaderItem.config.field] || null
+            if (loaderItem.item.initDisplay) {
+                loaderItem.item.initDisplay()
+            }
+        }
+
+        for (var j = 0; j < repeater.count; j++) {
+            loaderItem = repeater.itemAt(j).loaderItem
+            loaderItem.value = formData[loaderItem.config.field] || null
+            if (loaderItem.item.initDisplay) {
+                loaderItem.item.initDisplay()
+            }
+        }
+    }
 
     function getDataByParamsRequest(rowDataId) {
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + formPaneData.getDataByParamsUrl)
@@ -140,24 +162,142 @@ ColumnLayout{
                     return
                 }
 
-                rowFormData = jsResult.result
-                var loaderItem = null
-                for (var i = 0; i < tabRepeater.count; i++) {
-                    loaderItem = tabRepeater.itemAt(i).loaderItem
-                    loaderItem.value = rowFormData[loaderItem.config.field] || null
-                    if (loaderItem.item.initDisplay) {
-                        loaderItem.item.initDisplay()
-                    }
+                formData = jsResult.result
+            }
+    }
+
+    function childTableUpdateProc(tablePane) {
+        // if (tableModel === "modalAllModel") {
+        //     showError(qsTr("弹窗一起保存模式暂未支持"))
+        //     return false
+        // }
+
+        var updateObj = {
+            insertRecords: []
+            , updateRecords: []
+            , removeRecords: tablePane.removeRecords || []
+        }
+        var sysUpdateFieldNames = {}
+        for (var key in tablePane.tableView.editedRows) {
+            var row = tablePane.tableView.editedRows[key]
+            var rowObj = tablePane.tableView.getRow(row)
+            var temp = {}
+            for (var field in tablePane.editFieldColumn) {
+                var column = tablePane.editFieldColumn[field]
+                if (column === -1) {
+                    continue
                 }
 
-                for (var j = 0; j < repeater.count; j++) {
-                    loaderItem = repeater.itemAt(j).loaderItem
-                    loaderItem.value = rowFormData[loaderItem.config.field] || null
-                    if (loaderItem.item.initDisplay) {
-                        loaderItem.item.initDisplay()
-                    }
+                var config = tablePane.tableView.columnSource[column]
+                if (config.required === true && !rowObj[field]) {
+                    showError(config.title + qsTr("不能为空"))
+                    return false
+                }
+                temp[field] = rowObj[field]
+                sysUpdateFieldNames[field] = true
+            }
+
+            if (rowObj.id) {
+                temp.id = rowObj.id //必须
+                updateObj.sysUpdateFieldNames = Object.keys(sysUpdateFieldNames)
+                updateObj.updateRecords.push(temp)
+            } else {
+                if (tablePane.relatedFields.length === 2) {
+                    temp[tablePane.relatedFields[1]] = formData[tablePane.relatedFields[0]]
+                }
+                updateObj.insertRecords.push(temp)
+            }
+        }
+
+        if (updateObj.updateRecords.length <= 0 && updateObj.insertRecords.length <= 0 && updateObj.removeRecords.length <= 0) {
+            return undefined
+        }
+
+        return updateObj
+    }
+
+    function formDataSave() {
+        var newData = Object.assign({}, formData)
+        var sysUpdateFieldNames = []
+        var loaderItem
+        for (var i = 0; i < tabRepeater.count; i++) {
+            loaderItem = tabRepeater.itemAt(i).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            if (newData.id) {
+                if (newData[loaderItem.config.field] !== loaderItem.value) {
+                    newData[loaderItem.config.field] = loaderItem.value
+                    sysUpdateFieldNames.push(loaderItem.config.field)
+                }
+            } else {
+                if (loaderItem.value) {
+                    newData[loaderItem.config.field] = loaderItem.value
                 }
             }
+        }
+
+        for (var j = 0; j < repeater.count; j++) {
+            loaderItem = repeater.itemAt(j).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            if (newData.id) {
+                if (newData[loaderItem.config.field] !== loaderItem.value) {
+                    newData[loaderItem.config.field] = loaderItem.value
+                    sysUpdateFieldNames.push(loaderItem.config.field)
+                }
+            } else {
+                if (loaderItem.value) {
+                    newData[loaderItem.config.field] = loaderItem.value
+                }
+            }
+        }
+
+        if (newData.id) {
+            var isChildTableUpdate = false //子表是否有更新
+            for (var k = 0; k < childTableConfig.length; k++) {
+                if (!tablePanes[k]) {
+                    continue
+                }
+
+                var updateObj = childTableUpdateProc(tablePanes[k])
+                if (updateObj === false) { //当且仅当为false时 表示出错
+                    return
+                }
+
+                if (!updateObj) {
+                    continue
+                }
+
+                var config = childTableConfig[k]
+                var field = config.field
+                newData[field] = updateObj
+                isChildTableUpdate = true
+            }
+
+            if (sysUpdateFieldNames.length <= 0 && !isChildTableUpdate) {
+                showInfo(qsTr("无可更新"))
+                return
+            }
+
+            for (var key in tablePanes) {
+                tablePanes[key].tableView.editedRows = {}
+            }
+
+            newData.sysUpdateFieldNames = sysUpdateFieldNames
+            formPaneData.parent.updateFormDataRequest(newData)
+        } else {
+            formPaneData.parent.addFormDataRequest(newData)
+        }
+
+        if (close) { //若有父窗口 则关闭
+            close()
+        }
     }
 
     RowLayout{
@@ -178,140 +318,7 @@ ColumnLayout{
             visible: title.text !== qsTr("详情")
             Layout.rightMargin: 10
             text: qsTr("保存")
-            onClicked: {
-                // control.close()
-                var newData = Object.assign({}, rowFormData)
-                var sysUpdateFieldNames = []
-                var loaderItem
-                for (var i = 0; i < tabRepeater.count; i++) {
-                    loaderItem = tabRepeater.itemAt(i).loaderItem
-                    if (loaderItem.config.required === true && !loaderItem.value) {
-                        showError(loaderItem.config.label + qsTr("不能为空"))
-                        return
-                    }
-
-                    if (newData.id) {
-                        if (newData[loaderItem.config.field] !== loaderItem.value) {
-                            newData[loaderItem.config.field] = loaderItem.value
-                            sysUpdateFieldNames.push(loaderItem.config.field)
-                        }
-                    } else {
-                        if (loaderItem.value) {
-                            newData[loaderItem.config.field] = loaderItem.value
-                        }
-                    }
-                }
-
-                for (var j = 0; j < repeater.count; j++) {
-                    loaderItem = repeater.itemAt(j).loaderItem
-                    if (loaderItem.config.required === true && !loaderItem.value) {
-                        showError(loaderItem.config.label + qsTr("不能为空"))
-                        return
-                    }
-
-                    if (newData.id) {
-                        if (newData[loaderItem.config.field] !== loaderItem.value) {
-                            newData[loaderItem.config.field] = loaderItem.value
-                            sysUpdateFieldNames.push(loaderItem.config.field)
-                        }
-                    } else {
-                        if (loaderItem.value) {
-                            newData[loaderItem.config.field] = loaderItem.value
-                        }
-                    }
-                }
-
-                if (newData.id) {
-                    var childTableUpdate = false //子表是否有更新
-                    for (var k = 0; k < childTableConfig.length; k++) {
-                        if (!tablePanes[k]) {
-                            continue
-                        }
-
-                        var updateObj = tableUpdateAll(tablePanes[k])
-                        if (updateObj === false) { //当且仅当为false时 表示出错
-                            return
-                        }
-
-                        if (!updateObj) {
-                            continue
-                        }
-
-                        var config = childTableConfig[k]
-                        var field = config.field
-                        newData[field] = updateObj
-                        childTableUpdate = true
-                    }
-
-                    if (sysUpdateFieldNames.length <= 0 && !childTableUpdate) {
-                        showInfo(qsTr("无可更新"))
-                        return
-                    }
-
-                    for (var key in tablePanes) {
-                        tablePanes[key].tableView.editedRows = {}
-                    }
-
-                    newData.sysUpdateFieldNames = sysUpdateFieldNames
-                    formPaneData.parent.updateFormDataRequest(newData)
-                } else {
-                    formPaneData.parent.addFormDataRequest(newData)
-                }
-
-                if (close) { //若有父窗口 则关闭
-                    close()
-                }
-            }
-
-            function tableUpdateAll(tablePane) {
-                // if (tableModel === "modalAllModel") {
-                //     showError(qsTr("弹窗一起保存模式暂未支持"))
-                //     return false
-                // }
-
-                var updateObj = {
-                    insertRecords: []
-                    , updateRecords: []
-                    , removeRecords: tablePane.removeRecords || []
-                }
-                var sysUpdateFieldNames = {}
-                for (var key in tablePane.tableView.editedRows) {
-                    var row = tablePane.tableView.editedRows[key]
-                    var rowObj = tablePane.tableView.getRow(row)
-                    var temp = {}
-                    for (var field in tablePane.editFieldColumn) {
-                        var column = tablePane.editFieldColumn[field]
-                        if (column === -1) {
-                            continue
-                        }
-
-                        var config = tablePane.tableView.columnSource[column]
-                        if (config.required === true && !rowObj[field]) {
-                            showError(config.title + qsTr("不能为空"))
-                            return false
-                        }
-                        temp[field] = rowObj[field]
-                        sysUpdateFieldNames[field] = true
-                    }
-
-                    if (rowObj.id) {
-                        temp.id = rowObj.id //必须
-                        updateObj.sysUpdateFieldNames = Object.keys(sysUpdateFieldNames)
-                        updateObj.updateRecords.push(temp)
-                    } else {
-                        if (tablePane.relatedField && rowFormData.id) {
-                            temp[tablePane.relatedField] = rowFormData.id
-                        }
-                        updateObj.insertRecords.push(temp)
-                    }
-                }
-
-                if (updateObj.updateRecords.length <= 0 && updateObj.insertRecords.length <= 0 && updateObj.removeRecords.length <= 0) {
-                    return undefined
-                }
-
-                return updateObj
-            }
+            onClicked: formPaneData && formPaneData.formDataSaveListener ? formPaneData.formDataSaveListener() : formDataSave()
         }
 
         // FluIconButton{
@@ -327,11 +334,13 @@ ColumnLayout{
 
     FluRadioButtons{
         id: tabButtons
+        visible: false
         spacing: 0
         orientation: Qt.Horizontal
     }
 
     FluDivider{
+        visible: tabButtons.visible
         Layout.fillWidth: true
     }
 
@@ -340,6 +349,7 @@ ColumnLayout{
         columns: 24
         columnSpacing: 0
         Layout.fillWidth: true
+        visible: tabFields.length > 0
 
         Repeater {
             id: tabRepeater
@@ -370,6 +380,7 @@ ColumnLayout{
         columns: 24
         columnSpacing: 0
         Layout.fillWidth: true
+        visible: formConfig.schemas && formConfig.schemas.length > 0
 
         Repeater {
             id: repeater
@@ -393,6 +404,7 @@ ColumnLayout{
     FluLoader {
         Layout.fillWidth: true
         sourceComponent: childTableConfig.length > 0 ? comChildTableTab : undefined
+        visible: childTableConfig.length > 0 && childTableConfig[0].label //有标签文本才显示
     }
 
     Component {
@@ -417,7 +429,6 @@ ColumnLayout{
                                     if (tablePanes[i]) {
                                         tablePane = tablePanes[i]
                                         tablePane.visible = true
-                                        // tableId = tablePane.tableId
                                     } else {
                                         procChildTable(i)
                                     }
@@ -430,49 +441,6 @@ ColumnLayout{
                     }
 
                     tableButtons.currentIndex = 0
-                    procChildTable(0)
-                }
-
-                function procChildTable(i) {
-                    if (i < 0 || i >= childTableConfig.length) {
-                        return
-                    }
-
-                    var componentProps = childTableConfig[i].componentProps
-                    var tableId = componentProps.genTableHeadId || componentProps.defaultValue
-                    var menuId = componentProps.genMenuId || 0
-                    var fieldStr = componentProps.relatedField || ""
-                    var fields = fieldStr.split(":")
-                    var relatedField = fields.length > 1 ? fields[1] : ""
-
-                    var comTablePane = Qt.createComponent("FluTablePane.qml")
-                    if (comTablePane.status !== Component.Ready) {
-                        console.error(comTablePane.errorString())
-                        return
-                    }
-
-                    var properties = {
-                        formPane: root
-                        , tableModel: "editAllModel" //子表的模式由web端写死
-                        , tableId: tableId
-                        // , formId: formId
-                        , menuId: menuId
-                        , relatedField: relatedField
-                    }
-
-                     //使用自定义url
-                    if (childTableConfig.length > 0) {
-                        var config = childTableConfig[i]
-                        if (config.getColumnsUrl) {
-                            properties.getColumnsUrl = config.getColumnsUrl
-                        }
-                        if (config.getTableDataUrl) {
-                            properties.getTableDataUrl = config.getTableDataUrl
-                        }
-                    }
-
-                    tablePane = comTablePane.createObject(root, properties)
-                    tablePanes[i] = tablePane
                 }
             }
 
@@ -480,6 +448,58 @@ ColumnLayout{
                 Layout.fillWidth: true
             }
         }
+    }
+
+    function procChildTable(i) {
+        if (i < 0 || i >= childTableConfig.length) {
+            return
+        }
+
+        var comTablePane = Qt.createComponent("FluTablePane.qml")
+        if (comTablePane.status !== Component.Ready) {
+            console.error(comTablePane.errorString())
+            return
+        }
+
+        var componentProps = childTableConfig[i].componentProps || {}
+        var properties = {
+            formPane: root
+            , tableId: componentProps.genTableHeadId || componentProps.defaultValue || ""
+            , formId: componentProps.genFormHeadId || "" //暂未支持子表form弹窗
+            , menuId: componentProps.genMenuId || 0
+            , relatedFields: componentProps.relatedField ? componentProps.relatedField.split(":") : []
+        }
+
+        //使用自定义配置
+        var childTableCustomConfig = formPaneData.childTableCustomConfig || []
+        if (childTableCustomConfig.length === childTableConfig.length) { //子表自定义配置合并
+            Object.assign(childTableConfig[i], childTableCustomConfig[i])
+        }
+
+        if (childTableConfig[i].tableModel) {
+            properties.tableModel = childTableConfig[i].tableModel
+        }
+        if (childTableConfig[i].tableConfig) {
+            properties.tableConfig = childTableConfig[i].tableConfig
+        }
+        if (childTableConfig[i].getColumnsUrl) {
+            properties.getColumnsUrl = childTableConfig[i].getColumnsUrl
+        }
+        if (childTableConfig[i].getTableDataUrl) {
+            properties.getTableDataUrl = childTableConfig[i].getTableDataUrl
+        }
+        if (childTableConfig[i].delDataByParamsUrl) {
+            properties.delDataByParamsUrl = childTableConfig[i].delDataByParamsUrl
+        }
+        if (childTableConfig[i].addFormDataUrl) {
+            properties.addFormDataUrl = childTableConfig[i].addFormDataUrl
+        }
+        if (childTableConfig[i].updateFormDataUrl) {
+            properties.updateFormDataUrl = childTableConfig[i].updateFormDataUrl
+        }
+
+        tablePane = comTablePane.createObject(root, properties)
+        tablePanes[i] = tablePane
     }
 
     Component {

@@ -7,54 +7,64 @@ import "../global"
 
 FluScrollablePage {
     id:root
+    readonly property int enumStatusUnfrozen: 1
+    readonly property int enumStatusFrozen: 2
 
-    FluNetworkCallable{
-        id: queryallCallable
-        property string postfixUrl: "/sys/role/queryall"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
+    property var infoAssignFormData: ({})
+    property var infoAssignFormConfig: ({
+        schemas: [
+            {
+                field: 'selectedRole',
+                label: '角色分配',
+                component: 'SearchSelect',
+                componentProps: {
+                    listUrl: '/sys/role/list',
+                    valField: 'id',
+                    txtField: 'roleName',
+                    multiple: false,
+                    async: false,
+                },
+            },
+            {
+                field: 'checkedDepartNameString',
+                label: '部门分配',
+                component: 'SelectMultiDep',
+            },
+            {
+                field: 'departIds',
+                label: '负责部门',
+                component: 'SelectMultiDep',
+            },
+        ]
+    })
 
-                contentDialog.open()
-            }
-
-        function queryallRequest(updateObj) {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in updateObj) {
-                networkParams.addQuery(key, updateObj[key])
-            }
-
-            networkParams.go(queryallCallable)
-        }
-    }
-
-    FluContentDialog {
-        id: contentDialog
-        title: qsTr("角色\部门分配")
-        buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
-        negativeText: qsTr("关闭")
-        positiveText: qsTr("确认")
-        onPositiveClicked:{
-        }
-    }
+    property var passwordFormData: ({})
+    property var passwordFormConfig: ({
+        schemas: [
+            {
+                field: 'username',
+                label: '用户账号',
+                component: 'Input',
+            },
+            {
+                field: 'password',
+                label: '登录密码',
+                required: true,
+                component: 'Password',
+                "componentProps": {
+                    "placeholderText": "请输入登录密码"
+                },
+            },
+            {
+                field: 'confirmpassword',
+                label: '确认密码',
+                component: 'Password',
+                "componentProps": {
+                    "placeholderText": "请重新输入登录密码"
+                },
+            },
+        ]
+    })
 
     FluTablePane {
         id: tablePane
@@ -332,7 +342,7 @@ FluScrollablePage {
         }
     }
 
-    Component{
+    Component {
         id: comRowAction
         Item{
             RowLayout{
@@ -354,9 +364,9 @@ FluScrollablePage {
                     onClicked: {
                         deleteDialog.open()
                     }
-                    FluContentDialog{
+                    FluContentDialog {
                         id: deleteDialog
-                        title: qsTr("删除确认")
+                        title: qsTr("删除")
                         message: qsTr("是否确认删除?")
                         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
                         negativeText: qsTr("取消")
@@ -386,34 +396,492 @@ FluScrollablePage {
                         FluMenuItem {
                             text: qsTr("信息分配")
                             onTriggered: {
-                                queryallCallable.queryallRequest()
+                                infoAssignFormData = {}
+                                var rowObj = tablePane.tableView.getRow(row)
+                                infoAssignFormData.id = rowObj.id
+                                queryUserRoleCallable.httpRequest({userId: infoAssignFormData.id})
                             }
                         }
-                        // FluMenuSeparator { }
+
                         FluMenuItem {
                             text: qsTr("密码")
                             onTriggered: {
-                                showError(qsTr("Search"))
+                                passwordFormData = {}
+                                var rowObj = tablePane.tableView.getRow(row)
+                                passwordFormData.username = rowObj.id
+                                FluRouter.navigate("/onlineFormWindow", {
+                                                       formPaneData: {
+                                                           formConfig: passwordFormConfig
+                                                           , title: qsTr("重新设定密码")
+                                                           , parent: tablePane
+                                                           , formData: passwordFormData
+                                                           , formDataSaveListener: passwordFormDataSave
+                                                       }
+                                                   }, tablePane)
                             }
                         }
-                        // FluMenuSeparator { }
+
                         FluMenuItem {
                             text: qsTr("冻结")
                             onTriggered: {
-                                showError(qsTr("Search"))
+                                var rowObj = tablePane.tableView.getRow(row)
+                                if (rowObj.status === enumStatusUnfrozen) {
+                                    frozenDialog.open()
+                                } else {
+                                    frozenBatchCallable.httpRequest({ids: rowObj.id, status: enumStatusUnfrozen})
+                                }
+                            }
+                            Component.onCompleted: {
+                                var rowObj = tablePane.tableView.getRow(row)
+                                if (rowObj.status === enumStatusFrozen) {
+                                    text = qsTr("解冻")
+                                }
+                            }
+
+                            FluContentDialog{
+                                id: frozenDialog
+                                title: qsTr("冻结")
+                                message: qsTr("是否确认冻结?")
+                                buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
+                                negativeText: qsTr("取消")
+                                positiveText: qsTr("确认")
+                                onPositiveClicked:{
+                                    var rowObj = tablePane.tableView.getRow(row)
+                                    frozenBatchCallable.httpRequest({ids: rowObj.id, status: enumStatusFrozen})
+                                }
                             }
                         }
-                        // FluMenuSeparator { }
+
                         FluMenuItem {
                             text: qsTr("业务权限")
                             onTriggered: {
-                                showError(qsTr("Search"))
+                                busiRuleFormData = {}
+                                var rowObj = tablePane.tableView.getRow(row)
+                                busiRuleFormData.userId = rowObj.id
+                                FluRouter.navigate("/onlineFormWindow", {
+                                                       formPaneData: {
+                                                           formConfig: busiRuleFormConfig
+                                                           , title: qsTr("详情")
+                                                           , parent: tablePane
+                                                           , formData: busiRuleFormData
+                                                       }
+                                                   }, tablePane)
                             }
                         }
                     }
-
                 }
             }
         }
     }
+
+    FluNetworkCallable{
+        id: queryUserRoleCallable
+        property string postfixUrl: "/sys/user/queryUserRole"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (jsResult.result) {
+                    infoAssignFormData.selectedRole = jsResult.result.map(function(item) {
+                        return item.roleId
+                     }).join(",")
+                } else {
+                    infoAssignFormData.selectedRole = ""
+                }
+
+                queryUserDepartsCallable.httpRequest({userId: infoAssignFormData.id})
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(queryUserRoleCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: queryUserDepartsCallable
+        property string postfixUrl: "/sys/user/queryUserDeparts"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (jsResult.result) {
+                    infoAssignFormData.checkedDepartNameString = jsResult.result.map(function(item) {
+                        return item.value
+                     }).join(",")
+                } else {
+                    infoAssignFormData.checkedDepartNameString = ""
+                }
+
+                listCallable.httpRequest({id: infoAssignFormData.id})
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(queryUserDepartsCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: listCallable
+        property string postfixUrl: tablePane.getTableDataUrl
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                infoAssignFormData.departIds = jsResult.result ? jsResult.result.records[0].departIds : ""
+                FluRouter.navigate("/onlineFormWindow", {
+                                       formPaneData: {
+                                           formConfig: infoAssignFormConfig
+                                           , rowDataId: infoAssignFormData.id
+                                           , title: qsTr("角色\\部门分配")
+                                           , parent: tablePane
+                                           , formData: infoAssignFormData
+                                           , formDataSaveListener: infoAssignFormDataSave
+                                       }
+                                   }, tablePane)
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(listCallable)
+        }
+    }
+
+    function infoAssignFormDataSave() {
+        var formPane = tablePane._to.formPane
+        var newData = {id: infoAssignFormData.id}
+        var loaderItem
+        for (var j = 0; j < formPane.formRepeater.count; j++) {
+            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            newData[loaderItem.config.field] = loaderItem.value
+        }
+
+        newData.selectedRole = newData.selectedRole ? newData.selectedRole.split(",") : []
+        changePropsCallable.httpRequest(newData)
+    }
+
+    FluNetworkCallable{
+        id: changePropsCallable
+        property string postfixUrl: "/sys/user/changeProps"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (tablePane._to.close) {
+                    tablePane._to.close()
+                }
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(changePropsCallable)
+        }
+    }
+
+    function passwordFormDataSave() {
+        var formPane = tablePane._to.formPane
+        var newData = {}
+        var loaderItem
+        for (var j = 0; j < formPane.formRepeater.count; j++) {
+            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            newData[loaderItem.config.field] = loaderItem.value
+        }
+
+        var pattern = /^[a-zA-Z0-9`~!@#$%^&*()-_=+[{\]}\|;:'",<.>/?]{6,}$/
+        if (!pattern.test(newData.password)) {
+            tablePane._to.showError(qsTr("密码需要至少6位数字、大小写字母或特殊符号组成！"))
+            return
+        }
+
+        if (newData.password !== newData.confirmpassword) {
+            tablePane._to.showError(qsTr("两次输入的密码不一样！"))
+            return
+        }
+
+        changePasswordCallable.httpRequest(newData)
+    }
+
+    FluNetworkCallable{
+        id: changePasswordCallable
+        property string postfixUrl: "/sys/user/changePassword"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (tablePane._to.close) {
+                    tablePane._to.close()
+                }
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(changePasswordCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: frozenBatchCallable
+        property string postfixUrl: "/sys/user/frozenBatch"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                tablePane.getTableDataRequest()
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(frozenBatchCallable)
+        }
+    }
+
+    property var busiRuleFormData: ({})
+    property var busiRuleFormConfig: ({
+        schemas: [
+            {
+                "field": "busiRule",
+                "label": "",
+                "component": "childTable",
+                "colProps": {
+                    "span": 8
+                },
+                "componentProps": {
+                    "relatedField": "userId:userId",
+                },
+                "getTableDataUrl": "/sys/sysBusiRule/list",
+                "delDataByParamsUrl": "/sys/sysBusiRule/delete",
+                "addFormDataUrl": "/sys/sysBusiRule/add",
+                "updateFormDataUrl": "/sys/sysBusiRule/edit",
+                "tableConfig": {
+                    "tableModel": "editSingleModel",
+                    "formConfig": {
+                        "labelWidth": 120,
+                        "schemas": [
+                            {
+                                "field": "userId",
+                                "label": "用户ID",
+                                "component": "SInput",
+                                "componentProps": {
+                                    "type": "LIKE"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            },
+                            {
+                                "field": "busiKey",
+                                "label": "业务key",
+                                "component": "DictSelectTag",
+                                "componentProps": {
+                                    "dictCode": "sys_busi_rule"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            },
+                            {
+                                "field": "busiValue",
+                                "label": "业务值",
+                                "component": "SInput",
+                                "componentProps": {
+                                    "type": "LIKE"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            }
+                        ]
+                    },
+                    "columns": [
+                        {
+                            "title": "用户ID",
+                            "dataIndex": "userId",
+                            "width": 200,
+                            "editComponent": "Input",
+                            "editRow": true,
+                            "editRule": true,
+                        },
+                        {
+                            "title": "业务key",
+                            "dataIndex": "busiKey_dictText",
+                            "width": 200,
+                            "editComponent": "DictSelectTag",
+                            "editComponentProps": {
+                                "dictCode": "sys_busi_rule"
+                            },
+                            "editRow": true,
+                            "editRule": true,
+                        },
+                        {
+                            "title": "业务值",
+                            "dataIndex": "busiValue",
+                            "width": 200,
+                            "editComponent": "Input",
+                            "editRow": true,
+                            "editRule": true,
+                        }
+                    ],
+                    "actionColumn": {
+                        "width": 120,
+                        "title": "操作",
+                        "dataIndex": "action"
+                    },
+                    "defaultButtons": {
+                        "add": {
+                            "visible": true
+                        },
+                        "edit": {
+                            "visible": true
+                        },
+                        "delete": {
+                            "visible": true
+                        }
+                    },
+                },
+            },
+        ]
+    })
 }

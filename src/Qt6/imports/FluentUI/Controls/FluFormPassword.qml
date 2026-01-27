@@ -3,13 +3,20 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import FluentUI
 
-FluTextBox {
+FluPasswordBox {
     id: control
     anchors.fill: parent
     placeholderText: qsTr("请输入")
 
     onTextChanged: {
         value = control.text
+    }
+
+    Component.onCompleted: {
+        var componentProps = config.componentProps
+        if (componentProps && componentProps.placeholderText) {
+            control.placeholderText = componentProps.placeholderText
+        }
     }
 
     function initDisplay() {

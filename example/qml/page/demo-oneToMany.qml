@@ -32,11 +32,13 @@ FluScrollablePage {
                 {
                     getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235622714/fb367426764077dcf94640c843733985"
                     , getTableDataUrl: "/demo/testDemo2d1/list"
+                    , tableModel: "editAllModel"
                     , label: "子表1"
                 }
                 , {
                     getColumnsUrl: "/online/genFormAPI/getColumns/1920671189335622714/fb367426764077dcf94640c843733985"
                     , getTableDataUrl: "/demo/testDemo2d2/list"
+                    , tableModel: "editAllModel"
                     , label: "子表2"
                 }
             ]

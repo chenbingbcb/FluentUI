@@ -9,6 +9,7 @@ FluWindow {
     minimumWidth: 1000
     minimumHeight: 668
     launchMode: FluWindowType.SingleInstance
+    property var formPane
 
     Component.onCompleted: {
         // showMaximized()
@@ -18,6 +19,7 @@ FluWindow {
         (argument)=>{
             // Object.assign(formPane, argument)
             loaderFormPane.sourceComponent = comFormPane
+            formPane = loaderFormPane.item
         }
 
     FluScrollablePage {

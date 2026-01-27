@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import FluentUI
 
-FluFormControl {
+Item {
     id: control
     property string sysPostListUrl: "/sys/sysPost/list"
 

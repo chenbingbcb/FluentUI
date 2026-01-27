@@ -34,7 +34,7 @@ ColumnLayout {
     property var editFieldColumn: ({})
     property var queryParams: ({}) //查询字段参数
     property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
-    property string relatedField: ""
+    property var relatedFields: []
     property var removeRecords: [] //删除的table记录
     property var _to
     property var tableView
@@ -50,13 +50,14 @@ ColumnLayout {
         if (!tableConfig) {
             getColumnsRequest()
         }
+
+        if (!formConfig) {
+            getFormConfigRequest()
+        }
     }
 
     onTableConfigChanged: {
         loaderTableView.sourceComponent = comTableView
-    }
-
-    onFormConfigChanged: {
     }
 
     function getColumnsRequest() {
@@ -88,7 +89,6 @@ ColumnLayout {
                 }
 
                 tableConfig = jsResult.result
-                getFormConfigRequest()
             }
     }
 
@@ -136,8 +136,8 @@ ColumnLayout {
         .addQuery("column", "createTime")
         .addQuery("pageNo", gagination.pageCurrent)
         .addQuery("pageSize", gagination.__itemPerPage)
-        if (relatedField && formPane && formPane.rowFormData) {
-            networkParams.addQuery(relatedField, formPane.rowFormData.id)
+        if (relatedFields.length === 2 && formPane && formPane.formData) {
+            networkParams.addQuery(relatedFields[1], formPane.formData[relatedFields[0]])
         }
 
         for(var key in queryParams) {
@@ -409,7 +409,12 @@ ColumnLayout {
                 model: queryFormConfig.schemas
                 delegate: comDelegate
                 onItemAdded: (index, item) => {
-                                 queryParams[model[index].field.trim()] = item.loaderItem
+                                 var field = model[index].field.trim()
+                                 queryParams[field] = item.loaderItem
+                                 if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
+                                     item.loaderItem.value = formPane.formData[relatedFields[0]]
+                                     item.loaderItem.item.initDisplay()
+                                 }
                              }
             }
 
@@ -427,11 +432,15 @@ ColumnLayout {
                 FluButton{
                     text: qsTr("重置")
                     onClicked: {
-                        for(var key in queryParams) {
-                            var loaderItem = queryParams[key]
+                        for(var field in queryParams) {
+                            var loaderItem = queryParams[field]
                             loaderItem.value = null
                             var config = loaderItem.config
                             loaderItem.sourceComponent = getComponentByType(config.component, config.componentProps)
+                            if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
+                                loaderItem.value = formPane.formData[relatedFields[0]]
+                                loaderItem.item.initDisplay()
+                            }
                         }
                         getTableDataRequest()
                     }
@@ -464,6 +473,9 @@ ColumnLayout {
                     }
                     for (var field in editFieldColumn) {
                         rowObj[field] = ""
+                        if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
+                            rowObj[field] = formPane.formData[relatedFields[0]]
+                        }
                     }
 
                     for (var key in tableView.editedRows) {
@@ -660,9 +672,9 @@ ColumnLayout {
                     onClicked: {
                         deleteDialog.open()
                     }
-                    FluContentDialog{
+                    FluContentDialog {
                         id: deleteDialog
-                        title: qsTr("删除确认")
+                        title: qsTr("删除")
                         message: qsTr("是否确认删除?")
                         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
                         negativeText: qsTr("取消")
@@ -670,7 +682,7 @@ ColumnLayout {
                         onPositiveClicked:{
                             var rowObj = tableView.getRow(row)
                             if (rowObj.id) {
-                                if (formPane && formPane.childTableConfig.length > 0) {
+                                if (formPane && formPane.childTableConfig.length > 0 && tableModel === "modalSingleModel") {
                                     removeRecords.push(rowObj)
                                 } else {
                                     delDataByParamsRequest(row)
@@ -812,6 +824,9 @@ ColumnLayout {
                 break
             case "Textarea":
                 url = "FluFormTextArea.qml"
+                break
+            case "Password":
+                url = "FluFormPassword.qml"
                 break
             case "Switch":
                 url = "FluFormSwitch.qml"
