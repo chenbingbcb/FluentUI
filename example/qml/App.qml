@@ -45,7 +45,8 @@ FluLauncher {
             "/singleInstanceWindow":"qrc:/example/qml/window/SingleInstanceWindow.qml",
             "/pageWindow":"qrc:/example/qml/window/PageWindow.qml",
             "/hotkey":"qrc:/example/qml/window/HotkeyWindow.qml",
-            "/onlineFormWindow":"qrc:/example/qml/window/OnlineFormWindow.qml",
+            "/onlineFormWindow":"qrc:/example/qml/window/onlineFormWindow.qml",
+            "/authHeadTableWindow":"qrc:/example/qml/window/authHeadTableWindow.qml",
         }
         var args = Qt.application.arguments
         if(args.length>=2 && args[1].startsWith("-crashed=")){

@@ -6,19 +6,16 @@ import FluentUI 1.0
 import "../global"
 
 FluScrollablePage {
-    id:root
+    id: root
     FluTablePane {
-        getTableDataUrl: "/sys/sysBusiRule/list"
-        getDataByParamsUrl: "/sys/sysBusiRule/queryById"
-        delDataByParamsUrl: "/sys/sysBusiRule/delete"
-        addFormDataUrl: "/sys/sysBusiRule/add"
-        updateFormDataUrl: "/sys/sysBusiRule/edit"
+        listUrl: "/sys/sysBusiRule/list"
+        deleteUrl: "/sys/sysBusiRule/delete"
+        addUrl: "/sys/sysBusiRule/add"
+        editUrl: "/sys/sysBusiRule/edit"
+        queryByIdUrl: "/sys/sysBusiRule/queryById"
+        tableTitle: "业务权限"
         tableConfig: {
             "tableModel": "modalSingleModel",
-            "primaryKey": [
-                "id"
-            ],
-            "useSearchForm": true,
             "formConfig": {
                 "labelWidth": 120,
                 "schemas": [
@@ -57,9 +54,6 @@ FluScrollablePage {
                     }
                 ]
             },
-            "ellipsis": true,
-            "orderConfig": "{}",
-            "showIndexColumn": true,
             "columns": [
                 {
                     "title": "用户ID",
@@ -77,8 +71,6 @@ FluScrollablePage {
                     "width": 200
                 }
             ],
-            "showTableSetting": true,
-            "bordered": true,
             "actionColumn": {
                 "width": 120,
                 "title": "操作",
@@ -95,29 +87,8 @@ FluScrollablePage {
                     "visible": true
                 }
             },
-            "customButtons": {},
-            "rowKey": "id",
-            "rowSelection": {
-                "type": "checkbox"
-            },
-            "showSelectionBar": true
         }
         formConfig: {
-            "primaryKey": [
-                "id"
-            ],
-            "defaultButtons": {
-                "add": {
-                    "visible": true
-                },
-                "edit": {
-                    "visible": true
-                },
-                "delete": {
-                    "visible": true
-                }
-            },
-            "customButtons": {},
             "schemas": [
                 {
                     "field": "userId",

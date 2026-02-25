@@ -6,7 +6,7 @@ import FluentUI 1.0
 import "../global"
 
 FluScrollablePage {
-    id:root
+    id: root
 
     Component.onCompleted: {
         loaderTablePane.sourceComponent = comTablePane
@@ -20,26 +20,26 @@ FluScrollablePage {
     Component {
         id: comTablePane
         FluTablePane {
-            getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/0"
-            getFormConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/0"
-            getTableDataUrl: "/demo/testDemo2/list"
-            getDataByParamsUrl: "/demo/testDemo2/queryByParams"
-            delDataByParamsUrl: "/demo/testDemo2/deleteByParams"
-            addFormDataUrl: "/demo/testDemo2/add"
-            updateFormDataUrl: "/demo/testDemo2/updateMainSub"
+            columnsUrl: "/online/genFormAPI/getColumns/1920671189235699714/0"
+            formConfigUrl: "/online/genFormAPI/getFormConfig/1920759948459421697/0"
+            listUrl: "/demo/testDemo2/list"
+            deleteUrl: "/demo/testDemo2/deleteByParams"
+            addUrl: "/demo/testDemo2/add"
+            editUrl: "/demo/testDemo2/updateMainSub"
+            queryByIdUrl: "/demo/testDemo2/queryByParams"
             updateAllUrl: "/demo/testDemo2/updateAll"
             childTableCustomConfig: [
                 {
-                    getColumnsUrl: "/online/genFormAPI/getColumns/1920671189235622714/fb367426764077dcf94640c843733985"
-                    , getTableDataUrl: "/demo/testDemo2d1/list"
-                    , tableModel: "editAllModel"
-                    , label: "子表1"
-                }
-                , {
-                    getColumnsUrl: "/online/genFormAPI/getColumns/1920671189335622714/fb367426764077dcf94640c843733985"
-                    , getTableDataUrl: "/demo/testDemo2d2/list"
-                    , tableModel: "editAllModel"
-                    , label: "子表2"
+                    label: "子表1",
+                    tableModel: "editAllModel",
+                    columnsUrl: "/online/genFormAPI/getColumns/1920671189235622714/fb367426764077dcf94640c843733985",
+                    listUrl: "/demo/testDemo2d1/list",
+                },
+                {
+                    label: "子表2",
+                    tableModel: "editAllModel",
+                    columnsUrl: "/online/genFormAPI/getColumns/1920671189335622714/fb367426764077dcf94640c843733985",
+                    listUrl: "/demo/testDemo2d2/list",
                 }
             ]
             rowCustomActionListener: rowCustomAction

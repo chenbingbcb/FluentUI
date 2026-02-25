@@ -11,21 +11,31 @@ ColumnLayout {
     property string tableId: "" //列表id
     property string formId: "" //表单id
     property string menuId: "" //菜单id
-    property string getColumnsUrl: "/online/genFormAPI/getColumns/%1/%2".arg(tableId).arg(menuId) //获取列表配置url
-    property string getFormConfigUrl: "/online/genFormAPI/getFormConfig/%1/%2".arg(formId).arg(menuId) //获取表单配置url
-    property string getTableDataUrl: "/online/genFormAPI/getTableData/" + tableId //获取列表数据url
-    property string getDataByParamsUrl: "/online/genFormAPI/getDataByParams/" + tableId //获取单行表单数据url
-    property string delDataByParamsUrl: "/online/genFormAPI/delDataByParams/" + tableId //删除单行数据url
-    property string addFormDataUrl: "/online/genFormAPI/addFormData/" + tableId //新增单行数据url
-    property string updateFormDataUrl: "/online/genFormAPI/updateFormData/" + tableId //更新单行数据url
+    property string columnsUrl: "/online/genFormAPI/getColumns/%1/%2".arg(tableId).arg(menuId) //获取列表配置url
+    property string formConfigUrl: "/online/genFormAPI/getFormConfig/%1/%2".arg(formId).arg(menuId) //获取表单配置url
+    property string listUrl: "/online/genFormAPI/getTableData/" + tableId //获取列表数据url
+    property string deleteUrl: "/online/genFormAPI/delDataByParams/" + tableId //删除单行数据url
+    property string addUrl: "/online/genFormAPI/addFormData/" + tableId //新增单行数据url
+    property string editUrl: "/online/genFormAPI/updateFormData/" + tableId //更新单行数据url
+    property string queryByIdUrl: "/online/genFormAPI/getDataByParams/" + tableId //获取单行数据url
     property string updateAllUrl: "/demo/testDemo2/updateAll" //更新全部数据url 临时配置
+    property var listListener: listRequest //获取列表数据回调
+    property var deleteListener: deleteRequest //删除单行数据回调
+    property var addListener: addRequest //新增单行数据回调
+    property var editListener: editRequest //更新单行数据回调
+    property var queryByIdListener: queryByIdRequest //获取单行数据回调
+    property var updateAllListener: updateAllRequest //更新全部数据回调
+    property var relatedFields: [] //关联字段
+    property var relatedRowData //关联行数据
+    property string tableTitle: ""
     property var rowActionDelegate: comRowAction //行操作委托
     property var rowCustomActionListener: function() {} //row自定义操作回调
     property var tableCustomActionListener: function() {} //table自定义操作列回调
     property var customAfterFormListener: function() {} //表单后面自定义组件回调
     property var childTableCustomConfig: [] //子表自定义配置
 
-    property int defaultCellWidth: 100
+    property int tableViewHeight: defaultCellHeight * 10 + 42 //42为表头高度
+    property int defaultCellWidth: 200
     property int defaultCellHeight: 50
     //modalSingleModel:弹窗单行保存(默认) modalAllModel:弹窗一起保存 editSingleModel:可编辑单行保存 editAllModel:可编辑一起保存
     property string tableModel: tableConfig && tableConfig.tableModel ? tableConfig.tableModel : "modalSingleModel"
@@ -34,25 +44,24 @@ ColumnLayout {
     property var editFieldColumn: ({})
     property var queryParams: ({}) //查询字段参数
     property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
-    property var relatedFields: []
     property var removeRecords: [] //删除的table记录
     property var _to
     property var tableView
     Layout.fillWidth: true
 
     Component.onDestruction: {
-        if (_to) { //关闭关联的form窗口
+        if (_to && _to.close) { //关闭关联的form窗口
             _to.close()
         }
     }
 
     Component.onCompleted: {
         if (!tableConfig) {
-            getColumnsRequest()
+            columnsRequest()
         }
 
         if (!formConfig) {
-            getFormConfigRequest()
+            formConfigRequest()
         }
     }
 
@@ -60,15 +69,15 @@ ColumnLayout {
         loaderTableView.sourceComponent = comTableView
     }
 
-    function getColumnsRequest() {
-        FluNetwork.get(GlobalModel.basicUrl + getColumnsUrl)
+    function columnsRequest() {
+        FluNetwork.get(GlobalModel.basicUrl + columnsUrl)
         .addHeader("S-Token", GlobalModel.token)
         .bind(root)
-        .go(getColumnsCallable)
+        .go(columnsCallable)
     }
 
     FluNetworkCallable{
-        id: getColumnsCallable
+        id: columnsCallable
         onStart: {
             showLoading()
         }
@@ -84,7 +93,7 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(getColumnsUrl + " failed: " + result))
+                    showError(qsTr(columnsUrl + " failed: " + result))
                     return
                 }
 
@@ -92,19 +101,19 @@ ColumnLayout {
             }
     }
 
-    function getFormConfigRequest() {
+    function formConfigRequest() {
         if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
             return
         }
 
-        FluNetwork.get(GlobalModel.basicUrl + getFormConfigUrl)
+        FluNetwork.get(GlobalModel.basicUrl + formConfigUrl)
         .addHeader("S-Token", GlobalModel.token)
         .bind(root)
-        .go(getFormConfigCallable)
+        .go(formConfigCallable)
     }
 
     FluNetworkCallable{
-        id: getFormConfigCallable
+        id: formConfigCallable
         onStart: {
             showLoading()
         }
@@ -120,7 +129,7 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(getFormConfigUrl + " failed: " + result))
+                    showError(qsTr(formConfigUrl + " failed: " + result))
                     return
                 }
 
@@ -128,30 +137,31 @@ ColumnLayout {
             }
     }
 
-    function getTableDataRequest() {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + getTableDataUrl)
+    function listRequest() {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         .addQuery("order", "desc")
         .addQuery("column", "createTime")
         .addQuery("pageNo", gagination.pageCurrent)
         .addQuery("pageSize", gagination.__itemPerPage)
-        if (relatedFields.length === 2 && formPane && formPane.formData) {
-            networkParams.addQuery(relatedFields[1], formPane.formData[relatedFields[0]])
+
+        if (relatedFields.length === 2 && relatedRowData && !queryParams.hasOwnProperty(relatedFields[1])) { //避免重复添加
+            networkParams.addQuery(relatedFields[1], relatedRowData[relatedFields[0]])
         }
 
-        for(var key in queryParams) {
-            var loaderItem = queryParams[key]
+        for(var field in queryParams) {
+            var loaderItem = queryParams[field]
             if (loaderItem.value) {
-                networkParams.addQuery(key, loaderItem.value)
+                networkParams.addQuery(field, loaderItem.value)
             }
         }
 
-        networkParams.go(getTableDataCallable)
+        networkParams.go(listCallable)
     }
 
     FluNetworkCallable{
-        id: getTableDataCallable
+        id: listCallable
         onStart: {
             showLoading()
         }
@@ -167,7 +177,7 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(getTableDataUrl + " failed: " + result))
+                    showError(qsTr(listUrl + " failed: " + result))
                     return
                 }
 
@@ -187,17 +197,17 @@ ColumnLayout {
             }
     }
 
-    function delDataByParamsRequest(row) {
+    function deleteRequest(row) {
         var obj = tableView.getRow(row)
-        var networkParams = FluNetwork.deleteJson(GlobalModel.basicUrl + delDataByParamsUrl)
+        var networkParams = FluNetwork.deleteJson(GlobalModel.basicUrl + deleteUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         .addQuery("id", obj.id)
-        .go(delDataByParamsCallable)
+        .go(deleteCallable)
     }
 
     FluNetworkCallable{
-        id: delDataByParamsCallable
+        id: deleteCallable
         onStart: {
             showLoading()
         }
@@ -213,30 +223,30 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(delDataByParamsUrl + " failed: " + result))
+                    showError(qsTr(deleteUrl + " failed: " + result))
                     return
                 }
 
-                getTableDataRequest()
+                listListener()
             }
     }
 
-    function addFormDataRequest(updateObj, noRefresh) {
-        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addFormDataUrl)
+    function addRequest(params, noRefresh) {
+        var networkParams = FluNetwork.postJson(GlobalModel.basicUrl + addUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
 
-        for(var key in updateObj) {
-            networkParams.add(key, updateObj[key])
+        for(var key in params) {
+            networkParams.add(key, params[key])
         }
 
-        addFormDataCallable.noRefresh = noRefresh
-        networkParams.go(addFormDataCallable)
+        addCallable.noRefresh = noRefresh
+        networkParams.go(addCallable)
     }
 
     FluNetworkCallable{
-        id: addFormDataCallable
+        id: addCallable
         property var noRefresh
         onStart: {
             showLoading()
@@ -253,32 +263,32 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(addFormDataUrl + " failed: " + result))
+                    showError(qsTr(addUrl + " failed: " + result))
                     return
                 }
 
                 if (!noRefresh) {
-                    getTableDataRequest()
+                    listListener()
                 }
             }
     }
 
-    function updateFormDataRequest(updateObj, noRefresh) {
-        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateFormDataUrl)
+    function editRequest(params, noRefresh) {
+        var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + editUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
 
-        for(var key in updateObj) {
-            networkParams.add(key, updateObj[key])
+        for(var key in params) {
+            networkParams.add(key, params[key])
         }
 
-        updateFormDataCallable.noRefresh = noRefresh
-        networkParams.go(updateFormDataCallable)
+        editCallable.noRefresh = noRefresh
+        networkParams.go(editCallable)
     }
 
     FluNetworkCallable{
-        id: updateFormDataCallable
+        id: editCallable
         property var noRefresh //默认刷新
         onStart: {
             showLoading()
@@ -295,24 +305,59 @@ ColumnLayout {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(updateFormDataUrl + " failed: " + result))
+                    showError(qsTr(editUrl + " failed: " + result))
                     return
                 }
 
                 if (!noRefresh) {
-                    getTableDataRequest()
+                    listListener()
                 }
             }
     }
 
-    function updateAllRequest(updateObj) {
+    function queryByIdRequest(rowDataId, formTitle) {
+        queryByIdCallable.formTitle = formTitle
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + queryByIdUrl)
+        .bind(root)
+        .addHeader("S-Token", GlobalModel.token)
+        .addQuery("id", rowDataId)
+        .go(queryByIdCallable)
+    }
+
+    FluNetworkCallable{
+        id: queryByIdCallable
+        property string formTitle: ""
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(queryByIdUrl + " failed: " + result))
+                    return
+                }
+
+                openFormWindow(jsResult.result, formTitle)
+            }
+    }
+
+    function updateAllRequest(params) {
         var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + updateAllUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
         // .openLog(true)
 
-        for(var key in updateObj) {
-            networkParams.add(key, updateObj[key])
+        for(var key in params) {
+            networkParams.add(key, params[key])
         }
 
         networkParams.go(updateAllCallable)
@@ -339,7 +384,7 @@ ColumnLayout {
                     return
                 }
 
-                getTableDataRequest()
+                listListener()
             }
     }
 
@@ -370,10 +415,11 @@ ColumnLayout {
                         return modelData.label
                     }
                 }
-                width: 120
+                width: 80
                 height: 32
                 verticalAlignment: Qt.AlignVCenter
                 horizontalAlignment: Qt.AlignRight
+                wrapMode: Text.WrapAnywhere
             }
 
             FluLoader {
@@ -396,6 +442,7 @@ ColumnLayout {
 
     FluFrame{
         Layout.fillWidth: true
+        visible: queryFormConfig.schemas !== undefined && queryFormConfig.schemas.length > 0
 
         GridLayout{
             columns: 24
@@ -410,11 +457,11 @@ ColumnLayout {
                 delegate: comDelegate
                 onItemAdded: (index, item) => {
                                  var field = model[index].field.trim()
-                                 queryParams[field] = item.loaderItem
-                                 if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
-                                     item.loaderItem.value = formPane.formData[relatedFields[0]]
+                                 if (relatedFields.length === 2 && relatedFields[1] === field && relatedRowData) {
+                                     item.loaderItem.value = relatedRowData[relatedFields[0]]
                                      item.loaderItem.item.initDisplay()
                                  }
+                                 queryParams[field] = item.loaderItem
                              }
             }
 
@@ -437,30 +484,39 @@ ColumnLayout {
                             loaderItem.value = null
                             var config = loaderItem.config
                             loaderItem.sourceComponent = getComponentByType(config.component, config.componentProps)
-                            if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
-                                loaderItem.value = formPane.formData[relatedFields[0]]
+                            if (relatedFields.length === 2 && relatedFields[1] === field && relatedRowData) {
+                                loaderItem.value = relatedRowData[relatedFields[0]]
                                 loaderItem.item.initDisplay()
                             }
                         }
-                        getTableDataRequest()
+                        listListener()
                     }
                 }
 
                 FluButton{
                     text: qsTr("查询")
                     onClicked: {
-                        getTableDataRequest()
+                        listListener()
                     }
                 }
             }
         }
     }
 
-    RowLayout{
+    RowLayout {
         Layout.fillWidth: true
-        Layout.alignment: Qt.AlignRight
+        // Layout.alignment: Qt.AlignRight
 
-        FluFilledButton{
+        FluText {
+            text: tableTitle
+            font: FluTextStyle.Subtitle
+        }
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        FluFilledButton {
             visible: defaultButtons.add ? defaultButtons.add.visible : true
             text: qsTr("新增")
             onClicked: {
@@ -471,10 +527,11 @@ ColumnLayout {
                         , _minimumHeight: defaultCellHeight
                         , action: tableView.customItem(rowActionDelegate, {newRow: uuid})
                     }
+
                     for (var field in editFieldColumn) {
                         rowObj[field] = ""
-                        if (relatedFields.length === 2 && relatedFields[1] === field && formPane && formPane.formData) {
-                            rowObj[field] = formPane.formData[relatedFields[0]]
+                        if (relatedFields.length === 2 && relatedFields[1] === field && relatedRowData) {
+                            rowObj[field] = relatedRowData[relatedFields[0]]
                         }
                     }
 
@@ -487,12 +544,17 @@ ColumnLayout {
                     tableView.editedRows[uuid] = 0
                     tableView.insertRow(0, rowObj)
                 } else {
-                    openFormWindow(-1, qsTr("新增"))
+                    var rowFormData = null
+                    if (relatedFields.length === 2 && relatedRowData) {
+                        rowFormData = {}
+                        rowFormData[relatedFields[1]] = relatedRowData[relatedFields[0]]
+                    }
+                    openFormWindow(rowFormData, qsTr("新增"))
                 }
             }
         }
 
-        FluFilledButton{
+        FluFilledButton {
             visible: tableModel === "editAllModel" && !formPane //子表的保存跟表单一起
             text: qsTr("保存")
             onClicked: {
@@ -540,7 +602,7 @@ ColumnLayout {
                 }
 
                 tableView.editedRows = {}
-                updateAllRequest(updateObj)
+                updateAllListener(updateObj)
             }
         }
 
@@ -556,10 +618,10 @@ ColumnLayout {
         id: loaderTableView
         Layout.topMargin: -6
         Layout.fillWidth: true
-        Layout.preferredHeight: defaultCellHeight * 10 + 42 //42为表头高度
+        Layout.preferredHeight: tableViewHeight
         onLoaded: {
             tableView = item
-            getTableDataRequest()
+            listListener()
         }
     }
 
@@ -651,7 +713,8 @@ ColumnLayout {
                             }
                             tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
                         } else {
-                            openFormWindow(row, qsTr("修改"))
+                            var obj = tableView.getRow(row)
+                            queryByIdListener(obj.id, qsTr("修改"))
                         }
                     }
                 }
@@ -661,7 +724,8 @@ ColumnLayout {
                     iconSource: FluentIcons.BulletedList
                     iconSize: 15
                     onClicked: {
-                        openFormWindow(row, qsTr("详情"))
+                        var obj = tableView.getRow(row)
+                        queryByIdListener(obj.id, qsTr("详情"))
                     }
                 }
 
@@ -682,10 +746,10 @@ ColumnLayout {
                         onPositiveClicked:{
                             var rowObj = tableView.getRow(row)
                             if (rowObj.id) {
-                                if (formPane && formPane.childTableConfig.length > 0 && tableModel === "modalSingleModel") {
+                                if (formPane && formPane.childTableConfig.length > 0 && tableModel === "editAllModel") {
                                     removeRecords.push(rowObj)
                                 } else {
-                                    delDataByParamsRequest(row)
+                                    deleteListener(row)
                                 }
                             }
 
@@ -724,9 +788,9 @@ ColumnLayout {
                         if (rowObj.id) {
                             updateObj.id = rowObj.id //必须
                             updateObj.sysUpdateFieldNames = sysUpdateFieldNames
-                            updateFormDataRequest(updateObj)
+                            editListener(updateObj)
                         } else {
-                            addFormDataRequest(updateObj)
+                            addListener(updateObj)
                         }
 
                         editButton.visible = true
@@ -772,7 +836,7 @@ ColumnLayout {
     }
 
     FluPagination{
-        id:gagination
+        id: gagination
         Component.onCompleted: {
 
         }
@@ -787,25 +851,22 @@ ColumnLayout {
                 // tableView.closeEditor()
                 tableView.editedRows = {}
                 tableView.resetPosition()
-                getTableDataRequest()
+                listListener()
             }
     }
 
-    function openFormWindow(row, formTitle) {
-        var rowDataId = "" //为空时表示新增
-        if (row > -1) {
-            var obj = tableView.getRow(row)
-            rowDataId = obj.id
-        }
+    Item {
+        Layout.fillHeight: true
+    }
 
+    function openFormWindow(rowFormData, formTitle) {
         FluRouter.navigate("/onlineFormWindow", {
                                formPaneData: {
                                    formConfig: formConfig
-                                   , rowDataId: rowDataId
+                                   , formData: rowFormData
                                    , title: formTitle
                                    , parent: root
                                    , childTableCustomConfig: childTableCustomConfig
-                                   , getDataByParamsUrl: getDataByParamsUrl
                                }
                            }, root)
     }
@@ -857,6 +918,24 @@ ColumnLayout {
                 break
             case "SelectPost":
                 url = "FluFormSelectPost.qml"
+                break
+            case "SelectMenu":
+                url = "FluFormSelectMenu.qml"
+                break
+            case "SelectForm":
+                url = "FluFormSelectForm.qml"
+                break
+            case "SelectTable":
+                url = "FluFormSelectTable.qml"
+                break
+            case "SelectAuthority":
+                url = "FluFormSelectAuthority.qml"
+                break
+            case "SelectField":
+                url = "FluFormSelectField.qml"
+                break
+            case "SelectButton":
+                url = "FluFormSelectButton.qml"
                 break
             default:
                 url = "FluFormUnsupported.qml"

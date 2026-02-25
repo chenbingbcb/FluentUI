@@ -109,11 +109,11 @@ Item {
         onPositiveClicked:
             (data)=>{
                 textBox.text = data.map(function(item) {
-                   return item[selectBiz.nameKey]
+                   return item["realname"]
                 }).join(", ")
 
                 value = data.map(function(item) {
-                   return item[selectBiz.idKey]
+                   return item.username
                 }).join(",")
             }
 

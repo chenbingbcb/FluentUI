@@ -5,10 +5,10 @@ import FluentUI
 
 Item {
     id: control
-    property string sysPostListUrl: "/sys/sysPost/list"
+    property string formListUrl: "/online/genFormHead/list"
 
-    function sysPostListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysPostListUrl)
+    function formListRequest(queryParams, display) {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + formListUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -16,12 +16,12 @@ Item {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        sysPostListCallable.display = display
-        networkParams.go(sysPostListCallable)
+        formListCallable.display = display
+        networkParams.go(formListCallable)
     }
 
     FluNetworkCallable {
-        id: sysPostListCallable
+        id: formListCallable
         property var display
         onStart: {
             showLoading()
@@ -38,11 +38,11 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(sysPostListUrl + " failed: " + result))
+                    showError(qsTr(formListUrl + " failed: " + result))
                     return
                 }
 
-                sysPostListResp(jsResult.result, display)
+                formListResp(jsResult.result, display)
             }
     }
 
@@ -82,25 +82,21 @@ Item {
 
     FluSelectBizDialog {
         id: selectBiz
-        title: qsTr("职称选择")
-        choosedTitle: qsTr("已选职称")
+        title: qsTr("选择")
+        choosedTitle: qsTr("已选")
         columnConfig: [
             {
-                title: "职称名称",
+                title: "表单名称",
                 dataIndex: 'name',
-                width: 150
+                width: 300
             },
             {
-                title: "职称编码",
+                title: "表单编码",
                 dataIndex: 'code',
-                width: 150
-            },
-            {
-                title: "成员",
-                dataIndex: 'member',
                 width: 200
-            }
+            },
         ]
+        isSingleSelect: true
         queryClickListener: queryClickImpl
         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
         onNegativeClicked: {
@@ -112,7 +108,7 @@ Item {
                 }).join(", ")
 
                 value = data.map(function(item) {
-                   return item.code
+                   return item.id
                 }).join(",")
             }
 
@@ -120,7 +116,7 @@ Item {
             var queryParams = {
                 pageNo: selectBiz.getPageNo()
                 , pageSize: selectBiz.getPageSize()
-                , field: "id,name,code,member_dictText"
+                , field: "id,name,code"
                 , order: "desc"
                 , colunm: "createTime"
             }
@@ -135,11 +131,11 @@ Item {
                 queryParams["name"] = name
             }
 
-            sysPostListRequest(queryParams, false)
+            formListRequest(queryParams, false)
         }
     }
 
-    function sysPostListResp(result, display) {
+    function formListResp(result, display) {
         if (display) {
             var choosed = []
             textBox.text = result.records.map(function(item) {
@@ -162,9 +158,9 @@ Item {
         var queryParams = {
             pageNo: 1
             , pageSize: textBox.text.split(",").length
-            , code: textBox.text
+            , id: textBox.text
         }
 
-        sysPostListRequest(queryParams, true)
+        formListRequest(queryParams, true)
     }
 }

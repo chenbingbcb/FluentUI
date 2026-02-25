@@ -7,7 +7,7 @@ Item {
     id: control
     property string sysDepartListUrl: "/sys/sysDepart/list"
 
-    function sysDepartListRequest(control, queryParams, display) {
+    function sysDepartListRequest(queryParams, display) {
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysDepartListUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
@@ -16,14 +16,12 @@ Item {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        sysDepartListCallable.control = control
         sysDepartListCallable.display = display
         networkParams.go(sysDepartListCallable)
     }
 
     FluNetworkCallable {
         id: sysDepartListCallable
-        property var control
         property var display
         onStart: {
             showLoading()
@@ -44,7 +42,7 @@ Item {
                     return
                 }
 
-                control.sysDepartListResp(jsResult.result, display)
+                sysDepartListResp(jsResult.result, display)
             }
     }
 
@@ -105,11 +103,11 @@ Item {
         onPositiveClicked:
             (data)=>{
                 textBox.text = data.map(function(item) {
-                   return item[selectBiz.nameKey]
+                   return item["departName"]
                 }).join(", ")
 
                 value = data.map(function(item) {
-                   return item[selectBiz.idKey]
+                   return item.id
                 }).join(",")
             }
 
@@ -132,7 +130,7 @@ Item {
                 queryParams["departName"] = name
             }
 
-            sysDepartListRequest(control, queryParams, false)
+            sysDepartListRequest(queryParams, false)
         }
     }
 
@@ -162,6 +160,6 @@ Item {
             , id: textBox.text
         }
 
-        sysDepartListRequest(control, queryParams, true)
+        sysDepartListRequest(queryParams, true)
     }
 }

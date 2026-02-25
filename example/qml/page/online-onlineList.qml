@@ -6,7 +6,7 @@ import FluentUI 1.0
 import "../global"
 
 FluScrollablePage {
-    id:root
+    id: root
     property string tableId: ""
     property string formId: ""
     property string menuId: ""
@@ -35,8 +35,8 @@ FluScrollablePage {
             childTableCustomConfig: [
                 {
                     tableModel: "editAllModel"
-                }
-                , {
+                },
+                {
                     tableModel: "editAllModel"
                 }
             ]

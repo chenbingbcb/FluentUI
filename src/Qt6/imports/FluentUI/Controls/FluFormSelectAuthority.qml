@@ -5,10 +5,10 @@ import FluentUI
 
 Item {
     id: control
-    property string sysPostListUrl: "/sys/sysPost/list"
+    property string authorityListUrl: "/online/authHead/list"
 
-    function sysPostListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysPostListUrl)
+    function authorityListRequest(queryParams, display) {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + authorityListUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -16,12 +16,12 @@ Item {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        sysPostListCallable.display = display
-        networkParams.go(sysPostListCallable)
+        authorityListCallable.display = display
+        networkParams.go(authorityListCallable)
     }
 
     FluNetworkCallable {
-        id: sysPostListCallable
+        id: authorityListCallable
         property var display
         onStart: {
             showLoading()
@@ -38,11 +38,11 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(sysPostListUrl + " failed: " + result))
+                    showError(qsTr(authorityListUrl + " failed: " + result))
                     return
                 }
 
-                sysPostListResp(jsResult.result, display)
+                authorityListResp(jsResult.result, display)
             }
     }
 
@@ -82,24 +82,34 @@ Item {
 
     FluSelectBizDialog {
         id: selectBiz
-        title: qsTr("职称选择")
-        choosedTitle: qsTr("已选职称")
+        title: qsTr("选择")
+        choosedTitle: qsTr("已选")
         columnConfig: [
             {
-                title: "职称名称",
-                dataIndex: 'name',
-                width: 150
+                title: "标题",
+                dataIndex: 'title',
+                width: 100
             },
             {
-                title: "职称编码",
-                dataIndex: 'code',
-                width: 150
+                title: "id",
+                dataIndex: 'id',
+                width: 100
             },
             {
-                title: "成员",
-                dataIndex: 'member',
-                width: 200
-            }
+                title: "菜单",
+                dataIndex: 'menuId_dictText',
+                width: 100
+            },
+            {
+                title: "列表",
+                dataIndex: 'tableId_dictText',
+                width: 100
+            },
+            {
+                title: "表单",
+                dataIndex: 'formId_dictText',
+                width: 100
+            },
         ]
         queryClickListener: queryClickImpl
         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
@@ -108,11 +118,11 @@ Item {
         onPositiveClicked:
             (data)=>{
                 textBox.text = data.map(function(item) {
-                   return item["name"]
+                   return item["title"]
                 }).join(", ")
 
                 value = data.map(function(item) {
-                   return item.code
+                   return item.id
                 }).join(",")
             }
 
@@ -120,31 +130,31 @@ Item {
             var queryParams = {
                 pageNo: selectBiz.getPageNo()
                 , pageSize: selectBiz.getPageSize()
-                , field: "id,name,code,member_dictText"
+                , field: "id,title,menuId_dictText,tableId_dictText,formId_dictText"
                 , order: "desc"
                 , colunm: "createTime"
             }
             var strId = selectBiz.getTextBoxId()
             if (strId !== "") {
                 strId = "*" + strId + "*"
-                queryParams["code"] = strId
+                queryParams["id"] = strId
             }
             var name = selectBiz.getTextBoxName()
             if (name !== "") {
                 name = "*" + name + "*"
-                queryParams["name"] = name
+                queryParams["title"] = name
             }
 
-            sysPostListRequest(queryParams, false)
+            authorityListRequest(queryParams, false)
         }
     }
 
-    function sysPostListResp(result, display) {
+    function authorityListResp(result, display) {
         if (display) {
             var choosed = []
             textBox.text = result.records.map(function(item) {
                 choosed.push(item)
-                return item["name"]
+                return item["title"]
              }).join(", ")
             selectBiz.initChoosed(choosed)
             return
@@ -162,9 +172,9 @@ Item {
         var queryParams = {
             pageNo: 1
             , pageSize: textBox.text.split(",").length
-            , code: textBox.text
+            , id: textBox.text
         }
 
-        sysPostListRequest(queryParams, true)
+        authorityListRequest(queryParams, true)
     }
 }

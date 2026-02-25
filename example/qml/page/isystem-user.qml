@@ -6,7 +6,7 @@ import FluentUI 1.0
 import "../global"
 
 FluScrollablePage {
-    id:root
+    id: root
     readonly property int enumStatusUnfrozen: 1
     readonly property int enumStatusFrozen: 2
 
@@ -38,6 +38,203 @@ FluScrollablePage {
         ]
     })
 
+    FluNetworkCallable{
+        id: queryUserRoleCallable
+        property string postfixUrl: "/sys/user/queryUserRole"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (jsResult.result) {
+                    infoAssignFormData.selectedRole = jsResult.result.map(function(item) {
+                        return item.roleId
+                     }).join(",")
+                } else {
+                    infoAssignFormData.selectedRole = ""
+                }
+
+                queryUserDepartsCallable.httpRequest({userId: infoAssignFormData.id})
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(queryUserRoleCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: queryUserDepartsCallable
+        property string postfixUrl: "/sys/user/queryUserDeparts"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (jsResult.result) {
+                    infoAssignFormData.checkedDepartNameString = jsResult.result.map(function(item) {
+                        return item.value
+                     }).join(",")
+                } else {
+                    infoAssignFormData.checkedDepartNameString = ""
+                }
+
+                listCallable.httpRequest({id: infoAssignFormData.id})
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(queryUserDepartsCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: listCallable
+        property string postfixUrl: "/sys/user/list"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                infoAssignFormData.departIds = jsResult.result ? jsResult.result.records[0].departIds : ""
+                FluRouter.navigate("/onlineFormWindow", {
+                                       formPaneData: {
+                                           formConfig: infoAssignFormConfig
+                                           , title: qsTr("角色\\部门分配")
+                                           , parent: tablePane
+                                           , formData: infoAssignFormData
+                                           , formDataSaveListener: infoAssignFormDataSave
+                                       }
+                                   }, tablePane)
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.addQuery(key, params[key])
+            }
+
+            networkParams.go(listCallable)
+        }
+    }
+
+    function infoAssignFormDataSave() {
+        var formPane = tablePane._to.formPane
+        var newData = {id: infoAssignFormData.id}
+        var loaderItem
+        for (var j = 0; j < formPane.formRepeater.count; j++) {
+            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            newData[loaderItem.config.field] = loaderItem.value
+        }
+
+        newData.selectedRole = newData.selectedRole ? newData.selectedRole.split(",") : []
+        changePropsCallable.httpRequest(newData)
+    }
+
+    FluNetworkCallable{
+        id: changePropsCallable
+        property string postfixUrl: "/sys/user/changeProps"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (tablePane._to.close) {
+                    tablePane._to.close()
+                }
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(changePropsCallable)
+        }
+    }
+
     property var passwordFormData: ({})
     property var passwordFormConfig: ({
         schemas: [
@@ -66,20 +263,230 @@ FluScrollablePage {
         ]
     })
 
+    function passwordFormDataSave() {
+        var formPane = tablePane._to.formPane
+        var newData = {}
+        var loaderItem
+        for (var j = 0; j < formPane.formRepeater.count; j++) {
+            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
+            if (loaderItem.config.required === true && !loaderItem.value) {
+                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
+                return
+            }
+
+            newData[loaderItem.config.field] = loaderItem.value
+        }
+
+        var pattern = /^[a-zA-Z0-9`~!@#$%^&*()-_=+[{\]}\|;:'",<.>/?]{6,}$/
+        if (!pattern.test(newData.password)) {
+            tablePane._to.showError(qsTr("密码需要至少6位数字、大小写字母或特殊符号组成！"))
+            return
+        }
+
+        if (newData.password !== newData.confirmpassword) {
+            tablePane._to.showError(qsTr("两次输入的密码不一样！"))
+            return
+        }
+
+        changePasswordCallable.httpRequest(newData)
+    }
+
+    FluNetworkCallable{
+        id: changePasswordCallable
+        property string postfixUrl: "/sys/user/changePassword"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                if (tablePane._to.close) {
+                    tablePane._to.close()
+                }
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(changePasswordCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: frozenBatchCallable
+        property string postfixUrl: "/sys/user/frozenBatch"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                tablePane.listListener()
+            }
+
+        function httpRequest(params) {
+            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            for(var key in params) {
+                networkParams.add(key, params[key])
+            }
+
+            networkParams.go(frozenBatchCallable)
+        }
+    }
+
+    property var busiRuleFormData: ({})
+    property var busiRuleFormConfig: ({
+        schemas: [
+            {
+                "field": "busiRule",
+                "label": "",
+                "component": "childTable",
+                "colProps": {
+                    "span": 8
+                },
+                "componentProps": {
+                    "relatedField": "id:userId",
+                },
+                "listUrl": "/sys/sysBusiRule/list",
+                "deleteUrl": "/sys/sysBusiRule/delete",
+                "addUrl": "/sys/sysBusiRule/add",
+                "editUrl": "/sys/sysBusiRule/edit",
+                "tableConfig": {
+                    "tableModel": "editSingleModel",
+                    "formConfig": {
+                        "labelWidth": 120,
+                        "schemas": [
+                            {
+                                "field": "userId",
+                                "label": "用户ID",
+                                "component": "SInput",
+                                "componentProps": {
+                                    "type": "LIKE"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            },
+                            {
+                                "field": "busiKey",
+                                "label": "业务key",
+                                "component": "DictSelectTag",
+                                "componentProps": {
+                                    "dictCode": "sys_busi_rule"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            },
+                            {
+                                "field": "busiValue",
+                                "label": "业务值",
+                                "component": "SInput",
+                                "componentProps": {
+                                    "type": "LIKE"
+                                },
+                                "colProps": {
+                                    "span": 8
+                                }
+                            }
+                        ]
+                    },
+                    "columns": [
+                        {
+                            "title": "用户ID",
+                            "dataIndex": "userId",
+                            "width": 200,
+                            "editComponent": "Input",
+                            "editRow": true,
+                            "editRule": true,
+                        },
+                        {
+                            "title": "业务key",
+                            "dataIndex": "busiKey_dictText",
+                            "width": 200,
+                            "editComponent": "DictSelectTag",
+                            "editComponentProps": {
+                                "dictCode": "sys_busi_rule"
+                            },
+                            "editRow": true,
+                            "editRule": true,
+                        },
+                        {
+                            "title": "业务值",
+                            "dataIndex": "busiValue",
+                            "width": 200,
+                            "editComponent": "Input",
+                            "editRow": true,
+                            "editRule": true,
+                        }
+                    ],
+                    "actionColumn": {
+                        "width": 120,
+                        "title": "操作",
+                        "dataIndex": "action"
+                    },
+                    "defaultButtons": {
+                        "add": {
+                            "visible": true
+                        },
+                        "edit": {
+                            "visible": true
+                        },
+                        "delete": {
+                            "visible": true
+                        }
+                    },
+                },
+            },
+        ]
+    })
+
     FluTablePane {
         id: tablePane
-        getTableDataUrl: "/sys/user/list"
-        getDataByParamsUrl: "/sys/user/queryById"
-        delDataByParamsUrl: "/sys/user/delete"
-        addFormDataUrl: "/sys/user/add"
-        updateFormDataUrl: "/sys/user/edit"
+        listUrl: "/sys/user/list"
+        deleteUrl: "/sys/user/delete"
+        addUrl: "/sys/user/add"
+        editUrl: "/sys/user/edit"
+        queryByIdUrl: "/sys/user/queryById"
         rowActionDelegate: comRowAction
+        tableTitle: "用户管理"
         tableConfig: {
             "tableModel": "modalSingleModel",
-            "primaryKey": [
-                "id"
-            ],
-            "useSearchForm": true,
             "formConfig": {
                 "labelWidth": 120,
                 "schemas": [
@@ -140,9 +547,6 @@ FluScrollablePage {
                     }
                 ]
             },
-            "ellipsis": true,
-            "orderConfig": "{}",
-            "showIndexColumn": true,
             "columns": [
                 {
                     "title": "用户账号",
@@ -195,8 +599,6 @@ FluScrollablePage {
                     "sorter": true
                 }
             ],
-            "showTableSetting": true,
-            "bordered": true,
             "actionColumn": {
                 "width": 120,
                 "title": "操作",
@@ -213,29 +615,8 @@ FluScrollablePage {
                     "visible": true
                 }
             },
-            "customButtons": {},
-            "rowKey": "id",
-            "rowSelection": {
-                "type": "checkbox"
-            },
-            "showSelectionBar": true
         }
         formConfig: {
-            "primaryKey": [
-                "id"
-            ],
-            "defaultButtons": {
-                "add": {
-                    "visible": true
-                },
-                "edit": {
-                    "visible": true
-                },
-                "delete": {
-                    "visible": true
-                }
-            },
-            "customButtons": {},
             "schemas": [
                 {
                     "field": "username",
@@ -354,7 +735,8 @@ FluScrollablePage {
                     iconSource: FluentIcons.Edit
                     iconSize: 15
                     onClicked: {
-                        tablePane.openFormWindow(row, qsTr("修改"))
+                        var obj = tablePane.tableView.getRow(row)
+                        tablePane.queryByIdListener(obj.id, qsTr("修改"))
                     }
                 }
 
@@ -364,6 +746,7 @@ FluScrollablePage {
                     onClicked: {
                         deleteDialog.open()
                     }
+
                     FluContentDialog {
                         id: deleteDialog
                         title: qsTr("删除")
@@ -374,7 +757,7 @@ FluScrollablePage {
                         onPositiveClicked:{
                             var rowObj = tablePane.tableView.getRow(row)
                             if (rowObj.id) {
-                                tablePane.delDataByParamsRequest(row)
+                                tablePane.deleteListener(row)
                             }
 
                             tablePane.tableView.removeRow(row)
@@ -457,7 +840,7 @@ FluScrollablePage {
                             onTriggered: {
                                 busiRuleFormData = {}
                                 var rowObj = tablePane.tableView.getRow(row)
-                                busiRuleFormData.userId = rowObj.id
+                                busiRuleFormData.id = rowObj.id
                                 FluRouter.navigate("/onlineFormWindow", {
                                                        formPaneData: {
                                                            formConfig: busiRuleFormConfig
@@ -473,415 +856,4 @@ FluScrollablePage {
             }
         }
     }
-
-    FluNetworkCallable{
-        id: queryUserRoleCallable
-        property string postfixUrl: "/sys/user/queryUserRole"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                if (jsResult.result) {
-                    infoAssignFormData.selectedRole = jsResult.result.map(function(item) {
-                        return item.roleId
-                     }).join(",")
-                } else {
-                    infoAssignFormData.selectedRole = ""
-                }
-
-                queryUserDepartsCallable.httpRequest({userId: infoAssignFormData.id})
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.addQuery(key, params[key])
-            }
-
-            networkParams.go(queryUserRoleCallable)
-        }
-    }
-
-    FluNetworkCallable{
-        id: queryUserDepartsCallable
-        property string postfixUrl: "/sys/user/queryUserDeparts"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                if (jsResult.result) {
-                    infoAssignFormData.checkedDepartNameString = jsResult.result.map(function(item) {
-                        return item.value
-                     }).join(",")
-                } else {
-                    infoAssignFormData.checkedDepartNameString = ""
-                }
-
-                listCallable.httpRequest({id: infoAssignFormData.id})
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.addQuery(key, params[key])
-            }
-
-            networkParams.go(queryUserDepartsCallable)
-        }
-    }
-
-    FluNetworkCallable{
-        id: listCallable
-        property string postfixUrl: tablePane.getTableDataUrl
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                infoAssignFormData.departIds = jsResult.result ? jsResult.result.records[0].departIds : ""
-                FluRouter.navigate("/onlineFormWindow", {
-                                       formPaneData: {
-                                           formConfig: infoAssignFormConfig
-                                           , rowDataId: infoAssignFormData.id
-                                           , title: qsTr("角色\\部门分配")
-                                           , parent: tablePane
-                                           , formData: infoAssignFormData
-                                           , formDataSaveListener: infoAssignFormDataSave
-                                       }
-                                   }, tablePane)
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.addQuery(key, params[key])
-            }
-
-            networkParams.go(listCallable)
-        }
-    }
-
-    function infoAssignFormDataSave() {
-        var formPane = tablePane._to.formPane
-        var newData = {id: infoAssignFormData.id}
-        var loaderItem
-        for (var j = 0; j < formPane.formRepeater.count; j++) {
-            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
-            if (loaderItem.config.required === true && !loaderItem.value) {
-                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
-                return
-            }
-
-            newData[loaderItem.config.field] = loaderItem.value
-        }
-
-        newData.selectedRole = newData.selectedRole ? newData.selectedRole.split(",") : []
-        changePropsCallable.httpRequest(newData)
-    }
-
-    FluNetworkCallable{
-        id: changePropsCallable
-        property string postfixUrl: "/sys/user/changeProps"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                if (tablePane._to.close) {
-                    tablePane._to.close()
-                }
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.add(key, params[key])
-            }
-
-            networkParams.go(changePropsCallable)
-        }
-    }
-
-    function passwordFormDataSave() {
-        var formPane = tablePane._to.formPane
-        var newData = {}
-        var loaderItem
-        for (var j = 0; j < formPane.formRepeater.count; j++) {
-            loaderItem = formPane.formRepeater.itemAt(j).loaderItem
-            if (loaderItem.config.required === true && !loaderItem.value) {
-                tablePane._to.showError(loaderItem.config.label + qsTr("不能为空"))
-                return
-            }
-
-            newData[loaderItem.config.field] = loaderItem.value
-        }
-
-        var pattern = /^[a-zA-Z0-9`~!@#$%^&*()-_=+[{\]}\|;:'",<.>/?]{6,}$/
-        if (!pattern.test(newData.password)) {
-            tablePane._to.showError(qsTr("密码需要至少6位数字、大小写字母或特殊符号组成！"))
-            return
-        }
-
-        if (newData.password !== newData.confirmpassword) {
-            tablePane._to.showError(qsTr("两次输入的密码不一样！"))
-            return
-        }
-
-        changePasswordCallable.httpRequest(newData)
-    }
-
-    FluNetworkCallable{
-        id: changePasswordCallable
-        property string postfixUrl: "/sys/user/changePassword"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                if (tablePane._to.close) {
-                    tablePane._to.close()
-                }
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.add(key, params[key])
-            }
-
-            networkParams.go(changePasswordCallable)
-        }
-    }
-
-    FluNetworkCallable{
-        id: frozenBatchCallable
-        property string postfixUrl: "/sys/user/frozenBatch"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                tablePane._to.showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    tablePane._to.showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                tablePane.getTableDataRequest()
-            }
-
-        function httpRequest(params) {
-            var networkParams = FluNetwork.putJson(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            for(var key in params) {
-                networkParams.add(key, params[key])
-            }
-
-            networkParams.go(frozenBatchCallable)
-        }
-    }
-
-    property var busiRuleFormData: ({})
-    property var busiRuleFormConfig: ({
-        schemas: [
-            {
-                "field": "busiRule",
-                "label": "",
-                "component": "childTable",
-                "colProps": {
-                    "span": 8
-                },
-                "componentProps": {
-                    "relatedField": "userId:userId",
-                },
-                "getTableDataUrl": "/sys/sysBusiRule/list",
-                "delDataByParamsUrl": "/sys/sysBusiRule/delete",
-                "addFormDataUrl": "/sys/sysBusiRule/add",
-                "updateFormDataUrl": "/sys/sysBusiRule/edit",
-                "tableConfig": {
-                    "tableModel": "editSingleModel",
-                    "formConfig": {
-                        "labelWidth": 120,
-                        "schemas": [
-                            {
-                                "field": "userId",
-                                "label": "用户ID",
-                                "component": "SInput",
-                                "componentProps": {
-                                    "type": "LIKE"
-                                },
-                                "colProps": {
-                                    "span": 8
-                                }
-                            },
-                            {
-                                "field": "busiKey",
-                                "label": "业务key",
-                                "component": "DictSelectTag",
-                                "componentProps": {
-                                    "dictCode": "sys_busi_rule"
-                                },
-                                "colProps": {
-                                    "span": 8
-                                }
-                            },
-                            {
-                                "field": "busiValue",
-                                "label": "业务值",
-                                "component": "SInput",
-                                "componentProps": {
-                                    "type": "LIKE"
-                                },
-                                "colProps": {
-                                    "span": 8
-                                }
-                            }
-                        ]
-                    },
-                    "columns": [
-                        {
-                            "title": "用户ID",
-                            "dataIndex": "userId",
-                            "width": 200,
-                            "editComponent": "Input",
-                            "editRow": true,
-                            "editRule": true,
-                        },
-                        {
-                            "title": "业务key",
-                            "dataIndex": "busiKey_dictText",
-                            "width": 200,
-                            "editComponent": "DictSelectTag",
-                            "editComponentProps": {
-                                "dictCode": "sys_busi_rule"
-                            },
-                            "editRow": true,
-                            "editRule": true,
-                        },
-                        {
-                            "title": "业务值",
-                            "dataIndex": "busiValue",
-                            "width": 200,
-                            "editComponent": "Input",
-                            "editRow": true,
-                            "editRule": true,
-                        }
-                    ],
-                    "actionColumn": {
-                        "width": 120,
-                        "title": "操作",
-                        "dataIndex": "action"
-                    },
-                    "defaultButtons": {
-                        "add": {
-                            "visible": true
-                        },
-                        "edit": {
-                            "visible": true
-                        },
-                        "delete": {
-                            "visible": true
-                        }
-                    },
-                },
-            },
-        ]
-    })
 }

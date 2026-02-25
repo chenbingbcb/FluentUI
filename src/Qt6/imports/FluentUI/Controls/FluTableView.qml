@@ -23,7 +23,7 @@ Rectangle {
     property color selectedBorderColor: FluTheme.primaryColor
     property color selectedColor: FluTools.withOpacity(FluTheme.primaryColor,0.3)
     property alias view: table_view
-    property var editedRows: ({})
+    property var editedRows: ({}) //被编辑的行
     property var columnWidthProvider: function(column) {
         var columnModel = control.columnSource[column]
         var width = columnModel.width
@@ -386,7 +386,7 @@ Rectangle {
                             }
                         }
 
-                        return value || ""
+                        return value || value !== null ? value : ""
                     }
                     property bool isObject: typeof(display) == "object"
                     property var options: {
@@ -423,7 +423,7 @@ Rectangle {
                     }
                     signal editTextChaged(string text)
                     sourceComponent: {
-                        if(item_table_mouse.isHide || editedRows[rowModel._key] !== row || item_table_loader.isObject) {
+                        if(!enabled || item_table_mouse.isHide || editedRows[rowModel._key] !== row || item_table_loader.isObject) {
                             return undefined
                         }
 

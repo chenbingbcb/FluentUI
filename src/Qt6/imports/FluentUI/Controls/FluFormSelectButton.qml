@@ -5,23 +5,29 @@ import FluentUI
 
 Item {
     id: control
-    property string sysPostListUrl: "/sys/sysPost/list"
+    property string relButtonUrl: "/online/authHead/relButton"
+    property string formId: ""
+    property string tableId: ""
+    property alias textBoxText: textBox.text
 
-    function sysPostListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysPostListUrl)
+    function relButtonRequest(queryParams, display) {
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + relButtonUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
+
+        networkParams.addQuery("formId", formId)
+        networkParams.addQuery("tableId", tableId)
 
         for(var key in queryParams) {
             networkParams.addQuery(key, queryParams[key])
         }
 
-        sysPostListCallable.display = display
-        networkParams.go(sysPostListCallable)
+        relButtonCallable.display = display
+        networkParams.go(relButtonCallable)
     }
 
     FluNetworkCallable {
-        id: sysPostListCallable
+        id: relButtonCallable
         property var display
         onStart: {
             showLoading()
@@ -38,11 +44,11 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(sysPostListUrl + " failed: " + result))
+                    showError(qsTr(relButtonUrl + " failed: " + result))
                     return
                 }
 
-                sysPostListResp(jsResult.result, display)
+                relButtonResp(jsResult.result, display)
             }
     }
 
@@ -82,24 +88,19 @@ Item {
 
     FluSelectBizDialog {
         id: selectBiz
-        title: qsTr("职称选择")
-        choosedTitle: qsTr("已选职称")
+        title: qsTr("选择")
+        choosedTitle: qsTr("已选")
         columnConfig: [
             {
-                title: "职称名称",
-                dataIndex: 'name',
-                width: 150
+                title: "权限标识",
+                dataIndex: 'permissionTag',
+                width: 300
             },
             {
-                title: "职称编码",
+                title: "按钮code",
                 dataIndex: 'code',
-                width: 150
-            },
-            {
-                title: "成员",
-                dataIndex: 'member',
                 width: 200
-            }
+            },
         ]
         queryClickListener: queryClickImpl
         buttonFlags: FluContentDialogType.NegativeButton | FluContentDialogType.PositiveButton
@@ -108,7 +109,7 @@ Item {
         onPositiveClicked:
             (data)=>{
                 textBox.text = data.map(function(item) {
-                   return item["name"]
+                   return item["permissionTag"]
                 }).join(", ")
 
                 value = data.map(function(item) {
@@ -120,7 +121,7 @@ Item {
             var queryParams = {
                 pageNo: selectBiz.getPageNo()
                 , pageSize: selectBiz.getPageSize()
-                , field: "id,name,code,member_dictText"
+                , field: "id,permissionTag,code"
                 , order: "desc"
                 , colunm: "createTime"
             }
@@ -132,19 +133,19 @@ Item {
             var name = selectBiz.getTextBoxName()
             if (name !== "") {
                 name = "*" + name + "*"
-                queryParams["name"] = name
+                queryParams["permissionTag"] = name
             }
 
-            sysPostListRequest(queryParams, false)
+            relButtonRequest(queryParams, false)
         }
     }
 
-    function sysPostListResp(result, display) {
+    function relButtonResp(result, display) {
         if (display) {
             var choosed = []
             textBox.text = result.records.map(function(item) {
                 choosed.push(item)
-                return item["name"]
+                return item["permissionTag"]
              }).join(", ")
             selectBiz.initChoosed(choosed)
             return
@@ -165,6 +166,6 @@ Item {
             , code: textBox.text
         }
 
-        sysPostListRequest(queryParams, true)
+        relButtonRequest(queryParams, true)
     }
 }

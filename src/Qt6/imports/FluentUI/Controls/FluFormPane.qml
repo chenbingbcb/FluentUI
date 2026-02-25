@@ -7,7 +7,6 @@ import FluentUI
 ColumnLayout{
     id: root
     property var formPaneData
-    property var formDataSaveListener: formDataSave //表单数据保存回调
     property var formConfig: ({}) //表单配置
     property var childTableConfig: [] //子表配置
     property var tabConfig: ({}) //标签配置
@@ -36,6 +35,11 @@ ColumnLayout{
             } else if (schema.component === "childTable") {
                 if (schema.ifShow !== false) {
                     childTableConfig.unshift(schema)
+                    var childTableCustomConfig = formPaneData.childTableCustomConfig || []
+                    if (childTableCustomConfig.length > 0) { //子表自定义配置合并
+                        var pop = childTableCustomConfig.pop()
+                        Object.assign(childTableConfig[0], pop)
+                    }
                 }
                 formConfig.schemas.splice(i, 1)
             } else if (schema.ifShow === false) {
@@ -82,37 +86,12 @@ ColumnLayout{
             tabFields = fields
         }
 
-        if (formPaneData.getDataByParamsUrl) {
-            if (formPaneData.rowDataId) { //非新增
-                getDataByParamsRequest(formPaneData.rowDataId)
-            }
-        } else {
-            formData = formPaneData.formData
+        if (formPaneData.title !== qsTr("新增")) {
+            formData = formPaneData.formData || {}
         }
 
-        procChildTable(0)
         formPaneData.parent.customAfterFormListener(loaderCustomAfterForm)
     }
-
-    // Connections{
-    //     target: root
-    //     function onDictItemsUpdated(key, dictItems) {
-    //         var loaderItem
-    //         for (var i = 0; i < tabRepeater.count; i++) {
-    //             loaderItem = tabRepeater.itemAt(i).loaderItem
-    //             if (loaderItem.item.dictCode === key) {
-    //                 loaderItem.item.dictItems = dictItems
-    //             }
-    //         }
-
-    //         for (var j = 0; j < repeater.count; j++) {
-    //             loaderItem = repeater.itemAt(j).loaderItem
-    //             if (loaderItem.item.dictCode === key) {
-    //                 loaderItem.item.dictItems = dictItems
-    //             }
-    //         }
-    //     }
-    // }
 
     onFormDataChanged: {
         var loaderItem = null
@@ -131,47 +110,67 @@ ColumnLayout{
                 loaderItem.item.initDisplay()
             }
         }
+
+        procChildTable(0) //子表也需要用到formData
     }
 
-    function getDataByParamsRequest(rowDataId) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + formPaneData.getDataByParamsUrl)
-        .bind(root)
-        .addHeader("S-Token", GlobalModel.token)
-        .addQuery("id", rowDataId)
-        .go(getDataByParamsCallable)
-    }
-
-    FluNetworkCallable{
-        id: getDataByParamsCallable
-        onStart: {
-            showLoading()
+    function procChildTable(i) {
+        if (i < 0 || i >= childTableConfig.length) {
+            return
         }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(formPaneData.getDataByParamsUrl + " failed: " + result))
-                    return
-                }
 
-                formData = jsResult.result
-            }
+        var comTablePane = Qt.createComponent("FluTablePane.qml")
+        if (comTablePane.status !== Component.Ready) {
+            console.error(comTablePane.errorString())
+            return
+        }
+
+        var componentProps = childTableConfig[i].componentProps || {}
+        var properties = {
+            formPane: root
+            , tableId: componentProps.genTableHeadId || componentProps.defaultValue || ""
+            , formId: componentProps.genFormHeadId || "" //暂未支持子表form弹窗
+            , menuId: componentProps.genMenuId || 0
+            , relatedFields: componentProps.relatedField ? componentProps.relatedField.split(":") : []
+        }
+        if (properties.relatedFields.length === 2) {
+            properties.relatedRowData = formData
+        }
+
+        //使用自定义配置
+        if (childTableConfig[i].tableModel) {
+            properties.tableModel = childTableConfig[i].tableModel
+        }
+        if (childTableConfig[i].tableConfig) {
+            properties.tableConfig = childTableConfig[i].tableConfig
+        }
+        if (childTableConfig[i].columnsUrl) {
+            properties.columnsUrl = childTableConfig[i].columnsUrl
+        }
+        if (childTableConfig[i].listUrl) {
+            properties.listUrl = childTableConfig[i].listUrl
+        }
+        if (childTableConfig[i].deleteUrl) {
+            properties.deleteUrl = childTableConfig[i].deleteUrl
+        }
+        if (childTableConfig[i].addUrl) {
+            properties.addUrl = childTableConfig[i].addUrl
+        }
+        if (childTableConfig[i].editUrl) {
+            properties.editUrl = childTableConfig[i].editUrl
+        }
+        if (childTableConfig[i].updateAllUrl) {
+            properties.updateAllUrl = childTableConfig[i].updateAllUrl
+        }
+        if (childTableConfig[i].tableCustomActionListener) {
+            properties.tableCustomActionListener = childTableConfig[i].tableCustomActionListener
+        }
+
+        tablePane = comTablePane.createObject(root, properties)
+        tablePanes[i] = tablePane
     }
 
     function childTableUpdateProc(tablePane) {
-        // if (tableModel === "modalAllModel") {
-        //     showError(qsTr("弹窗一起保存模式暂未支持"))
-        //     return false
-        // }
-
         var updateObj = {
             insertRecords: []
             , updateRecords: []
@@ -290,9 +289,9 @@ ColumnLayout{
             }
 
             newData.sysUpdateFieldNames = sysUpdateFieldNames
-            formPaneData.parent.updateFormDataRequest(newData)
+            formPaneData.parent.editListener(newData)
         } else {
-            formPaneData.parent.addFormDataRequest(newData)
+            formPaneData.parent.addListener(newData)
         }
 
         if (close) { //若有父窗口 则关闭
@@ -304,9 +303,8 @@ ColumnLayout{
         Layout.fillWidth: true
 
         FluText{
-            id: title
             font: FluTextStyle.Subtitle
-            text: formPaneData ? formPaneData.title : ""
+            text: formPaneData.title || ""
             leftPadding: 10
         }
 
@@ -315,7 +313,7 @@ ColumnLayout{
         }
 
         FluFilledButton {
-            visible: title.text !== qsTr("详情")
+            visible: formPaneData.title !== qsTr("详情")
             Layout.rightMargin: 10
             text: qsTr("保存")
             onClicked: formPaneData && formPaneData.formDataSaveListener ? formPaneData.formDataSaveListener() : formDataSave()
@@ -403,7 +401,7 @@ ColumnLayout{
     //子表tab
     FluLoader {
         Layout.fillWidth: true
-        sourceComponent: childTableConfig.length > 0 ? comChildTableTab : undefined
+        sourceComponent: childTableConfig.length > 0 && formPaneData.title !== qsTr("新增") ? comChildTableTab : undefined
         visible: childTableConfig.length > 0 && childTableConfig[0].label //有标签文本才显示
     }
 
@@ -450,58 +448,6 @@ ColumnLayout{
         }
     }
 
-    function procChildTable(i) {
-        if (i < 0 || i >= childTableConfig.length) {
-            return
-        }
-
-        var comTablePane = Qt.createComponent("FluTablePane.qml")
-        if (comTablePane.status !== Component.Ready) {
-            console.error(comTablePane.errorString())
-            return
-        }
-
-        var componentProps = childTableConfig[i].componentProps || {}
-        var properties = {
-            formPane: root
-            , tableId: componentProps.genTableHeadId || componentProps.defaultValue || ""
-            , formId: componentProps.genFormHeadId || "" //暂未支持子表form弹窗
-            , menuId: componentProps.genMenuId || 0
-            , relatedFields: componentProps.relatedField ? componentProps.relatedField.split(":") : []
-        }
-
-        //使用自定义配置
-        var childTableCustomConfig = formPaneData.childTableCustomConfig || []
-        if (childTableCustomConfig.length === childTableConfig.length) { //子表自定义配置合并
-            Object.assign(childTableConfig[i], childTableCustomConfig[i])
-        }
-
-        if (childTableConfig[i].tableModel) {
-            properties.tableModel = childTableConfig[i].tableModel
-        }
-        if (childTableConfig[i].tableConfig) {
-            properties.tableConfig = childTableConfig[i].tableConfig
-        }
-        if (childTableConfig[i].getColumnsUrl) {
-            properties.getColumnsUrl = childTableConfig[i].getColumnsUrl
-        }
-        if (childTableConfig[i].getTableDataUrl) {
-            properties.getTableDataUrl = childTableConfig[i].getTableDataUrl
-        }
-        if (childTableConfig[i].delDataByParamsUrl) {
-            properties.delDataByParamsUrl = childTableConfig[i].delDataByParamsUrl
-        }
-        if (childTableConfig[i].addFormDataUrl) {
-            properties.addFormDataUrl = childTableConfig[i].addFormDataUrl
-        }
-        if (childTableConfig[i].updateFormDataUrl) {
-            properties.updateFormDataUrl = childTableConfig[i].updateFormDataUrl
-        }
-
-        tablePane = comTablePane.createObject(root, properties)
-        tablePanes[i] = tablePane
-    }
-
     Component {
         id: comDelegate
         Item {
@@ -528,10 +474,11 @@ ColumnLayout{
                         return modelData.label
                     }
                 }
-                width: 120
+                width: 80
                 height: 32
                 verticalAlignment: Qt.AlignVCenter
                 horizontalAlignment: Qt.AlignRight
+                wrapMode: Text.WrapAnywhere
             }
 
             FluLoader {

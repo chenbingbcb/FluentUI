@@ -5,10 +5,10 @@ import FluentUI 1.0
 import "../component"
 
 FluWindow {
-    id:window
+    id: window
     minimumWidth: 1000
     minimumHeight: 668
-    launchMode: FluWindowType.SingleInstance
+    // launchMode: FluWindowType.SingleInstance
     property var formPane
 
     Component.onCompleted: {

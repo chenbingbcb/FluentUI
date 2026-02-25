@@ -8,7 +8,7 @@ FluPopup {
     id: control
     property string title: ""
     property string choosedTitle: ""
-    property var columnConfig: [ //默认值 应用层可自定义 第一项固定用于名称展示 第二项固定用于唯一索引
+    property var columnConfig: [ //至少2列 应用层可自定义 第一项固定用于名称展示
         {
             title: "名称",
             dataIndex: 'name',
@@ -20,8 +20,6 @@ FluPopup {
             width:200
         }
     ]
-    property var nameKey: columnConfig[0].dataIndex
-    property var idKey: columnConfig[1].dataIndex
     property var queryClickListener: function(){} //查询回调
 
     property string negativeText: qsTr("关闭")
@@ -279,7 +277,7 @@ FluPopup {
                         var obj = choosedTableView.getRow(row)
                         for (var j = 0; j < table_view.rows; j++) {
                             var item = table_view.getRow(j)
-                            if(item[idKey] === obj[idKey]){
+                            if(item.id === obj.id){
                                 item.checkbox = table_view.customItem(getCheckOrRadioComponent(),{checked:false})
                                 table_view.setRow(j,item)
                                 break
@@ -289,7 +287,7 @@ FluPopup {
                         var temp = choosedTableView.dataSource
                         for (var i = temp.length - 1; i >= 0; i--) {
                             var sourceItem = temp[i]
-                            if(sourceItem[idKey] === obj[idKey]){
+                            if(sourceItem.id === obj.id){
                                 temp.splice(i, 1)
                                 choosedTableView.dataSource = temp
                                 return
@@ -453,7 +451,7 @@ FluPopup {
                         columnSource:[
                             {
                                 title: columnConfig[0].title,
-                                dataIndex: nameKey,
+                                dataIndex: columnConfig[0].dataIndex,
                                 // readOnly:true,
                                 width: 200
                             },
@@ -528,7 +526,7 @@ FluPopup {
         choosedTableView.dataSource.forEach(function(choosed, index) {
             for(var i = 0; i < result.records.length; i++) {
                 var item = result.records[i]
-                if (item[idKey] === choosed[idKey]) {
+                if (item.id === choosed.id) {
                     item.checkbox.options.checked = true
                     break
                 }
@@ -572,7 +570,7 @@ FluPopup {
         var temp = choosedTableView.dataSource
         for (var i = 0; i < temp.length; i++) {
             var sourceItem = temp[i]
-            if(sourceItem[idKey] === obj[idKey]){
+            if(sourceItem.id === obj.id){
                 if (checked) {
                     return //如果存在且勾选 则不添加
                 } else {
@@ -584,11 +582,12 @@ FluPopup {
 
         if (checked) { //如果不存在且勾选 则添加
             var itemChoosed = {}
-            itemChoosed.delete = choosedTableView.customItem(componentDelete)
+            itemChoosed.id = obj.id
             columnConfig.forEach(function(item) {
                 itemChoosed[item.dataIndex] = obj[item.dataIndex]
             })
             itemChoosed._minimumHeight = 50
+            itemChoosed.delete = choosedTableView.customItem(componentDelete)
             temp.push(itemChoosed)
         }
 
@@ -601,13 +600,15 @@ FluPopup {
             for (var i = 0; i < table_view.rows; i++) {
                 var obj = table_view.getRow(i)
                 var itemChoosed = {}
-                itemChoosed.delete = choosedTableView.customItem(componentDelete)
+                itemChoosed.id = obj.id
                 columnConfig.forEach(function(item) {
                     itemChoosed[item.dataIndex] = obj[item.dataIndex]
                 })
                 itemChoosed._minimumHeight = 50
+                itemChoosed.delete = choosedTableView.customItem(componentDelete)
                 temp.push(itemChoosed)
             }
+
             choosedTableView.dataSource = temp
         } else {
             choosedTableView.dataSource = []

@@ -8,15 +8,17 @@ FluCheckComboBox {
     anchors.fill: parent
     placeholder: qsTr("请选择")
     property var textValueMap: ({})
+    property var dictItems
 
     Component.onCompleted: {
         var componentProps = config.componentProps
         if (componentProps && componentProps.dictCode) {
-            var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode] || []
-            model = dictItems.map(function(item) {
-                textValueMap[item.text] = item.value
-                return {text: item.text, value: item.value}
-            })
+            var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
+            if (dictItems) {
+                control.dictItems = dictItems
+            } else {
+                getDictItemsCallable.httpRequest(componentProps.dictCode)
+            }
         }
     }
 
@@ -25,6 +27,48 @@ FluCheckComboBox {
         value = texts.map(function(text) {
             return textValueMap[text]
          }).join(",")
+    }
+
+    onDictItemsChanged: {
+        model = dictItems.map(function(item) {
+            textValueMap[item.text] = item.value
+            return {text: item.text, value: item.value}
+        })
+    }
+
+    FluNetworkCallable{
+        id: getDictItemsCallable
+        property string dictCode: ""
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(dictCode + " failed: " + result))
+                    return
+                }
+
+                GlobalModel.sysAllDictItems[dictCode] = jsResult.result
+                dictItems = jsResult.result
+            }
+
+        function httpRequest(dictCode) {
+            getDictItemsCallable.dictCode = dictCode
+            FluNetwork.get(GlobalModel.basicUrl + "/sys/dict/getDictItems/" + dictCode)
+            .bind(root)
+            .addHeader("S-Token",GlobalModel.token)
+            .go(getDictItemsCallable)
+        }
     }
 
     function initDisplay() {

@@ -7,8 +7,7 @@ import example 1.0
 import "../global"
 
 FluContentPage{
-
-    id:root
+    id: root
     title: qsTr("SelectDemo")
     height: 60
 
