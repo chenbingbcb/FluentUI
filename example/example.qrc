@@ -216,6 +216,7 @@
         <file>qml/page/online-onlineList.qml</file>
         <file>qml/window/onlineFormWindow.qml</file>
         <file>qml/window/authHeadTableWindow.qml</file>
+        <file>qml/window/authMenuWindow.qml</file>
         <file>qml/page/demo-oneToMany.qml</file>
         <file>qml/page/system-SysBusiRuleList.qml</file>
         <file>qml/page/isystem-user.qml</file>

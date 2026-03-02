@@ -286,6 +286,8 @@ FluScrollablePage {
                         FluMenuItem {
                             text: qsTr("菜单权限")
                             onTriggered: {
+                                var obj = tablePane.tableView.getRow(row)
+                                queryTreeListCallable.httpRequest(obj.id)
                             }
                         }
 
@@ -665,6 +667,85 @@ FluScrollablePage {
                 networkParams.add(key, params[key])
             }
             networkParams.go(deptRoleAddCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: queryTreeListCallable
+        property string postfixUrl: "/sys/role/queryTreeList"
+        property string roleId: ""
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                queryRolePermissionCallable.httpRequest(roleId, jsResult.result.treeList)
+            }
+
+        function httpRequest(roleId) {
+            queryTreeListCallable.roleId = roleId
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            networkParams.go(queryTreeListCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: queryRolePermissionCallable
+        property string postfixUrl: "/sys/permission/queryRolePermission"
+        property string roleId: ""
+        property var treeList: []
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                FluRouter.navigate("/authMenuWindow", {
+                                       roleId: roleId,
+                                       rolePermissions: jsResult.result,
+                                       treeList: treeList || [],
+                                   }, tablePane)
+            }
+
+        function httpRequest(roleId, treeList) {
+            queryRolePermissionCallable.roleId = roleId
+            queryRolePermissionCallable.treeList = treeList
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+            .addQuery("roleId", roleId)
+
+            networkParams.go(queryRolePermissionCallable)
         }
     }
 }

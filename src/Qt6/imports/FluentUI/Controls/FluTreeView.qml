@@ -753,4 +753,16 @@ Rectangle {
     function selectionModel(){
         return tree_model.selectionModel()
     }
+
+    function allCheck() {
+        for(var i = 0; i < tree_model.dataSourceSize; i++){
+            tree_model.checkRow(i, true)
+        }
+    }
+
+    function allUncheck() {
+        for(var i = 0; i < tree_model.dataSourceSize; i++){
+            tree_model.checkRow(i, false)
+        }
+    }
 }

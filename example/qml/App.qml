@@ -47,6 +47,7 @@ FluLauncher {
             "/hotkey":"qrc:/example/qml/window/HotkeyWindow.qml",
             "/onlineFormWindow":"qrc:/example/qml/window/onlineFormWindow.qml",
             "/authHeadTableWindow":"qrc:/example/qml/window/authHeadTableWindow.qml",
+            "/authMenuWindow":"qrc:/example/qml/window/authMenuWindow.qml",
         }
         var args = Qt.application.arguments
         if(args.length>=2 && args[1].startsWith("-crashed=")){

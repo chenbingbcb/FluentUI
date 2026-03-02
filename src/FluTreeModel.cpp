@@ -105,6 +105,7 @@ void FluTreeModel::checkRow(int row, bool checked) {
 }
 
 void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
+    bool hasChecked = false;
     _dataSource.clear();
     if (_root) {
         _root->deleteLater();
@@ -127,6 +128,9 @@ void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
             _root->_children.append(node);
         }
         node->_checked = item.value("checked").toBool();
+        if (node->_checked) {
+            hasChecked = true;
+        }
         _dataSource.append(node);
         if (item.contains("children")) {
             QList<QVariant> children = item.value("children").toList();
@@ -145,6 +149,9 @@ void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
     _rows = _dataSource;
     endResetModel();
     dataSourceSize(_dataSource.size());
+    if (hasChecked) {
+        Q_EMIT dataChanged(index(0, 0), index(rowCount() - 1, 0));
+    }
 }
 
 void FluTreeModel::collapse(int row) {
