@@ -212,8 +212,8 @@ Rectangle {
                 topMargin: 6
                 bottomMargin: 6
             }
-            verticalAlignment: dataColumnModel.verticalAlignment || Qt.AlignVCenter
-            horizontalAlignment: dataColumnModel.horizontalAlignment || Qt.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: columnModel.align === "left" ? Text.AlignLeft : Text.AlignHCenter
             MouseArea{
                 acceptedButtons: Qt.NoButton
                 id: hover_handler
@@ -355,38 +355,40 @@ Rectangle {
                     property var model: item_table_mouse._model
                     // property var rowModel: model.rowModel //直接用model.rowModel 因为rowModel会出现跟model.rowModel不同步更新的问题
                     property var columnModel: model.columnModel
-                    property var dataColumnModel: columnModel.dataColumnModel || columnModel //数据列属性无效则用表头列属性 容错处理
                     property int row: model.row
                     property int column: model.column
                     property var display: {
                         var value = model.rowModel[columnModel.dataIndex]
+                        if (value === null || value === undefined) {
+                            return ""
+                        }
+
                         var format = columnModel.format
                         if (typeof format === "string") {
                             if (format.startsWith("column|")) {
                                 value = model.rowModel[format.slice(7)] || value
                             } else if (format.startsWith("dict|")) {
-                                if (value) {
-                                    var dictItems = GlobalModel.sysAllDictItems[format.slice(5)]
-                                    var values = value.split(",")
-                                    var temp = values.map(function(v) {
-                                        for (var i = 0; i < dictItems.length; i++) {
-                                            if (dictItems[i].value === v) {
-                                                return dictItems[i].text
-                                            }
+                                var dictItems = GlobalModel.sysAllDictItems[format.slice(5)]
+                                if (typeof value === "number") {
+                                    value = value.toString()
+                                }
+                                var values = value.split(",")
+                                var temp = values.map(function(v) {
+                                    for (var i = 0; i < dictItems.length; i++) {
+                                        if (dictItems[i].value === v) {
+                                            return dictItems[i].text
                                         }
-                                    })
-                                    value = temp.toString()
-                                }
+                                    }
+                                })
+                                value = temp.toString()
                             } else if (format.startsWith("date|")) {
-                                if (value) {
-                                    var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
-                                    var fixFormat = format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5) //不识别大写的年和日
-                                    value = whole.toLocaleString(FluApp.locale, fixFormat)
-                                }
+                                var whole = Date.fromLocaleString(FluApp.locale, value, "yyyy-MM-dd hh:mm:ss")
+                                var fixFormat = format.replace("YYYY", "yyyy").replace("DD", "dd").slice(5) //不识别大写的年和日
+                                value = whole.toLocaleString(FluApp.locale, fixFormat)
                             }
                         }
 
-                        return value || value !== null ? value : ""
+                        return value
                     }
                     property bool isObject: typeof(display) == "object"
                     property var options: {
@@ -807,8 +809,8 @@ Rectangle {
             id: column_text
             text: model.display.required === true ? "<font color='red'>*</font>" + display : String(display)
             anchors.fill: parent
-            horizontalAlignment: model.display.horizontalAlignment || Qt.AlignHCenter
-            verticalAlignment: model.display.verticalAlignment || Qt.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
          }
     }
     Item{

@@ -19,19 +19,18 @@ ColumnLayout {
     property string editUrl: "/online/genFormAPI/updateFormData/" + tableId //更新单行数据url
     property string queryByIdUrl: "/online/genFormAPI/getDataByParams/" + tableId //获取单行数据url
     property string updateAllUrl: "/demo/testDemo2/updateAll" //更新全部数据url 临时配置
-    property var listListener: listRequest //获取列表数据回调
-    property var deleteListener: deleteRequest //删除单行数据回调
-    property var addListener: addRequest //新增单行数据回调
-    property var editListener: editRequest //更新单行数据回调
-    property var queryByIdListener: queryByIdRequest //获取单行数据回调
-    property var updateAllListener: updateAllRequest //更新全部数据回调
+    property var listCallback: listRequest //获取列表数据回调
+    property var deleteCallback: deleteRequest //删除单行数据回调
+    property var addCallback: addRequest //新增单行数据回调
+    property var editCallback: editRequest //更新单行数据回调
+    property var queryByIdCallback: queryByIdRequest //获取单行数据回调
+    property var updateAllCallback: updateAllRequest //更新全部数据回调
     property var relatedFields: [] //关联字段
     property var relatedRowData //关联行数据
     property string tableTitle: ""
-    property var rowActionDelegate: comRowAction //行操作委托
-    property var rowCustomActionListener: function() {} //row自定义操作回调
-    property var tableCustomActionListener: function() {} //table自定义操作列回调
-    property var customAfterFormListener: function() {} //表单后面自定义组件回调
+    property var rowActionDelegate: comRowAction //行操作委托组件
+    property var tableActionDelegate //列表操作委托组件
+    property var formBelowDelegate //表单下面委托组件
     property var childTableCustomConfig: [] //子表自定义配置
 
     property int tableViewHeight: defaultCellHeight * 10 + 42 //42为表头高度
@@ -42,6 +41,7 @@ ColumnLayout {
     property var defaultButtons: tableConfig && tableConfig.defaultButtons ? tableConfig.defaultButtons : ({})
     property var queryFormConfig: tableConfig && tableConfig.formConfig ? tableConfig.formConfig : ({}) //查询表单配置
     property var editFieldColumn: ({})
+    property string actionName: "action" //默认操作列字段名
     property var queryParams: ({}) //查询字段参数
     property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
     property var removeRecords: [] //删除的table记录
@@ -186,7 +186,7 @@ ColumnLayout {
                 tableData.records.forEach(function(record) {
                     record._key = FluTools.uuid()
                     record._minimumHeight = defaultCellHeight
-                    record.action = tableView.customItem(rowActionDelegate)
+                    record[actionName] = tableView.customItem(rowActionDelegate)
                     dataSource.push(record)
                 })
 
@@ -227,7 +227,7 @@ ColumnLayout {
                     return
                 }
 
-                listListener()
+                listCallback()
             }
     }
 
@@ -268,7 +268,7 @@ ColumnLayout {
                 }
 
                 if (!noRefresh) {
-                    listListener()
+                    listCallback()
                 }
             }
     }
@@ -310,7 +310,7 @@ ColumnLayout {
                 }
 
                 if (!noRefresh) {
-                    listListener()
+                    listCallback()
                 }
             }
     }
@@ -384,7 +384,7 @@ ColumnLayout {
                     return
                 }
 
-                listListener()
+                listCallback()
             }
     }
 
@@ -489,14 +489,14 @@ ColumnLayout {
                                 loaderItem.item.initDisplay()
                             }
                         }
-                        listListener()
+                        listCallback()
                     }
                 }
 
                 FluButton{
                     text: qsTr("查询")
                     onClicked: {
-                        listListener()
+                        listCallback()
                     }
                 }
             }
@@ -525,8 +525,8 @@ ColumnLayout {
                     var rowObj = {
                         _key: uuid
                         , _minimumHeight: defaultCellHeight
-                        , action: tableView.customItem(rowActionDelegate, {newRow: uuid})
                     }
+                    rowObj[actionName] = tableView.customItem(rowActionDelegate, {newRow: uuid})
 
                     for (var field in editFieldColumn) {
                         rowObj[field] = ""
@@ -602,15 +602,12 @@ ColumnLayout {
                 }
 
                 tableView.editedRows = {}
-                updateAllListener(updateObj)
+                updateAllCallback(updateObj)
             }
         }
 
         FluLoader {
-            id: loaderTableCustomAction
-            Component.onCompleted: {
-                tableCustomActionListener(loaderTableCustomAction)
-            }
+            sourceComponent: tableActionDelegate
         }
     }
 
@@ -621,14 +618,13 @@ ColumnLayout {
         Layout.preferredHeight: tableViewHeight
         onLoaded: {
             tableView = item
-            listListener()
+            listCallback()
         }
     }
 
     Component {
         id: comTableView
         FluTableView {
-            id: tableView
             startRowIndex: (gagination.pageCurrent - 1) * gagination.__itemPerPage + 1
             columnSource: {
                 var temp = []
@@ -643,9 +639,10 @@ ColumnLayout {
                         temp.push({
                             title: item.title,
                             dataIndex: item.dataIndex,
-                            format: item.format,
                             width: item.width || defaultCellWidth,
                             minimumWidth: item.width || defaultCellWidth,
+                            align: item.align,
+                            format: item.format,
                             editRow: item.editRow,
                             required: item.editRule,
                             componentProps: item.editComponentProps,
@@ -657,9 +654,10 @@ ColumnLayout {
                 //最后一列操作列固定
                 if (typeof tableConfig.actionColumn === "object") {
                     var actionColumn = tableConfig.actionColumn
+                    actionName = actionColumn.dataIndex
                     temp.push({
                         title: actionColumn.title,
-                        dataIndex: "action",
+                        dataIndex: actionName,
                         width: actionColumn.width || defaultCellWidth,
                         // minimumWidth: actionColumn.width || defaultCellWidth,
                         frozen: true
@@ -714,7 +712,7 @@ ColumnLayout {
                             tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
                         } else {
                             var obj = tableView.getRow(row)
-                            queryByIdListener(obj.id, qsTr("修改"))
+                            queryByIdCallback(obj.id, qsTr("修改"))
                         }
                     }
                 }
@@ -725,7 +723,7 @@ ColumnLayout {
                     iconSize: 15
                     onClicked: {
                         var obj = tableView.getRow(row)
-                        queryByIdListener(obj.id, qsTr("详情"))
+                        queryByIdCallback(obj.id, qsTr("详情"))
                     }
                 }
 
@@ -749,7 +747,7 @@ ColumnLayout {
                                 if (formPane && formPane.childTableConfig.length > 0 && tableModel === "editAllModel") {
                                     removeRecords.push(rowObj)
                                 } else {
-                                    deleteListener(row)
+                                    deleteCallback(row)
                                 }
                             }
 
@@ -788,9 +786,9 @@ ColumnLayout {
                         if (rowObj.id) {
                             updateObj.id = rowObj.id //必须
                             updateObj.sysUpdateFieldNames = sysUpdateFieldNames
-                            editListener(updateObj)
+                            editCallback(updateObj)
                         } else {
-                            addListener(updateObj)
+                            addCallback(updateObj)
                         }
 
                         editButton.visible = true
@@ -824,13 +822,6 @@ ColumnLayout {
                         }
                     }
                 }
-
-                FluLoader {
-                    id: loaderRowCustomAction
-                    Component.onCompleted: {
-                        rowCustomActionListener(row, loaderRowCustomAction)
-                    }
-                }
             }
         }
     }
@@ -851,7 +842,7 @@ ColumnLayout {
                 // tableView.closeEditor()
                 tableView.editedRows = {}
                 tableView.resetPosition()
-                listListener()
+                listCallback()
             }
     }
 
@@ -867,80 +858,8 @@ ColumnLayout {
                                    , title: formTitle
                                    , parent: root
                                    , childTableCustomConfig: childTableCustomConfig
+                                   , formBelowDelegate: formBelowDelegate
                                }
                            }, root)
-    }
-
-    function getComponentByType(component, componentProps) {
-        if (!component) {
-            return null
-        }
-        componentProps = componentProps || {}
-
-        var url = ""
-        switch (component) {
-            case "Input":
-            case "SInput":
-                url = "FluFormInput.qml"
-                break
-            case "Textarea":
-                url = "FluFormTextArea.qml"
-                break
-            case "Password":
-                url = "FluFormPassword.qml"
-                break
-            case "Switch":
-                url = "FluFormSwitch.qml"
-                break
-            case "DatePicker":
-                url = componentProps.showTime === true ? "FluFormDateTimePicker.qml" : "FluFormDatePicker.qml"
-                break
-            case "TimePicker":
-                url = "FluFormTimePicker.qml"
-                break
-            case "SearchSelect":
-                url = "FluFormSearchSelect.qml"
-                break
-            case "RadioGroup":
-                url = "FluFormDictSelectTagRadio.qml"
-                break
-            case "DictSelectTag":
-                url = componentProps.type === "radio" ? "FluFormDictSelectTagRadio.qml" : "FluFormDictSelectTag.qml"
-                break
-            case "MultiSelectTag":
-                url = componentProps.type === "checkbox" ? "FluFormMultiSelectTagCheckBox.qml" : "FluFormMultiSelectTag.qml"
-                break
-            case "SelectMultiUser":
-                url = "FluFormSelectMultiUser.qml"
-                break
-            case "SelectMultiDep":
-                url = "FluFormSelectMultiDep.qml"
-                break
-            case "SelectPost":
-                url = "FluFormSelectPost.qml"
-                break
-            case "SelectMenu":
-                url = "FluFormSelectMenu.qml"
-                break
-            case "SelectForm":
-                url = "FluFormSelectForm.qml"
-                break
-            case "SelectTable":
-                url = "FluFormSelectTable.qml"
-                break
-            case "SelectAuthority":
-                url = "FluFormSelectAuthority.qml"
-                break
-            case "SelectField":
-                url = "FluFormSelectField.qml"
-                break
-            case "SelectButton":
-                url = "FluFormSelectButton.qml"
-                break
-            default:
-                url = "FluFormUnsupported.qml"
-        }
-
-        return Qt.createComponent(url)
     }
 }

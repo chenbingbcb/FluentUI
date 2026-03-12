@@ -5,10 +5,12 @@ import FluentUI
 
 Item {
     id: control
-    property string tableListUrl: "/online/genTableHead/list"
+    property string listUrl: "/online/genTableHead/list"
+    property alias displayText: textBox.text
+    property alias placeholderText: textBox.placeholderText
 
     function tableListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + tableListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -38,7 +40,7 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(tableListUrl + " failed: " + result))
+                    showError(qsTr(listUrl + " failed: " + result))
                     return
                 }
 

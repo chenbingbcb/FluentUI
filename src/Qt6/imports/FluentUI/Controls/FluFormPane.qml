@@ -6,7 +6,7 @@ import FluentUI
 
 ColumnLayout{
     id: root
-    property var formPaneData
+    property var formPaneData //表单面板数据
     property var formConfig: ({}) //表单配置
     property var childTableConfig: [] //子表配置
     property var tabConfig: ({}) //标签配置
@@ -42,9 +42,9 @@ ColumnLayout{
                     }
                 }
                 formConfig.schemas.splice(i, 1)
-            } else if (schema.ifShow === false) {
+            }/* else if (schema.ifShow === false) {
                 formConfig.schemas.splice(i, 1)
-            }
+            }*/
         }
         root.formConfig = formConfig
         root.childTableConfig = childTableConfig
@@ -86,11 +86,7 @@ ColumnLayout{
             tabFields = fields
         }
 
-        if (formPaneData.title !== qsTr("新增")) {
-            formData = formPaneData.formData || {}
-        }
-
-        formPaneData.parent.customAfterFormListener(loaderCustomAfterForm)
+        formData = formPaneData.formData || {}
     }
 
     onFormDataChanged: {
@@ -111,7 +107,9 @@ ColumnLayout{
             }
         }
 
-        procChildTable(0) //子表也需要用到formData
+        if (formPaneData.title !== qsTr("新增")) {
+            procChildTable(0) //子表也需要用到formData
+        }
     }
 
     function procChildTable(i) {
@@ -162,8 +160,8 @@ ColumnLayout{
         if (childTableConfig[i].updateAllUrl) {
             properties.updateAllUrl = childTableConfig[i].updateAllUrl
         }
-        if (childTableConfig[i].tableCustomActionListener) {
-            properties.tableCustomActionListener = childTableConfig[i].tableCustomActionListener
+        if (childTableConfig[i].tableActionDelegate) {
+            properties.tableActionDelegate = childTableConfig[i].tableActionDelegate
         }
 
         tablePane = comTablePane.createObject(root, properties)
@@ -218,7 +216,7 @@ ColumnLayout{
     function formDataSave() {
         var newData = Object.assign({}, formData)
         var sysUpdateFieldNames = []
-        var loaderItem
+        var loaderItem = null
         for (var i = 0; i < tabRepeater.count; i++) {
             loaderItem = tabRepeater.itemAt(i).loaderItem
             if (loaderItem.config.required === true && !loaderItem.value) {
@@ -251,8 +249,10 @@ ColumnLayout{
                     sysUpdateFieldNames.push(loaderItem.config.field)
                 }
             } else {
-                if (loaderItem.value) {
+                if (loaderItem.value !== null && loaderItem.value !== undefined) {
                     newData[loaderItem.config.field] = loaderItem.value
+                } else if (loaderItem.config.defaultValue) {
+                    newData[loaderItem.config.field] = loaderItem.config.defaultValue
                 }
             }
         }
@@ -289,9 +289,9 @@ ColumnLayout{
             }
 
             newData.sysUpdateFieldNames = sysUpdateFieldNames
-            formPaneData.parent.editListener(newData)
+            formPaneData.parent.editCallback(newData)
         } else {
-            formPaneData.parent.addListener(newData)
+            formPaneData.parent.addCallback(newData)
         }
 
         if (close) { //若有父窗口 则关闭
@@ -395,7 +395,7 @@ ColumnLayout{
     }
 
     FluLoader {
-        id: loaderCustomAfterForm
+        sourceComponent: formPaneData && formPaneData.formBelowDelegate ? formPaneData.formBelowDelegate : undefined
     }
 
     //子表tab
@@ -453,6 +453,7 @@ ColumnLayout{
         Item {
             property var columnSpan: modelData.colProps ? (modelData.colProps.span || 8) : 8
             property alias loaderItem: loader
+            visible: modelData.ifShow !== false
             Layout.columnSpan: columnSpan
             Layout.preferredWidth: parent.width / (24 / columnSpan)
             Layout.alignment: Qt.AlignRight | Qt.AlignTop
@@ -494,7 +495,7 @@ ColumnLayout{
                 enabled: !modelData.dynamicDisabled
                 property var config: modelData
                 property var value: null
-                sourceComponent: formPaneData.parent.getComponentByType(config.component, config.componentProps)
+                sourceComponent: getComponentByType(config.component, config.componentProps)
             }
         }
     }

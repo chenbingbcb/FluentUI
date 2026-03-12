@@ -42,9 +42,8 @@ FluScrollablePage {
                     listUrl: "/demo/testDemo2d2/list",
                 }
             ]
-            rowCustomActionListener: rowCustomAction
-            tableCustomActionListener: tableCustomAction
-            customAfterFormListener: customAfterForm
+            tableActionDelegate: comCustomAction
+            formBelowDelegate: comCustomAction
         }
     }
 
@@ -53,20 +52,5 @@ FluScrollablePage {
         FluIconButton {
             iconSource: FluentIcons.Wifi
         }
-    }
-
-    // table自定义操作回调 开口暴露给应用层自定义
-    function tableCustomAction(loaderTableCustomAction) {
-        loaderTableCustomAction.sourceComponent = comCustomAction
-    }
-
-    // row自定义操作回调 开口暴露给应用层自定义
-    function rowCustomAction(row, loaderRowCustomAction) {
-        loaderRowCustomAction.sourceComponent = comCustomAction
-    }
-
-    // 表单后面自定义组件回调 开口暴露给应用层自定义
-    function customAfterForm(loaderCustomAfterForm) {
-        loaderCustomAfterForm.sourceComponent = comCustomAction
     }
 }

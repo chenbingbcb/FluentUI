@@ -6,6 +6,12 @@ import FluentUI
 RowLayout {
     anchors.fill: parent
     spacing: -1
+    property alias dateText: calendarPicker.text
+    property alias currentDate: calendarPicker.current
+    property alias hourText: timePicker.hourText
+    property alias minuteText: timePicker.minuteText
+    property alias secondText: timePicker.secondText
+    property alias currentTime: timePicker.current
     property var valueFormat: {
         if (config && config.componentProps && config.componentProps.valueFormat) {
             return config.componentProps.valueFormat.replace("YYYY", "yyyy").replace("DD", "dd")
@@ -13,7 +19,7 @@ RowLayout {
         return "yyyy-MM-dd hh:mm:ss"
     }
 
-    FluCalendarPicker{
+    FluCalendarPicker {
         id: calendarPicker
 
         onAccepted: {

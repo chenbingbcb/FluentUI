@@ -5,10 +5,12 @@ import FluentUI
 
 Item {
     id: control
-    property string menuListUrl: "/sys/permission/listPer"
+    property string listUrl: "/sys/permission/listPer"
+    property alias displayText: textBox.text
+    property alias placeholderText: textBox.placeholderText
 
     function menuListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + menuListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -38,7 +40,7 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(menuListUrl + " failed: " + result))
+                    showError(qsTr(listUrl + " failed: " + result))
                     return
                 }
 

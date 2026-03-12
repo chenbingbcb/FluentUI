@@ -134,8 +134,8 @@ FluScrollablePage {
 
             FluTablePane {
                 id: userTablePane
-                listListener: userRoleListCallable.httpRequest
-                addListener: userRoleAddCallable.httpRequest
+                listCallback: userRoleListCallable.httpRequest
+                addCallback: userRoleAddCallable.httpRequest
                 tableTitle: "用户管理"
                 tableViewHeight: 250
                 tableConfig: {
@@ -200,8 +200,8 @@ FluScrollablePage {
 
             FluTablePane {
                 id: deptTablePane
-                listListener: deptRoleListCallable.httpRequest
-                addListener: deptRoleAddCallable.httpRequest
+                listCallback: deptRoleListCallable.httpRequest
+                addCallback: deptRoleAddCallable.httpRequest
                 tableTitle: "部门管理"
                 tableViewHeight: 250
                 tableConfig: {
@@ -305,7 +305,7 @@ FluScrollablePage {
                             text: qsTr("编辑")
                             onTriggered: {
                                 var obj = tablePane.tableView.getRow(row)
-                                tablePane.queryByIdListener(obj.id, qsTr("修改"))
+                                tablePane.queryByIdCallback(obj.id, qsTr("修改"))
                             }
                         }
 
@@ -325,7 +325,7 @@ FluScrollablePage {
                                 onPositiveClicked:{
                                     var rowObj = tablePane.tableView.getRow(row)
                                     if (rowObj.id) {
-                                        tablePane.deleteListener(row)
+                                        tablePane.deleteCallback(row)
                                     }
 
                                     tablePane.tableView.removeRow(row)

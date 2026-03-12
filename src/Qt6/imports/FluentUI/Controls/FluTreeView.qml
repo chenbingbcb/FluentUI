@@ -281,6 +281,7 @@ Rectangle {
                         text: String(display)
                         elide: Text.ElideRight
                         verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: columnModel.align === "left" ? Text.AlignLeft : Text.AlignHCenter
                         anchors.fill: parent
                         MouseArea{
                             acceptedButtons: Qt.NoButton
@@ -314,6 +315,7 @@ Rectangle {
                 bottomMargin: 6
             }
             verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: columnModel.align === "left" ? Text.AlignLeft : Text.AlignHCenter
             MouseArea{
                 acceptedButtons: Qt.NoButton
                 id: hover_handler
@@ -358,7 +360,34 @@ Rectangle {
         delegate: MouseArea{
             property var rowObject : rowModel.data
             property alias isRowSelected: item_table_loader.isRowSelected
-            property var display: rowModel.data[columnModel.dataIndex]
+            property var display: {
+                var value = rowModel.data[columnModel.dataIndex]
+                if (value === null || value === undefined) {
+                    return ""
+                }
+
+                var format = columnModel.format
+                if (typeof format === "string") {
+                    if (format.startsWith("dict|")) {
+                        var dictItems = GlobalModel.sysAllDictItems[format.slice(5)]
+                        if (typeof value === "number") {
+                            value = value.toString()
+                        }
+                        var values = value.split(",")
+                        var temp = values.map(function(v) {
+                            for (var i = 0; i < dictItems.length; i++) {
+                                if (dictItems[i].value === v) {
+                                    return dictItems[i].text
+                                }
+                            }
+                        })
+                        value = temp.toString()
+                    }
+                }
+
+                return value
+            }
+
             property bool isObject: typeof(item_table.display) == "object"
             property bool editVisible: {
                 if(rowObject && d.editPosition && d.editPosition._key === rowObject._key && d.editPosition.column === column){
@@ -765,4 +794,13 @@ Rectangle {
             tree_model.checkRow(i, false)
         }
     }
+
+    function getRow(row) {
+        return tree_model.getRow(row).data
+    }
+
+    function removeRows(row, count) {
+        return tree_model.removeRows(row, count)
+    }
+
 }

@@ -20,7 +20,7 @@ FluPopup {
             width:200
         }
     ]
-    property var queryClickListener: function(){} //查询回调
+    property var queryClickListener: function(){} //查询监听器
 
     property string negativeText: qsTr("关闭")
     property string positiveText: qsTr("确定")

@@ -6,8 +6,11 @@ import FluentUI
 FluCheckComboBox {
     id: control
     anchors.fill: parent
-    placeholder: qsTr("请选择")
+    placeholderText: qsTr("请选择")
     listMore: true
+    property var listUrl: qsTr("")
+    property var valField: qsTr("")
+    property var txtField: qsTr("")
     property var textValueMap: ({})
     signal dictItemsUpdated(string key, var dictItems) //字典数据更新通知
 
@@ -17,12 +20,12 @@ FluCheckComboBox {
             listUrl = componentProps.listUrl
             valField = componentProps.valField
             txtField = componentProps.txtField
-            listUrlRequest(listUrl, [valField, txtField], 1)
+            listUrlRequest([valField, txtField], 1)
         }
     }
 
     onMoreButtonClicked: {
-        listUrlRequest(listUrl, [valField, txtField], ++listPageNo)
+        listUrlRequest([valField, txtField], ++listPageNo)
     }
 
     onSelectionChanged: {
@@ -34,7 +37,6 @@ FluCheckComboBox {
 
     FluNetworkCallable{
         id: listUrlCallable
-        property var listUrl
         onStart: {
             showLoading()
         }
@@ -74,8 +76,7 @@ FluCheckComboBox {
         }
     }
 
-    function listUrlRequest(listUrl, fields, pageNo) {
-        listUrlCallable.listUrl = listUrl
+    function listUrlRequest(fields, pageNo) {
         FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(control)
         .addHeader("S-Token",GlobalModel.token)
@@ -91,6 +92,7 @@ FluCheckComboBox {
             return
         }
 
+        control.selectedItems = []
         var values = value.split(",")
         values.forEach(function(v) {
             for(var i = 0; i < control.model.length; i++) {

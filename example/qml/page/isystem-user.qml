@@ -247,7 +247,7 @@ FluScrollablePage {
                 field: 'password',
                 label: '登录密码',
                 required: true,
-                component: 'Password',
+                component: 'InputPassword',
                 "componentProps": {
                     "placeholderText": "请输入登录密码"
                 },
@@ -255,7 +255,7 @@ FluScrollablePage {
             {
                 field: 'confirmpassword',
                 label: '确认密码',
-                component: 'Password',
+                component: 'InputPassword',
                 "componentProps": {
                     "placeholderText": "请重新输入登录密码"
                 },
@@ -353,7 +353,7 @@ FluScrollablePage {
                     return
                 }
 
-                tablePane.listListener()
+                tablePane.listCallback()
             }
 
         function httpRequest(params) {
@@ -736,7 +736,7 @@ FluScrollablePage {
                     iconSize: 15
                     onClicked: {
                         var obj = tablePane.tableView.getRow(row)
-                        tablePane.queryByIdListener(obj.id, qsTr("修改"))
+                        tablePane.queryByIdCallback(obj.id, qsTr("修改"))
                     }
                 }
 
@@ -757,7 +757,7 @@ FluScrollablePage {
                         onPositiveClicked:{
                             var rowObj = tablePane.tableView.getRow(row)
                             if (rowObj.id) {
-                                tablePane.deleteListener(row)
+                                tablePane.deleteCallback(row)
                             }
 
                             tablePane.tableView.removeRow(row)

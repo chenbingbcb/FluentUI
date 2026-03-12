@@ -38,13 +38,13 @@ FluWindow {
                 addUrl: '/online/authHead/addHeader'
                 editUrl: '/online/authHead/updateMainSub'
                 queryByIdUrl: '/online/authHead/queryById'
-                addListener: addHeaderCallable.httpRequest
-                deleteListener: deleteRelCallable.httpRequest
+                addCallback: addHeaderCallable.httpRequest
+                deleteCallback: deleteRelCallable.httpRequest
                 relatedFields: ["id", "roleId"]
                 relatedRowData: argument.relatedRowData
                 tableTitle: "权限管理"
                 rowActionDelegate: comRowAction
-                tableCustomActionListener: root.tableCustomAction
+                tableActionDelegate: comTableCustomAction
                 tableConfig: {
                     "tableModel": "modalSingleModel",
                     "formConfig": {
@@ -254,7 +254,7 @@ FluWindow {
                             },
                         },
                         listUrl: "/online/authFiled/list",
-                        tableCustomActionListener: root.authFieldTableCustomAction
+                        tableActionDelegate: comAuthFieldTableCustomAction
                     },
                     {
                         tableModel: "editAllModel",
@@ -330,7 +330,7 @@ FluWindow {
                             },
                         },
                         listUrl: "/online/authButton/list",
-                        tableCustomActionListener: root.authButtonTableCustomAction
+                        tableActionDelegate: comAuthButtonTableCustomAction
                     },
                     {
                         tableModel: "editAllModel",
@@ -487,7 +487,7 @@ FluWindow {
                             onPositiveClicked:{
                                 var rowObj = tablePane.tableView.getRow(row)
                                 if (rowObj.id) {
-                                    tablePane.deleteListener(row)
+                                    tablePane.deleteCallback(row)
                                 }
 
                                 tablePane.tableView.removeRow(row)
@@ -496,10 +496,6 @@ FluWindow {
                     }
                 }
             }
-        }
-
-        function tableCustomAction(loaderTableCustomAction) {
-            loaderTableCustomAction.sourceComponent = comTableCustomAction
         }
 
         Component {
@@ -543,7 +539,7 @@ FluWindow {
                                 tablePane._to.close()
                             }
 
-                            tablePane.listListener()
+                            tablePane.listCallback()
                         }
 
                     function httpRequest() {
@@ -639,7 +635,7 @@ FluWindow {
                         return
                     }
 
-                    tablePane.listListener()
+                    tablePane.listCallback()
                 }
 
             function httpRequest(row) {
@@ -675,7 +671,7 @@ FluWindow {
                         return
                     }
 
-                    tablePane.listListener()
+                    tablePane.listCallback()
                 }
 
             function httpRequest(params) {
@@ -715,7 +711,7 @@ FluWindow {
                     if (loaderItem.value) {
                         var selectFieldItem = loaderItem.item
                         var codes = loaderItem.value.split(",")
-                        var names = selectFieldItem.textBoxText.split(", ")
+                        var names = selectFieldItem.displayText.split(", ")
 
                         codes.forEach(function(code, index) {
                             var uuid = FluTools.uuid()
@@ -771,10 +767,6 @@ FluWindow {
             }
         }
 
-        function authFieldTableCustomAction(loaderTableCustomAction) {
-            loaderTableCustomAction.sourceComponent = comAuthFieldTableCustomAction
-        }
-
         Component {
             id: comAuthButtonTableCustomAction
             RowLayout {
@@ -798,7 +790,7 @@ FluWindow {
                     if (loaderItem.value) {
                         var selectButtonItem = loaderItem.item
                         var codes = loaderItem.value.split(",")
-                        var permissionTags = selectButtonItem.textBoxText.split(", ")
+                        var permissionTags = selectButtonItem.displayText.split(", ")
 
                         codes.forEach(function(code, index) {
                             var uuid = FluTools.uuid()
@@ -852,10 +844,6 @@ FluWindow {
                     }
                 }
             }
-        }
-
-        function authButtonTableCustomAction(loaderTableCustomAction) {
-            loaderTableCustomAction.sourceComponent = comAuthButtonTableCustomAction
         }
     }
 }

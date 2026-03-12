@@ -5,10 +5,12 @@ import FluentUI
 
 Item {
     id: control
-    property string sysUserListUrl: "/sys/user/list"
+    property string listUrl: "/sys/user/list"
+    property alias displayText: textBox.text
+    property alias placeholderText: textBox.placeholderText
 
     function sysUserListRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + sysUserListUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -38,7 +40,7 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(sysUserListUrl + " failed: " + result))
+                    showError(qsTr(listUrl + " failed: " + result))
                     return
                 }
 

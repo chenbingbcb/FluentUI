@@ -5,13 +5,14 @@ import FluentUI
 
 Item {
     id: control
-    property string relButtonUrl: "/online/authHead/relButton"
+    property string listUrl: "/online/authHead/relButton"
     property string formId: ""
     property string tableId: ""
-    property alias textBoxText: textBox.text
+    property alias displayText: textBox.text
+    property alias placeholderText: textBox.placeholderText
 
     function relButtonRequest(queryParams, display) {
-        var networkParams = FluNetwork.get(GlobalModel.basicUrl + relButtonUrl)
+        var networkParams = FluNetwork.get(GlobalModel.basicUrl + listUrl)
         .bind(control)
         .addHeader("S-Token", GlobalModel.token)
 
@@ -44,7 +45,7 @@ Item {
                 var jsResult = JSON.parse(result)
                 console.debug(JSON.stringify(jsResult, null, 2))
                 if (jsResult.code !== 200) {
-                    showError(qsTr(relButtonUrl + " failed: " + result))
+                    showError(qsTr(listUrl + " failed: " + result))
                     return
                 }
 

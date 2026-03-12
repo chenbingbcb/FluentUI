@@ -273,7 +273,7 @@ FluContentPage{
 
             FluCheckComboBox {
                 id: comboMultiSelectTag
-                placeholder: qsTr("请做出你的选择")
+                placeholderText: qsTr("请做出你的选择")
                 onSelectionChanged: {
                     console.log("选中项:", selectedItems)
                     var str = selectedItems.map(function(item) {
@@ -310,7 +310,7 @@ FluContentPage{
             FluCheckComboBox {
                 id: comboSearchSelect
                 listMore: true
-                placeholder: qsTr("请做出你的选择")
+                placeholderText: qsTr("请做出你的选择")
                 onSelectionChanged: {
                     console.log("选中项:", selectedItems)
                     var str = selectedItems.map(function(item) {

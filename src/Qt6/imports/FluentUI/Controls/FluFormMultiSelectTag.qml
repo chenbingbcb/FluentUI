@@ -6,7 +6,7 @@ import FluentUI
 FluCheckComboBox {
     id: control
     anchors.fill: parent
-    placeholder: qsTr("请选择")
+    placeholderText: qsTr("请选择")
     property var textValueMap: ({})
     property var dictItems
 
@@ -76,6 +76,7 @@ FluCheckComboBox {
             return
         }
 
+        control.selectedItems = []
         var values = value.split(",")
         values.forEach(function(v) {
             for(var i = 0; i < control.model.length; i++) {

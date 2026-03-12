@@ -42,8 +42,6 @@ FluWindow {
     FluScrollablePage {
         id: root
         anchors.fill: parent
-        Component.onCompleted: {
-        }
 
         FluTreeView {
             id: treeView
@@ -62,7 +60,8 @@ FluWindow {
                 {
                     title: qsTr("所拥有的权限"),
                     dataIndex: 'title',
-                    width: treeView.width
+                    width: treeView.width,
+                    align: 'left',
                 }
             ]
             Component.onCompleted: {
@@ -119,7 +118,7 @@ FluWindow {
                     }
 
                     FluMenuItem {
-                        text: qsTr("合并左右")
+                        text: qsTr("合并所有")
                         onTriggered: {
                             treeView.allCollapse()
                         }

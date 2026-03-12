@@ -386,4 +386,77 @@ Window {
     function containerItem(){
         return layout_container
     }
+
+    function getComponentByType(component, componentProps) {
+        if (!component) {
+            return null
+        }
+        componentProps = componentProps || {}
+
+        var url = ""
+        switch (component) {
+            case "Input":
+            case "SInput":
+                url = "FluFormInput.qml"
+                break
+            case "InputPassword":
+                url = "FluFormPassword.qml"
+                break
+            case "Textarea":
+                url = "FluFormTextArea.qml"
+                break
+            case "Switch":
+                url = "FluFormSwitch.qml"
+                break
+            case "DatePicker":
+                url = componentProps.showTime === true ? "FluFormDateTimePicker.qml" : "FluFormDatePicker.qml"
+                break
+            case "TimePicker":
+                url = "FluFormTimePicker.qml"
+                break
+            case "SearchSelect":
+                url = "FluFormSearchSelect.qml"
+                break
+            case "RadioGroup":
+                url = "FluFormDictSelectTagRadio.qml"
+                break
+            case "DictSelectTag":
+                url = componentProps.type === "radio" ? "FluFormDictSelectTagRadio.qml" : "FluFormDictSelectTag.qml"
+                break
+            case "MultiSelectTag":
+                url = componentProps.type === "checkbox" ? "FluFormMultiSelectTagCheckBox.qml" : "FluFormMultiSelectTag.qml"
+                break
+            case "SelectMultiUser":
+                url = "FluFormSelectMultiUser.qml"
+                break
+            case "SelectMultiDep":
+                url = "FluFormSelectMultiDep.qml"
+                break
+            case "SelectPost":
+                url = "FluFormSelectPost.qml"
+                break
+            case "SelectMenu":
+                url = "FluFormSelectMenu.qml"
+                break
+            case "SelectForm":
+                url = "FluFormSelectForm.qml"
+                break
+            case "SelectTable":
+                url = "FluFormSelectTable.qml"
+                break
+            case "SelectAuthority":
+                url = "FluFormSelectAuthority.qml"
+                break
+            case "SelectField":
+                url = "FluFormSelectField.qml"
+                break
+            case "SelectButton":
+                url = "FluFormSelectButton.qml"
+                break
+            default:
+                url = "FluFormUnsupported.qml"
+        }
+
+        return Qt.createComponent(url)
+    }
 }

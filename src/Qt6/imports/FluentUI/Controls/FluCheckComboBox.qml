@@ -11,12 +11,9 @@ FluFrame {
 
     // 公共属性
     property var model: []
-    property string placeholder: qsTr("")
+    property string placeholderText: qsTr("")
     property var selectedItems: []
     property bool popupVisible: false
-    property var listUrl: qsTr("")
-    property var valField: qsTr("")
-    property var txtField: qsTr("")
     property bool listMore: false
     property int listPageNo: 1
 
@@ -45,7 +42,7 @@ FluFrame {
         TextArea.flickable: FluMultilineTextBox {
             id: textBox
             text: control.displayText
-            placeholderText: control.placeholder
+            placeholderText: control.placeholderText
             readOnly: true
             wrapMode: Text.WrapAnywhere
             activeFocusOnPress: false
