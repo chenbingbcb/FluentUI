@@ -181,19 +181,23 @@ ColumnLayout {
                     return
                 }
 
-                var tableData = jsResult.result
                 var dataSource = []
-                tableData.records.forEach(function(record) {
+                if (jsResult.result.records) {
+                    dataSource = jsResult.result.records
+                    gagination.itemCount = jsResult.result.total || 0
+                    gagination.__itemPerPage = jsResult.result.size || 10
+                } else {
+                    dataSource = jsResult.result
+                }
+
+                dataSource.forEach(function(record) {
                     record._key = FluTools.uuid()
                     record._minimumHeight = defaultCellHeight
                     record[actionName] = tableView.customItem(rowActionDelegate)
-                    dataSource.push(record)
                 })
 
                 tableView.dataSource = dataSource
                 tableView.editedRows = {}
-                gagination.itemCount = tableData.total || 0
-                gagination.__itemPerPage = tableData.size || 10
             }
     }
 
@@ -315,18 +319,25 @@ ColumnLayout {
             }
     }
 
-    function queryByIdRequest(rowDataId, formTitle) {
+    function queryByIdRequest(rowObj, formTitle, saveButtonInvisile) {
+        if (!queryByIdUrl) { //兼容直接使用该行数据的情况
+            openFormWindow(rowObj, formTitle, saveButtonInvisile)
+            return
+        }
+
         queryByIdCallable.formTitle = formTitle
+        queryByIdCallable.saveButtonInvisile = saveButtonInvisile
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + queryByIdUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
-        .addQuery("id", rowDataId)
+        .addQuery("id", rowObj.id)
         .go(queryByIdCallable)
     }
 
     FluNetworkCallable{
         id: queryByIdCallable
         property string formTitle: ""
+        property var saveButtonInvisile
         onStart: {
             showLoading()
         }
@@ -346,7 +357,7 @@ ColumnLayout {
                     return
                 }
 
-                openFormWindow(jsResult.result, formTitle)
+                openFormWindow(jsResult.result, formTitle, saveButtonInvisile)
             }
     }
 
@@ -712,7 +723,7 @@ ColumnLayout {
                             tableView.editedRows = Object.defineProperty(tableView.editedRows, model.rowModel._key, {value: row, writable: true, enumerable: true})
                         } else {
                             var obj = tableView.getRow(row)
-                            queryByIdCallback(obj.id, qsTr("修改"))
+                            queryByIdCallback(obj, qsTr("修改"))
                         }
                     }
                 }
@@ -723,7 +734,7 @@ ColumnLayout {
                     iconSize: 15
                     onClicked: {
                         var obj = tableView.getRow(row)
-                        queryByIdCallback(obj.id, qsTr("详情"))
+                        queryByIdCallback(obj, qsTr("详情"), true)
                     }
                 }
 
@@ -850,15 +861,15 @@ ColumnLayout {
         Layout.fillHeight: true
     }
 
-    function openFormWindow(rowFormData, formTitle) {
+    function openFormWindow(rowFormData, formTitle, saveButtonInvisile) {
         FluRouter.navigate("/onlineFormWindow", {
                                formPaneData: {
                                    formConfig: formConfig
                                    , formData: rowFormData
                                    , title: formTitle
-                                   , parent: root
                                    , childTableCustomConfig: childTableCustomConfig
                                    , formBelowDelegate: formBelowDelegate
+                                   , saveButtonInvisile: saveButtonInvisile
                                }
                            }, root)
     }

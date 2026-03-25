@@ -418,6 +418,7 @@ Window {
                 url = "FluFormSearchSelect.qml"
                 break
             case "RadioGroup":
+            case "RadioButtonGroup":
                 url = "FluFormDictSelectTagRadio.qml"
                 break
             case "DictSelectTag":
@@ -453,6 +454,9 @@ Window {
             case "SelectButton":
                 url = "FluFormSelectButton.qml"
                 break
+            // case "TreeSelect":
+            //     url = "FluFormTreeSelect.qml"
+            //     break
             default:
                 url = "FluFormUnsupported.qml"
         }

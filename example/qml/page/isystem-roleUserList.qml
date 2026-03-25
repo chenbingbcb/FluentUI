@@ -305,7 +305,7 @@ FluScrollablePage {
                             text: qsTr("编辑")
                             onTriggered: {
                                 var obj = tablePane.tableView.getRow(row)
-                                tablePane.queryByIdCallback(obj.id, qsTr("修改"))
+                                tablePane.queryByIdCallback(obj, qsTr("修改"))
                             }
                         }
 

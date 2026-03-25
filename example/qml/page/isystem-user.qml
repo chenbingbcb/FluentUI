@@ -157,7 +157,6 @@ FluScrollablePage {
                                        formPaneData: {
                                            formConfig: infoAssignFormConfig
                                            , title: qsTr("角色\\部门分配")
-                                           , parent: tablePane
                                            , formData: infoAssignFormData
                                            , formDataSaveListener: infoAssignFormDataSave
                                        }
@@ -736,7 +735,7 @@ FluScrollablePage {
                     iconSize: 15
                     onClicked: {
                         var obj = tablePane.tableView.getRow(row)
-                        tablePane.queryByIdCallback(obj.id, qsTr("修改"))
+                        tablePane.queryByIdCallback(obj, qsTr("修改"))
                     }
                 }
 
@@ -796,7 +795,6 @@ FluScrollablePage {
                                                        formPaneData: {
                                                            formConfig: passwordFormConfig
                                                            , title: qsTr("重新设定密码")
-                                                           , parent: tablePane
                                                            , formData: passwordFormData
                                                            , formDataSaveListener: passwordFormDataSave
                                                        }
@@ -845,7 +843,6 @@ FluScrollablePage {
                                                        formPaneData: {
                                                            formConfig: busiRuleFormConfig
                                                            , title: qsTr("详情")
-                                                           , parent: tablePane
                                                            , formData: busiRuleFormData
                                                        }
                                                    }, tablePane)

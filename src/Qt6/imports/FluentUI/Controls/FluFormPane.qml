@@ -14,6 +14,7 @@ ColumnLayout{
     property var formData //该行表单数据
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
+    property bool forceSave: false
     property alias formRepeater: repeater
     Layout.fillWidth: true
 
@@ -87,25 +88,32 @@ ColumnLayout{
         }
 
         formData = formPaneData.formData || {}
-    }
-
-    onFormDataChanged: {
-        var loaderItem = null
-        for (var i = 0; i < tabRepeater.count; i++) {
-            loaderItem = tabRepeater.itemAt(i).loaderItem
-            loaderItem.value = formData[loaderItem.config.field] || null
+        var isNew = formPaneData.title === qsTr("新增")
+        tabRepeater.model.forEach(function(item, i) {
+            var loaderItem = tabRepeater.itemAt(i).loaderItem
+            var value = formData[loaderItem.config.field]
+            if (isNew) {
+                loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+            } else {
+                loaderItem.value = value === undefined ? null : value
+            }
             if (loaderItem.item.initDisplay) {
                 loaderItem.item.initDisplay()
             }
-        }
+        })
 
-        for (var j = 0; j < repeater.count; j++) {
-            loaderItem = repeater.itemAt(j).loaderItem
-            loaderItem.value = formData[loaderItem.config.field] || null
+        repeater.model.forEach(function(item, i) {
+            var loaderItem = repeater.itemAt(i).loaderItem
+            var value = formData[loaderItem.config.field]
+            if (isNew) {
+                loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+            } else {
+                loaderItem.value = value === undefined ? null : value
+            }
             if (loaderItem.item.initDisplay) {
                 loaderItem.item.initDisplay()
             }
-        }
+        })
 
         if (formPaneData.title !== qsTr("新增")) {
             procChildTable(0) //子表也需要用到formData
@@ -142,6 +150,9 @@ ColumnLayout{
         if (childTableConfig[i].tableConfig) {
             properties.tableConfig = childTableConfig[i].tableConfig
         }
+        if (childTableConfig[i].formConfig) {
+            properties.formConfig = childTableConfig[i].formConfig
+        }
         if (childTableConfig[i].columnsUrl) {
             properties.columnsUrl = childTableConfig[i].columnsUrl
         }
@@ -156,6 +167,9 @@ ColumnLayout{
         }
         if (childTableConfig[i].editUrl) {
             properties.editUrl = childTableConfig[i].editUrl
+        }
+        if (childTableConfig[i].queryByIdUrl !== null && childTableConfig[i].queryByIdUrl !== undefined) { //兼容直接使用该行数据的情况
+            properties.queryByIdUrl = childTableConfig[i].queryByIdUrl
         }
         if (childTableConfig[i].updateAllUrl) {
             properties.updateAllUrl = childTableConfig[i].updateAllUrl
@@ -219,7 +233,7 @@ ColumnLayout{
         var loaderItem = null
         for (var i = 0; i < tabRepeater.count; i++) {
             loaderItem = tabRepeater.itemAt(i).loaderItem
-            if (loaderItem.config.required === true && !loaderItem.value) {
+            if (tabRepeater.itemAt(i).required === true && !loaderItem.value) {
                 showError(loaderItem.config.label + qsTr("不能为空"))
                 return
             }
@@ -238,7 +252,7 @@ ColumnLayout{
 
         for (var j = 0; j < repeater.count; j++) {
             loaderItem = repeater.itemAt(j).loaderItem
-            if (loaderItem.config.required === true && !loaderItem.value) {
+            if (repeater.itemAt(j).required === true && !loaderItem.value) {
                 showError(loaderItem.config.label + qsTr("不能为空"))
                 return
             }
@@ -279,7 +293,7 @@ ColumnLayout{
                 isChildTableUpdate = true
             }
 
-            if (sysUpdateFieldNames.length <= 0 && !isChildTableUpdate) {
+            if (sysUpdateFieldNames.length <= 0 && !isChildTableUpdate && !forceSave) {
                 showInfo(qsTr("无可更新"))
                 return
             }
@@ -289,9 +303,9 @@ ColumnLayout{
             }
 
             newData.sysUpdateFieldNames = sysUpdateFieldNames
-            formPaneData.parent.editCallback(newData)
+            _windowRegister.editCallback(newData)
         } else {
-            formPaneData.parent.addCallback(newData)
+            _windowRegister.addCallback(newData)
         }
 
         if (close) { //若有父窗口 则关闭
@@ -313,7 +327,7 @@ ColumnLayout{
         }
 
         FluFilledButton {
-            visible: formPaneData.title !== qsTr("详情")
+            visible: !formPaneData.saveButtonInvisile //默认显示
             Layout.rightMargin: 10
             text: qsTr("保存")
             onClicked: formPaneData && formPaneData.formDataSaveListener ? formPaneData.formDataSaveListener() : formDataSave()
@@ -453,7 +467,18 @@ ColumnLayout{
         Item {
             property var columnSpan: modelData.colProps ? (modelData.colProps.span || 8) : 8
             property alias loaderItem: loader
-            visible: modelData.ifShow !== false
+            property bool required: {
+                if (typeof modelData.required === "function" && formData) {
+                    return modelData.required(formData)
+                }
+                return modelData.required === true
+            }
+            visible: {
+                if (typeof modelData.ifShow === "function" && formData) {
+                    return modelData.ifShow(formData)
+                }
+                return modelData.ifShow !== false
+            }
             Layout.columnSpan: columnSpan
             Layout.preferredWidth: parent.width / (24 / columnSpan)
             Layout.alignment: Qt.AlignRight | Qt.AlignTop
@@ -469,7 +494,7 @@ ColumnLayout{
                     top: parent.top
                 }
                 text: {
-                    if (modelData.required === true) {
+                    if (required === true) {
                         return "<font color='red'>*</font>" + modelData.label
                     } else {
                         return modelData.label
@@ -484,7 +509,7 @@ ColumnLayout{
 
             FluLoader {
                 id: loader
-                anchors{
+                anchors {
                     left: label.right
                     right: parent.right
                     top: parent.top
@@ -493,9 +518,21 @@ ColumnLayout{
                     rightMargin: 5
                 }
                 enabled: !modelData.dynamicDisabled
+                sourceComponent: getComponentByType(config.component, config.componentProps)
                 property var config: modelData
                 property var value: null
-                sourceComponent: getComponentByType(config.component, config.componentProps)
+                signal updateSchema(var value)
+
+                Connections{
+                    target: loader
+                    ignoreUnknownSignals: true
+                    function onUpdateSchema(value) {
+                        if (formData[modelData.field] !== value) {
+                            formData = Object.defineProperty(formData, modelData.field, {value: value, writable: true, enumerable: true})
+                            forceSave = true
+                        }
+                    }
+                }
             }
         }
     }

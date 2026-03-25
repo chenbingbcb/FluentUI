@@ -12,6 +12,7 @@ Rectangle {
     property int cellHeight: 30
     property int depthPadding: 15
     property bool checkable: false
+    property bool showHeader: true
     property color lineColor: FluTheme.dividerColor
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
     property color selectedBorderColor: FluTheme.primaryColor
@@ -336,7 +337,7 @@ Rectangle {
         boundsBehavior: Flickable.StopAtBounds
         model: tree_model
         anchors{
-            top: header_horizontal.bottom
+            top: showHeader ? header_horizontal.bottom : parent.top
             left: parent.left
             right: parent.right
             bottom: parent.bottom
@@ -708,6 +709,7 @@ Rectangle {
 
     TableView {
         id: header_horizontal
+        visible: showHeader
         model: header_column_model
         anchors{
             left: table_view.left

@@ -54,7 +54,7 @@ FluWindow {
             showLine: false
             checkable: true
             onCurrentChanged: {
-                showInfo(current.data.title)
+                // showInfo(current.data.title)
             }
             columnSource: [
                 {

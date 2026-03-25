@@ -6,8 +6,6 @@ import Qt.labs.qmlmodels
 import FluentUI
 
 Rectangle {
-    property int test: 0
-    signal editClicked(int r)
     readonly property alias rows: table_view.rows
     readonly property alias columns: table_view.columns
     readonly property alias current: d.current

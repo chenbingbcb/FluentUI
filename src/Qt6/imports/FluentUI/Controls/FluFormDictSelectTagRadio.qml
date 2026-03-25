@@ -19,8 +19,8 @@ Rectangle {
                 for(var i = 0; i < control.buttons.length; i++){
                     var button = control.buttons[i]
                     if(this === button){
-                        control.currentIndex = i
                         value = button.value
+                        control.currentIndex = i
                         break
                     }
                 }
@@ -68,6 +68,12 @@ Rectangle {
         id: control
         anchors.verticalCenter: parent.verticalCenter
         orientation: Qt.Horizontal
+
+        onCurrentIndexChanged: {
+            if (config.updateSchema) {
+                updateSchema(value)
+            }
+        }
 
         Component.onCompleted: {
             var componentProps = config.componentProps

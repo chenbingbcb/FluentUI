@@ -19,6 +19,7 @@ ColumnLayout {
     property var editCallback: editRequest //更新单行数据回调
     property var queryByIdCallback: queryByIdRequest //获取单行数据回调
     property string treeTitle: ""
+    property var treeActionDelegate: comTreeAction //树操作委托
     property var rowActionDelegate: comRowAction //行操作委托
     property int treeViewHeight: defaultCellHeight * 10 + 42 //42为表头高度
     property int defaultCellWidth: 200
@@ -216,12 +217,12 @@ ColumnLayout {
             }
     }
 
-    function queryByIdRequest(rowDataId, formTitle) {
+    function queryByIdRequest(rowObj, formTitle) {
         queryByIdCallable.formTitle = formTitle
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + queryByIdUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
-        .addQuery("id", rowDataId)
+        .addQuery("id", rowObj.id)
         .go(queryByIdCallable)
     }
 
@@ -251,6 +252,17 @@ ColumnLayout {
             }
     }
 
+    Component {
+        id: comTreeAction
+        FluFilledButton {
+            visible: true
+            text: qsTr("新增")
+            onClicked: {
+                openFormWindow({pid: "0"}, qsTr("新增"))
+            }
+        }
+    }
+
     RowLayout {
         Layout.fillWidth: true
         // Layout.alignment: Qt.AlignRight
@@ -264,12 +276,8 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
-        FluFilledButton {
-            visible: true
-            text: qsTr("新增")
-            onClicked: {
-                openFormWindow({pid: "0"}, qsTr("新增"))
-            }
+        FluLoader {
+            sourceComponent: treeActionDelegate
         }
     }
 
@@ -319,7 +327,7 @@ ColumnLayout {
                 }
 
                 if (temp.length === 0) {
-                    return
+                    return []
                 }
 
                 return temp
@@ -342,7 +350,7 @@ ColumnLayout {
                     iconSize: 15
                     onClicked: {
                         var obj = treeView.getRow(row)
-                        queryByIdCallback(obj.id, qsTr("修改"))
+                        queryByIdCallback(obj, qsTr("修改"))
                     }
                 }
 
@@ -411,7 +419,6 @@ ColumnLayout {
                                    formConfig: formConfig
                                    , formData: rowFormData
                                    , title: formTitle
-                                   , parent: root
                                }
                            }, root)
     }

@@ -433,7 +433,6 @@ FluWindow {
                                                formConfig: tablePane.formConfig
                                                , formData: jsResult.result
                                                , title: formTitle
-                                               , parent: tablePane
                                                , childTableCustomConfig: tablePane.childTableCustomConfig
                                            }
                                        }, tablePane)
@@ -563,7 +562,6 @@ FluWindow {
                                                formPaneData: {
                                                    formConfig: relateAuthFormConfig
                                                    , title: qsTr("关联权限")
-                                                   , parent: tablePane
                                                    , formDataSaveListener: relHeaderCallable.httpRequest
                                                }
                                            }, tablePane)
@@ -752,7 +750,6 @@ FluWindow {
                                                formPaneData: {
                                                    formConfig: authFieldFormConfig
                                                    , title: qsTr("关联字段")
-                                                   , parent: childTablePane
                                                    , formDataSaveListener: rowRelField.authFieldAdd
                                                }
                                            }, childTablePane)
@@ -831,7 +828,6 @@ FluWindow {
                                                formPaneData: {
                                                    formConfig: authButtonFormConfig
                                                    , title: qsTr("关联按钮")
-                                                   , parent: childTablePane
                                                    , formDataSaveListener: rowRelButton.authButtonAdd
                                                }
                                            }, childTablePane)

@@ -223,7 +223,9 @@
         <file>qml/page/isystem-roleUserList.qml</file>
         <file>qml/page/isystem-position.qml</file>
         <file>qml/page/system-SysPostList.qml</file>
+        <file>qml/page/isystem-permission.qml</file>
         <file>qml/page/isys-category.qml</file>
+        <file>qml/page/isystem-annountCement.qml</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>
