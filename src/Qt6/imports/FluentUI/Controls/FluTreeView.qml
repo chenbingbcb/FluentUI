@@ -434,14 +434,14 @@ Rectangle {
                 obj.height = item_table.height - 2
                 d.editPosition = obj
             }
-            onDoubleClicked:{
-                if(typeof(display) == "object"){
-                    return
-                }
-                d.editDelegate = d.getEditDelegate(column)
-                updateEditPosition()
-                loader_edit.display = display
-            }
+            // onDoubleClicked:{
+            //     if(typeof(display) == "object"){
+            //         return
+            //     }
+            //     d.editDelegate = d.getEditDelegate(column)
+            //     updateEditPosition()
+            //     loader_edit.display = display
+            // }
             onClicked:
                 (event)=>{
                     d.current = rowModel

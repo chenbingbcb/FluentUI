@@ -93,7 +93,11 @@ ColumnLayout{
             var loaderItem = tabRepeater.itemAt(i).loaderItem
             var value = formData[loaderItem.config.field]
             if (isNew) {
-                loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                if (value === undefined) {
+                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                } else {
+                    loaderItem.value = value
+                }
             } else {
                 loaderItem.value = value === undefined ? null : value
             }
@@ -106,7 +110,11 @@ ColumnLayout{
             var loaderItem = repeater.itemAt(i).loaderItem
             var value = formData[loaderItem.config.field]
             if (isNew) {
-                loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                if (value === undefined) {
+                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                } else {
+                    loaderItem.value = value
+                }
             } else {
                 loaderItem.value = value === undefined ? null : value
             }

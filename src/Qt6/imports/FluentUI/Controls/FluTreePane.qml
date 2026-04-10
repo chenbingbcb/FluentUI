@@ -53,7 +53,7 @@ ColumnLayout {
 
             // 如果存在children，则递归处理
             if (node.children && treeList.length) {
-                node.children = procTreeList(node.children);
+                node.children = procTreeList(node.children)
             }
 
             return node;

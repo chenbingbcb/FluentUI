@@ -29,7 +29,7 @@ FluWindow {
 
                     // 如果存在children，则递归处理
                     if (node.children && treeList.length) {
-                        newNode.children = procTreeList(node.children);
+                        newNode.children = procTreeList(node.children)
                     }
 
                     return newNode;

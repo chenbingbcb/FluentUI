@@ -131,6 +131,7 @@ void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
         if (node->_checked) {
             hasChecked = true;
         }
+        node->_orderIndex = _dataSource.size();
         _dataSource.append(node);
         if (item.contains("children")) {
             QList<QVariant> children = item.value("children").toList();

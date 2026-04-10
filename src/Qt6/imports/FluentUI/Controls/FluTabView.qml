@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import FluentUI
 
 Item {
-    property int tabWidthBehavior : FluTabViewType.Equal
+    property int tabWidthBehavior : FluTabViewType.SizeToContent
     property int closeButtonVisibility : FluTabViewType.Always
     property int itemWidth: 146
     property bool addButtonVisibility: true
@@ -38,7 +38,7 @@ Item {
         visible: addButtonVisibility
         width: 34
         height: 34
-        x:Math.min(tab_nav.contentWidth,tab_nav.width)
+        x: Math.min(tab_nav.contentWidth,tab_nav.width)
         anchors.top: parent.top
         iconSource: FluentIcons.Add
         onClicked: {
@@ -53,7 +53,7 @@ Item {
             top: parent.top
             left: parent.left
             right: parent.right
-            rightMargin: 34
+            rightMargin: addButtonVisibility ? 34 : 0
         }
         interactive: false
         model: tab_model
@@ -62,13 +62,13 @@ Item {
             NumberAnimation { properties: "y"; duration: 100; easing.type: Easing.OutCubic }
         }
         moveDisplaced: Transition {
-            NumberAnimation { properties: "x"; duration: 300; easing.type: Easing.OutCubic}
+            NumberAnimation { properties: "x"; duration: 300; easing.type: Easing.OutCubic }
             NumberAnimation { properties: "y"; duration: 100;  easing.type: Easing.OutCubic }
         }
         clip: true
         ScrollBar.horizontal: ScrollBar{
             id: scroll_nav
-            policy: ScrollBar.AlwaysOff
+            policy: ScrollBar.AsNeeded
         }
         delegate:  Item{
             width: item_layout.width

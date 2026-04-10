@@ -1039,10 +1039,44 @@ Item {
                 }
             }
         }
+
+        ColumnLayout {
+            id: naviTitle
+            height: 150
+            anchors {
+                top: layout_header.bottom
+                left: parent.left
+                right: parent.right
+            }
+            Image {
+                Layout.topMargin: 20
+                Layout.leftMargin: 20
+                Layout.preferredWidth: 50
+                Layout.preferredHeight: 50
+                source: "qrc:/example/res/image/favicon.ico"
+            }
+            FluText{
+                text: qsTr("XXX")
+                font: FluTextStyle.Body
+                Layout.topMargin: 20
+                Layout.leftMargin: 20
+            }
+            FluText{
+                text: qsTr("XXXXXXXXXXXXXXX")
+                Layout.topMargin: 5
+                Layout.bottomMargin: 20
+                Layout.leftMargin: 20
+                color: FluColors.Grey120
+                // font.pixelSize: 12
+                font.family: FluTextStyle.family
+                wrapMode: Text.WrapAnywhere
+            }
+        }
+
         Flickable{
             id:layout_flickable
             anchors{
-                top: layout_header.bottom
+                top: naviTitle.bottom
                 topMargin: 6
                 left: parent.left
                 right: parent.right

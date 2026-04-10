@@ -378,7 +378,7 @@ FluScrollablePage {
             visible: true
             text: qsTr("新增")
             onClicked: {
-                permissionListCallable.httpRequest(null)
+                permissionListCallable.httpRequest(null, text)
             }
         }
     }
@@ -394,7 +394,7 @@ FluScrollablePage {
                     text: qsTr("编辑")
                     onClicked: {
                         var rowObj = treePane.treeView.getRow(row)
-                        permissionListCallable.httpRequest(rowObj)
+                        permissionListCallable.httpRequest(rowObj, text)
                     }
                 }
 
@@ -414,7 +414,7 @@ FluScrollablePage {
                             text: qsTr("添加下级")
                             onTriggered: {
                               var rowObj = treePane.treeView.getRow(row)
-                              permissionListCallable.httpRequest(rowObj)
+                              permissionListCallable.httpRequest({menuType: 1, parentId: rowObj.id}, qsTr("新增"))
                             }
                         }
 
@@ -468,6 +468,7 @@ FluScrollablePage {
         id: permissionListCallable
         property string postfixUrl: "/sys/permission/list"
         property var rowObj
+        property var formTitle
         onStart: {
             showLoading()
         }
@@ -488,16 +489,12 @@ FluScrollablePage {
                 }
 
                 var formConfig = Object.assign({}, treePane.formConfig)
-                // if (formConfig && formConfig.schemas) {
-                //     var config = formConfig.schemas.find(item => item.component === "TreeSelect")
-                //     if (config) {
-                //   config.componentProps = config.componentProps || {}
-                //         Object.assign(config.componentProps, {treeList: jsResult.result})
-                //         config.componentProps.options = jsResult.result
-                //     }
-                // }
+                formConfig.schemas.forEach(schema => {
+                    if (schema.component === "TreeSelect") {
+                        schema.treeList = jsResult.result
+                    }
+                })
 
-                var formTitle = rowObj ? qsTr("编辑") : qsTr("新增")
                 FluRouter.navigate("/onlineFormWindow", {
                                        formPaneData: {
                                            formConfig: formConfig
@@ -507,8 +504,9 @@ FluScrollablePage {
                                    }, treePane)
             }
 
-        function httpRequest(rowObj) {
+        function httpRequest(rowObj, formTitle) {
             permissionListCallable.rowObj = rowObj
+            permissionListCallable.formTitle = formTitle
             var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
             .bind(root)
             .addHeader("S-Token", GlobalModel.token)

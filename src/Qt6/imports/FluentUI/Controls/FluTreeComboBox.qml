@@ -6,12 +6,16 @@ import QtQuick.Templates as T
 
 T.ComboBox {
     id: control
+    textRole: "name" //默认 应用层可改
+    valueRole: "id" //默认 应用层可改
+    model: ListModel {}
     signal commit(string text)
     property bool disabled: false
     property color normalColor: FluTheme.dark ? Qt.rgba(62/255,62/255,62/255,1) : Qt.rgba(254/255,254/255,254/255,1)
     property color hoverColor: FluTheme.dark ? Qt.rgba(68/255,68/255,68/255,1) : Qt.rgba(251/255,251/255,251/255,1)
     property color disableColor: FluTheme.dark ? Qt.rgba(59/255,59/255,59/255,1) : Qt.rgba(252/255,252/255,252/255,1)
-    property alias textBox: text_field
+    property alias treeView: treeView
+
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
@@ -21,8 +25,9 @@ T.ComboBox {
     leftPadding: padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     rightPadding: padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     enabled: !disabled
+
     delegate: FluItemDelegate {
-        width: ListView.view.width
+        width: control.popup.width
         text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
         palette.text: control.palette.text
         font: control.font
@@ -30,6 +35,7 @@ T.ComboBox {
         highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled
     }
+
     focusPolicy:Qt.TabFocus
     indicator: FluIcon {
         x: control.mirrored ? control.padding : control.width - width - control.padding
@@ -110,14 +116,42 @@ T.ComboBox {
         topMargin: 32
         bottomMargin: 6
         modal: true
-        contentItem: ListView {
-            clip: true
-            implicitHeight: contentHeight
-            model: control.delegateModel
-            currentIndex: control.highlightedIndex
-            highlightMoveDuration: 0
-            boundsMovement: Flickable.StopAtBounds
-            T.ScrollIndicator.vertical: ScrollIndicator { }
+        contentItem: FluTreeView {
+            id: treeView
+            showLine: false
+            implicitHeight: view.contentHeight
+            showHeader: false
+            columnSource: [{ title: "Name", dataIndex: control.textRole, align: "left", width: control.width }] //需要设置单列 隐藏表头
+
+            onDataSourceChanged: {
+                if (!dataSource || !dataSource.length) {
+                    return
+                }
+
+                // 递归遍历数据源，将嵌套结构扁平化
+                function traverse(nodes) {
+                    for (let i = 0; i < nodes.length; i++) {
+                        var nodeCopy = {}
+                        nodeCopy[control.textRole] = nodes[i][control.textRole]
+                        nodeCopy[control.valueRole] = nodes[i][control.valueRole]
+                        control.model.append(nodeCopy)
+
+                        if (nodes[i].children && nodes[i].children.length) {
+                            traverse(nodes[i].children)
+                        }
+                    }
+                }
+
+                control.model.clear()
+                traverse(dataSource)
+            }
+
+            onCurrentChanged: {
+                if (current) {
+                    control.currentIndex = current.orderIndex
+                    control.popup.close()
+                }
+            }
         }
         enter: Transition {
             NumberAnimation {

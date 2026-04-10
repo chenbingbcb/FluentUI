@@ -14,11 +14,16 @@
 class FluTreeNode : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantMap data READ data CONSTANT)
+    Q_PROPERTY(int orderIndex READ orderIndex CONSTANT)
     Q_PROPERTY(int depth READ depth CONSTANT)
     Q_PROPERTY(bool isExpanded READ isExpanded CONSTANT)
     Q_PROPERTY(bool checked READ checked CONSTANT)
 public:
     explicit FluTreeNode(QObject *parent = nullptr);
+
+    [[nodiscard]] Q_INVOKABLE int orderIndex() const {
+        return _orderIndex;
+    };
 
     [[nodiscard]] Q_INVOKABLE int depth() const {
         return _depth;
@@ -87,6 +92,7 @@ public:
 
 public:
     QString _title = "";
+    int _orderIndex = 0; //在树中的顺序索引
     int _depth = 0;
     bool _checked = false;
     bool _isExpanded = true;

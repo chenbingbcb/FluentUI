@@ -13,7 +13,7 @@ Rectangle {
         columnSource: control.columnSource
     }
     property var columnSource: [] //表头配置
-    property var dataSource: []
+    property var dataSource
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
     property bool horizonalHeaderVisible: true
     property bool verticalHeaderVisible: true
@@ -331,14 +331,14 @@ Rectangle {
                     }
                     onReleased: {
                     }
-                    onDoubleClicked:{
-                        if(item_table_loader.isObject){
-                            return
-                        }
-                        loader_edit.display = item_table_loader.display
-                        d.editDelegate = d.getEditDelegate(column)
-                        item_table_mouse.updateEditPosition()
-                    }
+                    // onDoubleClicked:{
+                    //     if(item_table_loader.isObject){
+                    //         return
+                    //     }
+                    //     loader_edit.display = item_table_loader.display
+                    //     d.editDelegate = d.getEditDelegate(column)
+                    //     item_table_mouse.updateEditPosition()
+                    // }
                     onClicked:
                         (event)=>{
                             d.current = rowModel
