@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug FluentUI Example (MSVC)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Debug/example.exe",
+            "cwd": "${workspaceFolder}/bin/Debug",
+            "preLaunchTask": "Copy FluentUI DLL to QML Plugin",
+            "console": "integratedTerminal",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:QT6_MSVC_PATH}/bin;${env:PATH}"
+                },
+                {
+                    "name": "QML_IMPORT_PATH",
+                    "value": "${env:QT6_MSVC_PATH}/qml"
+                }
+            ]
+        }
+    ]
+}
