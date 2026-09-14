@@ -43,6 +43,9 @@ ColumnLayout {
     property var editFieldColumn: ({})
     property string actionName: "action" //默认操作列字段名
     property var queryParams: ({}) //查询字段参数
+    property alias pageNo: gagination.pageCurrent
+    property alias pageSize: gagination.__itemPerPage
+    property alias tableItemCount: gagination.itemCount
     property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
     property var removeRecords: [] //删除的table记录
     property var _to

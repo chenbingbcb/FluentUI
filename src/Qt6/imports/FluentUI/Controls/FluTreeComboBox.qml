@@ -14,6 +14,8 @@ T.ComboBox {
     property color normalColor: FluTheme.dark ? Qt.rgba(62/255,62/255,62/255,1) : Qt.rgba(254/255,254/255,254/255,1)
     property color hoverColor: FluTheme.dark ? Qt.rgba(68/255,68/255,68/255,1) : Qt.rgba(251/255,251/255,251/255,1)
     property color disableColor: FluTheme.dark ? Qt.rgba(59/255,59/255,59/255,1) : Qt.rgba(252/255,252/255,252/255,1)
+    property bool checkable: false
+    property bool checkStrictly: false
     property alias treeView: treeView
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
@@ -120,6 +122,8 @@ T.ComboBox {
             id: treeView
             showLine: false
             implicitHeight: view.contentHeight
+            checkable: control.checkable
+            checkStrictly: control.checkStrictly
             showHeader: false
             columnSource: [{ title: "Name", dataIndex: control.textRole, align: "left", width: control.width }] //需要设置单列 隐藏表头
 

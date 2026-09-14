@@ -8,10 +8,11 @@ import FluentUI
 Rectangle {
     property var dataSource
     property var columnSource : []
-    property bool showLine: true
     property int cellHeight: 30
     property int depthPadding: 15
+    property bool showLine: false
     property bool checkable: false
+    property bool checkStrictly: false //默认false父子关联, true则不父子关联
     property bool showHeader: true
     property color lineColor: FluTheme.dividerColor
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
@@ -19,6 +20,7 @@ Rectangle {
     property color selectedColor: FluTools.withOpacity(FluTheme.primaryColor,0.3)
     readonly property alias current: d.current
     property alias view: table_view
+    signal toggle(bool toExpand)
     id:control
     color: {
         if(Window.active){
@@ -46,6 +48,7 @@ Rectangle {
     FluTreeModel{
         id:tree_model
         columnSource: control.columnSource
+        checkStrictly: control.checkStrictly
     }
     Component.onDestruction: {
         table_view.contentY = 0
@@ -172,6 +175,7 @@ Rectangle {
             id:item_container
             clip: true
             function toggle(){
+                control.toggle(!rowModel.isExpanded)
                 if(rowModel.isExpanded){
                     tree_model.collapse(row)
                 }else{
@@ -269,7 +273,7 @@ Rectangle {
                     visible: control.checkable
                     padding: 0
                     clickListener: function(){
-                        tree_model.checkRow(row,!rowModel.checked)
+                        tree_model.checkRow(row,!rowModel.checked,control.checkStrictly)
                     }
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -787,13 +791,13 @@ Rectangle {
 
     function allCheck() {
         for(var i = 0; i < tree_model.dataSourceSize; i++){
-            tree_model.checkRow(i, true)
+            tree_model.checkRow(i, true, control.checkStrictly)
         }
     }
 
     function allUncheck() {
         for(var i = 0; i < tree_model.dataSourceSize; i++){
-            tree_model.checkRow(i, false)
+            tree_model.checkRow(i, false, control.checkStrictly)
         }
     }
 

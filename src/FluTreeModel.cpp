@@ -76,7 +76,16 @@ void FluTreeModel::setRow(int row, QVariantMap data) {
     Q_EMIT dataChanged(index(row, 0), index(row, columnCount() - 1));
 }
 
-void FluTreeModel::checkRow(int row, bool checked) {
+void FluTreeModel::checkRow(int row, bool checked, bool checkStrictly) {
+    if (checkStrictly) {
+        auto itemData = _rows.at(row);
+        if (itemData->_checked == checked) {
+            return;
+        }
+        itemData->_checked = checked;
+        Q_EMIT dataChanged(index(row, 0), index(row, 0));
+        return;
+    }
     auto itemData = _rows.at(row);
     if (itemData->hasChildren()) {
         QList<FluTreeNode *> stack = itemData->_children;
@@ -121,6 +130,7 @@ void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
         node->_parent = item.value("__parent").value<FluTreeNode *>();
         node->_data = item;
         node->_isExpanded = true;
+        node->_checkStrictly = _checkStrictly;
         if (node->_parent) {
             node->_parent->_children.append(node);
         } else {
@@ -270,4 +280,19 @@ QVariant FluTreeModel::selectionModel() {
         }
     }
     return QVariant::fromValue(data);
+}
+
+void FluTreeModel::setCheckStrictly(bool checkStrictly) {
+    if (_checkStrictly == checkStrictly) {
+        return;
+    }
+    _checkStrictly = checkStrictly;
+    for (auto node : _dataSource) {
+        node->_checkStrictly = checkStrictly;
+    }
+    if (_root) {
+        _root->_checkStrictly = checkStrictly;
+    }
+    Q_EMIT dataChanged(index(0, 0), index(rowCount() - 1, 0));
+    Q_EMIT checkStrictlyChanged();
 }

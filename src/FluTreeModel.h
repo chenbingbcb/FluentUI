@@ -18,6 +18,7 @@ class FluTreeNode : public QObject {
     Q_PROPERTY(int depth READ depth CONSTANT)
     Q_PROPERTY(bool isExpanded READ isExpanded CONSTANT)
     Q_PROPERTY(bool checked READ checked CONSTANT)
+    Q_PROPERTY(bool checkStrictly MEMBER _checkStrictly)
 public:
     explicit FluTreeNode(QObject *parent = nullptr);
 
@@ -53,7 +54,7 @@ public:
     }
 
     [[nodiscard]] Q_INVOKABLE bool checked() const {
-        if (!hasChildren()) {
+        if (_checkStrictly || !hasChildren()) {
             return _checked;
         }
         for (int i = 0; i <= _children.size() - 1; ++i) {
@@ -95,6 +96,7 @@ public:
     int _orderIndex = 0; //在树中的顺序索引
     int _depth = 0;
     bool _checked = false;
+    bool _checkStrictly = false; //默认false父子关联, true则不父子关联
     bool _isExpanded = true;
     QVariantMap _data;
     QList<FluTreeNode *> _children;
@@ -105,6 +107,7 @@ class FluTreeModel : public QAbstractTableModel {
     Q_OBJECT
     Q_PROPERTY_AUTO(int, dataSourceSize)
     Q_PROPERTY_AUTO(QList<QVariantMap>, columnSource)
+    Q_PROPERTY(bool checkStrictly READ checkStrictly WRITE setCheckStrictly NOTIFY checkStrictlyChanged)
     QML_NAMED_ELEMENT(FluTreeModel)
 public:
     enum TreeModelRoles { RowModel = 0x0101, ColumnModel = 0x0102 };
@@ -140,7 +143,7 @@ public:
 
     Q_INVOKABLE void refreshNode(int row);
 
-    Q_INVOKABLE void checkRow(int row, bool checked);
+    Q_INVOKABLE void checkRow(int row, bool checked, bool checkStrictly = false);
 
     Q_INVOKABLE bool hitHasChildrenExpanded(int row);
 
@@ -150,8 +153,18 @@ public:
 
     Q_INVOKABLE QVariant selectionModel();
 
+    [[nodiscard]] bool checkStrictly() const {
+        return _checkStrictly;
+    }
+
+    void setCheckStrictly(bool checkStrictly);
+
+Q_SIGNALS:
+    void checkStrictlyChanged();
+
 private:
     QList<FluTreeNode *> _rows;
     QList<FluTreeNode *> _dataSource;
     FluTreeNode *_root = nullptr;
+    bool _checkStrictly = false;
 };
