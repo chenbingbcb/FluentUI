@@ -41,3 +41,7 @@ example/Version.h
 dist
 
 *.qm
+/example/example_zh_CN.ts
+/example/example_en_US.ts
+/src/fluentui_zh_CN.ts
+/src/fluentui_en_US.ts
