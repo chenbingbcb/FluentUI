@@ -415,11 +415,9 @@ ColumnLayout {
 
     function openFormWindow(rowFormData, formTitle) {
         FluRouter.navigate("/onlineFormWindow", {
-                               formPaneData: {
-                                   formConfig: formConfig
-                                   , formData: rowFormData
-                                   , title: formTitle
-                               }
+                               formConfig: formConfig
+                               , formData: rowFormData
+                               , title: formTitle
                            }, root)
     }
 }

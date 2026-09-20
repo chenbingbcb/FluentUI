@@ -16,6 +16,7 @@ class FluTreeNode : public QObject {
     Q_PROPERTY(QVariantMap data READ data CONSTANT)
     Q_PROPERTY(int orderIndex READ orderIndex CONSTANT)
     Q_PROPERTY(int depth READ depth CONSTANT)
+    Q_PROPERTY(bool isLeaf READ isLeaf CONSTANT)
     Q_PROPERTY(bool isExpanded READ isExpanded CONSTANT)
     Q_PROPERTY(bool checked READ checked CONSTANT)
     Q_PROPERTY(bool checkStrictly MEMBER _checkStrictly)
@@ -28,6 +29,10 @@ public:
 
     [[nodiscard]] Q_INVOKABLE int depth() const {
         return _depth;
+    };
+
+    [[nodiscard]] Q_INVOKABLE bool isLeaf() const {
+        return _isLeaf;
     };
 
     [[nodiscard]] Q_INVOKABLE bool isExpanded() const {
@@ -97,6 +102,7 @@ public:
     int _depth = 0;
     bool _checked = false;
     bool _checkStrictly = false; //默认false父子关联, true则不父子关联
+    bool _isLeaf = false;
     bool _isExpanded = true;
     QVariantMap _data;
     QList<FluTreeNode *> _children;
@@ -108,6 +114,7 @@ class FluTreeModel : public QAbstractTableModel {
     Q_PROPERTY_AUTO(int, dataSourceSize)
     Q_PROPERTY_AUTO(QList<QVariantMap>, columnSource)
     Q_PROPERTY(bool checkStrictly READ checkStrictly WRITE setCheckStrictly NOTIFY checkStrictlyChanged)
+    Q_PROPERTY(bool defaultExpandAll MEMBER _defaultExpandAll)
     QML_NAMED_ELEMENT(FluTreeModel)
 public:
     enum TreeModelRoles { RowModel = 0x0101, ColumnModel = 0x0102 };
@@ -153,6 +160,12 @@ public:
 
     Q_INVOKABLE QVariant selectionModel();
 
+    Q_INVOKABLE FluTreeNode *findNodeByKey(const QString &key);
+
+    Q_INVOKABLE QStringList getCheckedKeys();
+
+    Q_INVOKABLE void insertChildNodes(const QString &parentKey, QList<QMap<QString, QVariant>> childrenData);
+
     [[nodiscard]] bool checkStrictly() const {
         return _checkStrictly;
     }
@@ -163,8 +176,9 @@ Q_SIGNALS:
     void checkStrictlyChanged();
 
 private:
-    QList<FluTreeNode *> _rows;
-    QList<FluTreeNode *> _dataSource;
+    QList<FluTreeNode *> _rows; //扁平化的视图数据 节点无递归 不含折叠后不可见的节点
+    QList<FluTreeNode *> _dataSource; //扁平化的原始数据 节点无递归 包含展开或折叠的所有节点
     FluTreeNode *_root = nullptr;
     bool _checkStrictly = false;
+    bool _defaultExpandAll = true;
 };

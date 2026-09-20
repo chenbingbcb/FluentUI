@@ -129,7 +129,8 @@ void FluTreeModel::setDataSource(QList<QMap<QString, QVariant>> data) {
         node->_depth = item.value("__depth").toInt();
         node->_parent = item.value("__parent").value<FluTreeNode *>();
         node->_data = item;
-        node->_isExpanded = true;
+        node->_isLeaf = item.value("isLeaf").toBool();
+        node->_isExpanded = _defaultExpandAll;
         node->_checkStrictly = _checkStrictly;
         if (node->_parent) {
             node->_parent->_children.append(node);
@@ -295,4 +296,128 @@ void FluTreeModel::setCheckStrictly(bool checkStrictly) {
     }
     Q_EMIT dataChanged(index(0, 0), index(rowCount() - 1, 0));
     Q_EMIT checkStrictlyChanged();
+}
+
+FluTreeNode *FluTreeModel::findNodeByKey(const QString &key) {
+    for (auto *node : _dataSource) {
+        if (node->_data.value("_key").toString() == key) {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+QStringList FluTreeModel::getCheckedKeys() {
+    QStringList keys;
+    for (auto *node : _dataSource) {
+        if (node->checked()) {
+            QString key = node->_data.value("_key").toString();
+            if (!key.isEmpty()) {
+                keys.append(key);
+            }
+        }
+    }
+    return keys;
+}
+
+void FluTreeModel::insertChildNodes(const QString &parentKey, QList<QMap<QString, QVariant>> childrenData) {
+    FluTreeNode *parent = findNodeByKey(parentKey);
+    if (!parent) {
+        return;
+    }
+    if (childrenData.isEmpty()) {
+        parent->_isLeaf = true;
+        int parentRow = _rows.indexOf(parent);
+        if (parentRow >= 0) {
+            Q_EMIT dataChanged(index(parentRow, 0), index(parentRow, 0));
+        }
+        return;
+    }
+
+    QList<FluTreeNode *> directChildren;
+    int baseDepth = parent->_depth + 1;
+
+    std::reverse(childrenData.begin(), childrenData.end());
+    while (childrenData.count() > 0) {
+        auto item = childrenData.at(childrenData.count() - 1);
+        childrenData.pop_back();
+
+        int depth = item.value("__depth").toInt();
+        if (!item.contains("__depth")) {
+            depth = baseDepth;
+        }
+
+        FluTreeNode *nodeParent = item.value("__parent").value<FluTreeNode *>();
+        if (!nodeParent) {
+            nodeParent = parent;
+        }
+
+        auto *node = new FluTreeNode(this);
+        node->_depth = depth;
+        node->_parent = nodeParent;
+        node->_data = item;
+        node->_isLeaf = item.value("isLeaf").toBool();
+        node->_isExpanded = _defaultExpandAll;
+        node->_checkStrictly = _checkStrictly;
+        nodeParent->_children.append(node);
+        node->_checked = item.value("checked").toBool();
+        node->_orderIndex = _dataSource.size();
+        _dataSource.append(node);
+
+        if (nodeParent == parent) {
+            directChildren.append(node);
+        }
+
+        if (item.contains("children")) {
+            QList<QVariant> nested = item.value("children").toList();
+            if (!nested.isEmpty()) {
+                std::reverse(nested.begin(), nested.end());
+                for (int i = 0; i <= nested.count() - 1; ++i) {
+                    auto child = nested.at(i).toMap();
+                    child.insert("__depth", depth + 1);
+                    child.insert("__parent", QVariant::fromValue(node));
+                    childrenData.append(child);
+                }
+            }
+        }
+    }
+
+    int parentRow = _rows.indexOf(parent);
+    if (parentRow >= 0) {
+        if (parent->_isExpanded) {
+            QList<FluTreeNode *> visibleNodes;
+            for (auto *child : directChildren) {
+                visibleNodes.append(child);
+                if (child->_isExpanded && child->hasChildren()) {
+                    QList<FluTreeNode *> stack = child->_children;
+                    std::reverse(stack.begin(), stack.end());
+                    while (!stack.isEmpty()) {
+                        auto *item = stack.takeLast();
+                        if (item->isShown()) {
+                            visibleNodes.append(item);
+                        }
+                        if (item->_isExpanded && item->hasChildren()) {
+                            QList<FluTreeNode *> sub = item->_children;
+                            std::reverse(sub.begin(), sub.end());
+                            for (auto *c : sub) {
+                                stack.append(c);
+                            }
+                        }
+                    }
+                }
+            }
+            int insertPos = parentRow + 1;
+            for (int i = insertPos; i < _rows.size(); i++) {
+                if (_rows[i]->_depth <= parent->_depth) {
+                    break;
+                }
+                insertPos = i + 1;
+            }
+            insertRows(insertPos, visibleNodes);
+        } else {
+            expand(parentRow);
+        }
+    }
+
+    dataSourceSize(_dataSource.size());
 }

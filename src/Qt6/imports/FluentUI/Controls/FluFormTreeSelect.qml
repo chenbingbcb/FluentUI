@@ -10,15 +10,15 @@ FluTreeComboBox {
     Component.onCompleted: {
         var componentProps = config.componentProps || {}
         var replaceFields = componentProps.replaceFields || {}
-        if (replaceFields.text) {
-            control.textRole = replaceFields.text
+        if (replaceFields.title) {
+            control.textRole = replaceFields.title
         }
         if (replaceFields.value) {
             control.valueRole = replaceFields.value
         }
 
-        if (config.treeList && config.treeList.length) {
-            treeView.dataSource = config.treeList
+        if (componentProps.treeData && componentProps.treeData.length) {
+            treeView.dataSource = componentProps.treeData
             treeView.allCollapse()
         }
 

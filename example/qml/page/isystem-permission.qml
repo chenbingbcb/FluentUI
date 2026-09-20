@@ -425,12 +425,10 @@ FluScrollablePage {
                               var rowObj = treePane.treeView.getRow(row)
                               permissionRuleFormData.id = rowObj.id
                               FluRouter.navigate("/onlineFormWindow", {
-                                                      formPaneData: {
-                                                          formConfig: permissionRuleFormConfig
-                                                          , title: qsTr("数据权限规则")
-                                                          , formData: permissionRuleFormData
-                                                          , saveButtonInvisile: true
-                                                      }
+                                                                   formConfig: permissionRuleFormConfig
+                                                                   , title: qsTr("数据权限规则")
+                                                                   , formData: permissionRuleFormData
+                                                                   , saveButtonInvisile: true
                                                  }, treePane)
                             }
                         }
@@ -491,16 +489,15 @@ FluScrollablePage {
                 var formConfig = Object.assign({}, treePane.formConfig)
                 formConfig.schemas.forEach(schema => {
                     if (schema.component === "TreeSelect") {
-                        schema.treeList = jsResult.result
+                        schema.componentProps = schema.componentProps || {}
+                        schema.componentProps.treeData = jsResult.result
                     }
                 })
 
                 FluRouter.navigate("/onlineFormWindow", {
-                                       formPaneData: {
-                                           formConfig: formConfig
-                                           , formData: rowObj
-                                           , title: formTitle
-                                       }
+                                                     formConfig: formConfig
+                                                     , formData: rowObj
+                                                     , title: formTitle
                                    }, treePane)
             }
 

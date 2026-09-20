@@ -14,13 +14,15 @@ Rectangle {
     property bool checkable: false
     property bool checkStrictly: false //默认false父子关联, true则不父子关联
     property bool showHeader: true
+    property bool defaultExpandAll: true //默认展开所有节点
+    property var loadData: null //function
+    property var loadedKeys: new Set() //需配合loadData使用
     property color lineColor: FluTheme.dividerColor
     property color borderColor: FluTheme.dark ? Qt.rgba(37/255,37/255,37/255,1) : Qt.rgba(228/255,228/255,228/255,1)
     property color selectedBorderColor: FluTheme.primaryColor
     property color selectedColor: FluTools.withOpacity(FluTheme.primaryColor,0.3)
     readonly property alias current: d.current
     property alias view: table_view
-    signal toggle(bool toExpand)
     id:control
     color: {
         if(Window.active){
@@ -30,6 +32,9 @@ Rectangle {
     }
     onDataSourceChanged: {
         tree_model.setDataSource(dataSource)
+    }
+    onDefaultExpandAllChanged: {
+        tree_model.defaultExpandAll = defaultExpandAll
     }
     onColumnSourceChanged: {
         if(columnSource.length !== 0){
@@ -175,11 +180,14 @@ Rectangle {
             id:item_container
             clip: true
             function toggle(){
-                control.toggle(!rowModel.isExpanded)
                 if(rowModel.isExpanded){
                     tree_model.collapse(row)
                 }else{
-                    tree_model.expand(row)
+                    if (control.loadData && !control.loadedKeys.has(rowModel.data._key)) {
+                        control.loadData(row, rowModel.data)
+                    } else {
+                        tree_model.expand(row)
+                    }
                 }
                 delay_force_layout.restart()
             }
@@ -242,7 +250,7 @@ Rectangle {
                 Component{
                     id:com_icon_btn
                     FluIconButton{
-                        opacity: rowModel.hasChildren()
+                        // opacity: rowModel.hasChildren()
                         onClicked: {
                             item_container.toggle()
                         }
@@ -258,7 +266,13 @@ Rectangle {
                     id:item_loader_expand
                     Layout.preferredWidth: 20
                     Layout.preferredHeight: 20
-                    sourceComponent: rowModel.hasChildren() ? com_icon_btn : undefined
+                    sourceComponent: {
+                        if (control.loadData && !control.loadedKeys.has(rowModel.data._key)) {
+                            return rowModel.isLeaf ? undefined : com_icon_btn
+                        } else {
+                            return rowModel.hasChildren() ? com_icon_btn : undefined
+                        }
+                    }
                     Layout.alignment: Qt.AlignVCenter
                 }
                 FluCheckBox{
@@ -789,6 +803,10 @@ Rectangle {
         return tree_model.selectionModel()
     }
 
+    function getCheckedKeys(){
+        return tree_model.getCheckedKeys()
+    }
+
     function allCheck() {
         for(var i = 0; i < tree_model.dataSourceSize; i++){
             tree_model.checkRow(i, true, control.checkStrictly)
@@ -807,6 +825,17 @@ Rectangle {
 
     function removeRows(row, count) {
         return tree_model.removeRows(row, count)
+    }
+
+    function insertChildNodes(parentKey, childrenData) {
+        tree_model.insertChildNodes(parentKey, childrenData)
+    }
+
+    function setCurrentByKey(key) {
+        var node = tree_model.findNodeByKey(key)
+        if (node) {
+            d.current = node
+        }
     }
 
 }

@@ -866,14 +866,12 @@ ColumnLayout {
 
     function openFormWindow(rowFormData, formTitle, saveButtonInvisile) {
         FluRouter.navigate("/onlineFormWindow", {
-                               formPaneData: {
-                                   formConfig: formConfig
-                                   , formData: rowFormData
-                                   , title: formTitle
-                                   , childTableCustomConfig: childTableCustomConfig
-                                   , formBelowDelegate: formBelowDelegate
-                                   , saveButtonInvisile: saveButtonInvisile
-                               }
+                               formConfig: formConfig
+                               , formData: rowFormData
+                               , title: formTitle
+                               , childTableCustomConfig: childTableCustomConfig
+                               , formBelowDelegate: formBelowDelegate
+                               , saveButtonInvisile: saveButtonInvisile
                            }, root)
     }
 }

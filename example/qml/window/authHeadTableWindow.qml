@@ -429,12 +429,10 @@ FluWindow {
                     }
 
                     FluRouter.navigate("/onlineFormWindow", {
-                                           formPaneData: {
-                                               formConfig: tablePane.formConfig
-                                               , formData: jsResult.result
-                                               , title: formTitle
-                                               , childTableCustomConfig: tablePane.childTableCustomConfig
-                                           }
+                                           formConfig: tablePane.formConfig
+                                           , formData: jsResult.result
+                                           , title: formTitle
+                                           , childTableCustomConfig: tablePane.childTableCustomConfig
                                        }, tablePane)
 
 
@@ -559,11 +557,9 @@ FluWindow {
                     text: qsTr("关联权限")
                     onClicked: {
                         FluRouter.navigate("/onlineFormWindow", {
-                                               formPaneData: {
-                                                   formConfig: relateAuthFormConfig
-                                                   , title: qsTr("关联权限")
-                                                   , formDataSaveListener: relHeaderCallable.httpRequest
-                                               }
+                                               formConfig: relateAuthFormConfig
+                                               , title: qsTr("关联权限")
+                                               , formDataSaveListener: relHeaderCallable.httpRequest
                                            }, tablePane)
                     }
                 }
@@ -747,11 +743,9 @@ FluWindow {
                     onClicked: {
                         var childTablePane = childTablePanes[0]
                         FluRouter.navigate("/onlineFormWindow", {
-                                               formPaneData: {
-                                                   formConfig: authFieldFormConfig
-                                                   , title: qsTr("关联字段")
-                                                   , formDataSaveListener: rowRelField.authFieldAdd
-                                               }
+                                               formConfig: authFieldFormConfig
+                                               , title: qsTr("关联字段")
+                                               , formDataSaveListener: rowRelField.authFieldAdd
                                            }, childTablePane)
 
                         var formPane = childTablePane._to.formPane
@@ -825,11 +819,9 @@ FluWindow {
                     onClicked: {
                         var childTablePane = childTablePanes[1]
                         FluRouter.navigate("/onlineFormWindow", {
-                                               formPaneData: {
-                                                   formConfig: authButtonFormConfig
-                                                   , title: qsTr("关联按钮")
-                                                   , formDataSaveListener: rowRelButton.authButtonAdd
-                                               }
+                                               formConfig: authButtonFormConfig
+                                               , title: qsTr("关联按钮")
+                                               , formDataSaveListener: rowRelButton.authButtonAdd
                                            }, childTablePane)
 
                         var formPane = childTablePane._to.formPane

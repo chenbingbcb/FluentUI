@@ -154,12 +154,10 @@ FluScrollablePage {
 
                 infoAssignFormData.departIds = jsResult.result ? jsResult.result.records[0].departIds : ""
                 FluRouter.navigate("/onlineFormWindow", {
-                                       formPaneData: {
-                                           formConfig: infoAssignFormConfig
-                                           , title: qsTr("角色\\部门分配")
-                                           , formData: infoAssignFormData
-                                           , formDataSaveListener: infoAssignFormDataSave
-                                       }
+                                       formConfig: infoAssignFormConfig
+                                       , title: qsTr("角色\\部门分配")
+                                       , formData: infoAssignFormData
+                                       , formDataSaveListener: infoAssignFormDataSave
                                    }, tablePane)
             }
 
@@ -792,12 +790,10 @@ FluScrollablePage {
                                 var rowObj = tablePane.tableView.getRow(row)
                                 passwordFormData.username = rowObj.id
                                 FluRouter.navigate("/onlineFormWindow", {
-                                                       formPaneData: {
-                                                           formConfig: passwordFormConfig
-                                                           , title: qsTr("重新设定密码")
-                                                           , formData: passwordFormData
-                                                           , formDataSaveListener: passwordFormDataSave
-                                                       }
+                                                       formConfig: passwordFormConfig
+                                                       , title: qsTr("重新设定密码")
+                                                       , formData: passwordFormData
+                                                       , formDataSaveListener: passwordFormDataSave
                                                    }, tablePane)
                             }
                         }
@@ -840,11 +836,9 @@ FluScrollablePage {
                                 var rowObj = tablePane.tableView.getRow(row)
                                 busiRuleFormData.id = rowObj.id
                                 FluRouter.navigate("/onlineFormWindow", {
-                                                       formPaneData: {
-                                                           formConfig: busiRuleFormConfig
-                                                           , title: qsTr("详情")
-                                                           , formData: busiRuleFormData
-                                                       }
+                                                       formConfig: busiRuleFormConfig
+                                                       , title: qsTr("详情")
+                                                       , formData: busiRuleFormData
                                                    }, tablePane)
                             }
                         }

@@ -125,7 +125,7 @@ T.ComboBox {
             checkable: control.checkable
             checkStrictly: control.checkStrictly
             showHeader: false
-            columnSource: [{ title: "Name", dataIndex: control.textRole, align: "left", width: control.width }] //需要设置单列 隐藏表头
+            columnSource: [{ title: "title", dataIndex: control.textRole, align: "left", width: control.width }] //需要设置单列 隐藏表头
 
             onDataSourceChanged: {
                 if (!dataSource || !dataSource.length) {

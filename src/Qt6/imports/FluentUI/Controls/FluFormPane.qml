@@ -6,26 +6,72 @@ import FluentUI
 
 ColumnLayout{
     id: root
-    property var formPaneData //表单面板数据
-    property var formConfig: ({}) //表单配置
+    property string title: ""
+    property var formConfig //表单配置
     property var childTableConfig: [] //子表配置
-    property var tabConfig: ({}) //标签配置
+    property var childTableCustomConfig: []
+    property var tabConfig //标签配置
     property var tabFields: []
     property var formData //该行表单数据
+    property var formDataSaveListener
+    property var formBelowDelegate
+    property bool saveButtonInvisile: false
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
     property bool forceSave: false
     property alias formRepeater: repeater
     Layout.fillWidth: true
+    Layout.alignment: Qt.AlignTop
 
-    Component.onCompleted: {
-        if (!formPaneData) {
-            console.error("formPaneData null!")
+    onFormDataChanged: {
+        if (!formData) {
             return
         }
 
+        var isNew = title === qsTr("新增")
+        tabRepeater.model.forEach(function(item, i) {
+            var loaderItem = tabRepeater.itemAt(i).loaderItem
+            var value = formData[loaderItem.config.field]
+            if (isNew) {
+                if (value === undefined) {
+                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                } else {
+                    loaderItem.value = value
+                }
+            } else {
+                loaderItem.value = value === undefined ? null : value
+            }
+            if (loaderItem.item.initDisplay) {
+                loaderItem.item.initDisplay()
+            }
+        })
+
+        repeater.model.forEach(function(item, i) {
+            var temp = repeater.itemAt(i)
+            if (!temp) return
+            var loaderItem = temp.loaderItem
+            var value = formData[loaderItem.config.field]
+            if (isNew) {
+                if (value === undefined) {
+                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                } else {
+                    loaderItem.value = value
+                }
+            } else {
+                loaderItem.value = value === undefined ? null : value
+            }
+            if (loaderItem.item.initDisplay) {
+                loaderItem.item.initDisplay()
+            }
+        })
+
+        if (title !== qsTr("新增")) {
+            procChildTable(0) //子表也需要用到formData
+        }
+    }
+
+    onFormConfigChanged: {
         var childTableConfig = []
-        var formConfig = formPaneData.formConfig || {}
         formConfig.schemas = formConfig.schemas || []
         for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
             var schema = formConfig.schemas[i]
@@ -36,7 +82,6 @@ ColumnLayout{
             } else if (schema.component === "childTable") {
                 if (schema.ifShow !== false) {
                     childTableConfig.unshift(schema)
-                    var childTableCustomConfig = formPaneData.childTableCustomConfig || []
                     if (childTableCustomConfig.length > 0) { //子表自定义配置合并
                         var pop = childTableCustomConfig.pop()
                         Object.assign(childTableConfig[0], pop)
@@ -47,10 +92,10 @@ ColumnLayout{
                 formConfig.schemas.splice(i, 1)
             }*/
         }
-        root.formConfig = formConfig
+        // root.formConfig = formConfig
         root.childTableConfig = childTableConfig
 
-        if (tabConfig.componentProps) {
+        if (tabConfig && tabConfig.componentProps) {
             var fields = []
             var tabPanels = tabConfig.componentProps.tabPanels || []
             tabButtons.visible = tabPanels.length > 0
@@ -85,46 +130,6 @@ ColumnLayout{
                 }
             })
             tabFields = fields
-        }
-
-        formData = formPaneData.formData || {}
-        var isNew = formPaneData.title === qsTr("新增")
-        tabRepeater.model.forEach(function(item, i) {
-            var loaderItem = tabRepeater.itemAt(i).loaderItem
-            var value = formData[loaderItem.config.field]
-            if (isNew) {
-                if (value === undefined) {
-                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
-                } else {
-                    loaderItem.value = value
-                }
-            } else {
-                loaderItem.value = value === undefined ? null : value
-            }
-            if (loaderItem.item.initDisplay) {
-                loaderItem.item.initDisplay()
-            }
-        })
-
-        repeater.model.forEach(function(item, i) {
-            var loaderItem = repeater.itemAt(i).loaderItem
-            var value = formData[loaderItem.config.field]
-            if (isNew) {
-                if (value === undefined) {
-                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
-                } else {
-                    loaderItem.value = value
-                }
-            } else {
-                loaderItem.value = value === undefined ? null : value
-            }
-            if (loaderItem.item.initDisplay) {
-                loaderItem.item.initDisplay()
-            }
-        })
-
-        if (formPaneData.title !== qsTr("新增")) {
-            procChildTable(0) //子表也需要用到formData
         }
     }
 
@@ -326,7 +331,7 @@ ColumnLayout{
 
         FluText{
             font: FluTextStyle.Subtitle
-            text: formPaneData.title || ""
+            text: title || ""
             leftPadding: 10
         }
 
@@ -335,10 +340,10 @@ ColumnLayout{
         }
 
         FluFilledButton {
-            visible: !formPaneData.saveButtonInvisile //默认显示
+            visible: !saveButtonInvisile //默认显示
             Layout.rightMargin: 10
             text: qsTr("保存")
-            onClicked: formPaneData && formPaneData.formDataSaveListener ? formPaneData.formDataSaveListener() : formDataSave()
+            onClicked: formDataSaveListener ? formDataSaveListener() : formDataSave()
         }
 
         // FluIconButton{
@@ -404,7 +409,7 @@ ColumnLayout{
 
         Repeater {
             id: repeater
-            model: formConfig.schemas
+            model: formConfig ? formConfig.schemas : []
             delegate: comDelegate
             onItemAdded: (index, item) => {
 
@@ -417,13 +422,13 @@ ColumnLayout{
     }
 
     FluLoader {
-        sourceComponent: formPaneData && formPaneData.formBelowDelegate ? formPaneData.formBelowDelegate : undefined
+        sourceComponent: formBelowDelegate ? formBelowDelegate : undefined
     }
 
     //子表tab
     FluLoader {
         Layout.fillWidth: true
-        sourceComponent: childTableConfig.length > 0 && formPaneData.title !== qsTr("新增") ? comChildTableTab : undefined
+        sourceComponent: childTableConfig.length > 0 && title !== qsTr("新增") ? comChildTableTab : undefined
         visible: childTableConfig.length > 0 && childTableConfig[0].label //有标签文本才显示
     }
 

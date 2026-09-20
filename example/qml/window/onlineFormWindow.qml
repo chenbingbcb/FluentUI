@@ -20,6 +20,7 @@ FluWindow {
             // Object.assign(formPane, argument)
             loaderFormPane.sourceComponent = comFormPane
             formPane = loaderFormPane.item
+            formPane.formData = argument.formData //表单数据延后更新 避免formConfig关联的控件还没加载完
         }
 
     FluScrollablePage {
@@ -37,7 +38,12 @@ FluWindow {
         Component {
             id: comFormPane
             FluFormPane {
-                formPaneData: argument.formPaneData
+                formConfig: argument.formConfig
+                // formData: argument.formData
+                title: argument.title
+                childTableCustomConfig: argument.childTableCustomConfig || []
+                formBelowDelegate: argument.formBelowDelegate
+                saveButtonInvisile: argument.saveButtonInvisile || false
             }
         }
     }

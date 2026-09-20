@@ -158,6 +158,7 @@ FluScrollablePage {
 
         return treeList.map(node => {
             node._key = node.id || node.key
+            node._minimumHeight = 50
 
             // 如果存在children，则递归处理
             if (node.children && treeList.length) {
@@ -191,15 +192,7 @@ FluScrollablePage {
                     return
                 }
 
-                var tableData = jsResult.result
-                var dataSource = []
-                tableData.forEach(function(record) {
-                    record._key = FluTools.uuid()
-                    record._minimumHeight = 50
-                    dataSource.push(record)
-                })
-
-                treeView.dataSource = procTreeList(dataSource)
+                treeView.dataSource = procTreeList(jsResult.result)
                 if (collapse) {
                     treeView.allCollapse()
                 }
@@ -237,15 +230,7 @@ FluScrollablePage {
                     return
                 }
 
-                var tableData = jsResult.result
-                var dataSource = []
-                tableData.forEach(function(record) {
-                    record._key = FluTools.uuid()
-                    record._minimumHeight = 50
-                    dataSource.push(record)
-                })
-
-                treeView.dataSource = procTreeList(dataSource)
+                treeView.dataSource = procTreeList(jsResult.result)
             }
 
         function httpRequest(searchText) {
