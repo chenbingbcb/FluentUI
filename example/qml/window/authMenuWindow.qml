@@ -85,14 +85,14 @@ FluWindow {
                     FluMenuItem {
                         text: qsTr("父子关联")
                         onTriggered: {
-                            showWarning(qsTr("暂未支持"))
+                            treeView.checkStrictly = false
                         }
                     }
 
                     FluMenuItem {
                         text: qsTr("取消关联")
                         onTriggered: {
-                            showWarning(qsTr("暂未支持"))
+                            treeView.checkStrictly = true
                         }
                     }
 
