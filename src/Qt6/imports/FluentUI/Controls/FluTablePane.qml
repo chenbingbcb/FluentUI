@@ -188,7 +188,7 @@ ColumnLayout {
                 if (jsResult.result.records) {
                     dataSource = jsResult.result.records
                     gagination.itemCount = jsResult.result.total || 0
-                    gagination.__itemPerPage = jsResult.result.size || 10
+                    gagination.__itemPerPage = jsResult.result.size || 15
                 } else {
                     dataSource = jsResult.result
                 }
@@ -322,14 +322,14 @@ ColumnLayout {
             }
     }
 
-    function queryByIdRequest(rowObj, formTitle, saveButtonInvisile) {
+    function queryByIdRequest(rowObj, formTitle, saveFormBtnInvisile) {
         if (!queryByIdUrl) { //兼容直接使用该行数据的情况
-            openFormWindow(rowObj, formTitle, saveButtonInvisile)
+            openFormWindow(rowObj, formTitle, saveFormBtnInvisile)
             return
         }
 
         queryByIdCallable.formTitle = formTitle
-        queryByIdCallable.saveButtonInvisile = saveButtonInvisile
+        queryByIdCallable.saveFormBtnInvisile = saveFormBtnInvisile
         var networkParams = FluNetwork.get(GlobalModel.basicUrl + queryByIdUrl)
         .bind(root)
         .addHeader("S-Token", GlobalModel.token)
@@ -340,7 +340,7 @@ ColumnLayout {
     FluNetworkCallable{
         id: queryByIdCallable
         property string formTitle: ""
-        property var saveButtonInvisile
+        property var saveFormBtnInvisile
         onStart: {
             showLoading()
         }
@@ -360,7 +360,7 @@ ColumnLayout {
                     return
                 }
 
-                openFormWindow(jsResult.result, formTitle, saveButtonInvisile)
+                openFormWindow(jsResult.result, formTitle, saveFormBtnInvisile)
             }
     }
 
@@ -531,7 +531,7 @@ ColumnLayout {
         }
 
         FluFilledButton {
-            visible: defaultButtons.add ? defaultButtons.add.visible : true
+            visible: defaultButtons.add ? defaultButtons.add.visible : false
             text: qsTr("新增")
             onClicked: {
                 if (tableModel === "editSingleModel" || tableModel === "editAllModel") {
@@ -569,7 +569,7 @@ ColumnLayout {
         }
 
         FluFilledButton {
-            visible: tableModel === "editAllModel" && !formPane //子表的保存跟表单一起
+            visible: tableModel === "editAllModel" && (!formPane || formPane.saveFormBtnInvisile) //若是子表, 则跟表单保存按钮互斥
             text: qsTr("保存")
             onClicked: {
                 // if (tableModel === "modalAllModel") {
@@ -580,7 +580,7 @@ ColumnLayout {
                 var updateObj = {
                     insertRecords: []
                     , updateRecords: []
-                    // , removeRecords: removeRecords
+                    , removeRecords: removeRecords
                 }
                 var sysUpdateFieldNames = {}
                 for (var key in tableView.editedRows) {
@@ -607,11 +607,14 @@ ColumnLayout {
                         updateObj.sysUpdateFieldNames = Object.keys(sysUpdateFieldNames)
                         updateObj.updateRecords.push(temp)
                     } else {
+                        if (relatedFields.length === 2) {
+                            temp[relatedFields[1]] = formData[relatedFields[0]]
+                        }
                         updateObj.insertRecords.push(temp)
                     }
                 }
 
-                if (updateObj.updateRecords.length <= 0 && updateObj.insertRecords.length <= 0/* && updateObj.removeRecords.length <= 0*/) {
+                if (updateObj.updateRecords.length <= 0 && updateObj.insertRecords.length <= 0 && updateObj.removeRecords.length <= 0) {
                     return
                 }
 
@@ -660,7 +663,7 @@ ColumnLayout {
                             editRow: item.editRow,
                             required: item.editRule,
                             componentProps: item.editComponentProps,
-                            editDelegate: getComponentByType(item.editComponent, item.editComponentProps)
+                            editDelegate: getComponentByType(item.editComponent || "Input", item.editComponentProps)
                         })
                     }
                 })
@@ -848,7 +851,7 @@ ColumnLayout {
         Layout.fillWidth: true
         pageCurrent: 1
         pageButtonCount: 7
-        __itemPerPage: 10
+        __itemPerPage: 15
         previousText: qsTr("<")
         nextText: qsTr(">")
         onRequestPage:
@@ -864,14 +867,14 @@ ColumnLayout {
         Layout.fillHeight: true
     }
 
-    function openFormWindow(rowFormData, formTitle, saveButtonInvisile) {
+    function openFormWindow(rowFormData, formTitle, saveFormBtnInvisile) {
         FluRouter.navigate("/onlineFormWindow", {
                                formConfig: formConfig
                                , formData: rowFormData
                                , title: formTitle
                                , childTableCustomConfig: childTableCustomConfig
                                , formBelowDelegate: formBelowDelegate
-                               , saveButtonInvisile: saveButtonInvisile
+                               , saveFormBtnInvisile: saveFormBtnInvisile
                            }, root)
     }
 }

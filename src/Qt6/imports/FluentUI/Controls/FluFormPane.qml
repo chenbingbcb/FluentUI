@@ -15,7 +15,7 @@ ColumnLayout{
     property var formData //该行表单数据
     property var formDataSaveListener
     property var formBelowDelegate
-    property bool saveButtonInvisile: false
+    property bool saveFormBtnInvisile: false
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
     property bool forceSave: false
@@ -71,6 +71,10 @@ ColumnLayout{
     }
 
     onFormConfigChanged: {
+        if (!formConfig) {
+            return
+        }
+
         var childTableConfig = []
         formConfig.schemas = formConfig.schemas || []
         for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
@@ -186,6 +190,9 @@ ColumnLayout{
         }
         if (childTableConfig[i].updateAllUrl) {
             properties.updateAllUrl = childTableConfig[i].updateAllUrl
+        }
+        if (childTableConfig[i].rowActionDelegate) {
+            properties.rowActionDelegate = childTableConfig[i].rowActionDelegate
         }
         if (childTableConfig[i].tableActionDelegate) {
             properties.tableActionDelegate = childTableConfig[i].tableActionDelegate
@@ -340,7 +347,7 @@ ColumnLayout{
         }
 
         FluFilledButton {
-            visible: !saveButtonInvisile //默认显示
+            visible: !saveFormBtnInvisile //默认显示
             Layout.rightMargin: 10
             text: qsTr("保存")
             onClicked: formDataSaveListener ? formDataSaveListener() : formDataSave()
@@ -405,7 +412,7 @@ ColumnLayout{
         columns: 24
         columnSpacing: 0
         Layout.fillWidth: true
-        visible: formConfig.schemas && formConfig.schemas.length > 0
+        visible: formConfig && formConfig.schemas && formConfig.schemas.length > 0 ? true : false
 
         Repeater {
             id: repeater

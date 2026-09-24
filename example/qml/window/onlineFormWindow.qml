@@ -43,7 +43,7 @@ FluWindow {
                 title: argument.title
                 childTableCustomConfig: argument.childTableCustomConfig || []
                 formBelowDelegate: argument.formBelowDelegate
-                saveButtonInvisile: argument.saveButtonInvisile || false
+                saveFormBtnInvisile: argument.saveFormBtnInvisile || false
             }
         }
     }

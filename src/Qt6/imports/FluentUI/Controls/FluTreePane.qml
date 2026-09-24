@@ -97,7 +97,7 @@ ColumnLayout {
                 if (jsResult.result.records) {
                     treeList = jsResult.result.records
                     gagination.itemCount = jsResult.result.total || 0
-                    gagination.__itemPerPage = jsResult.result.size || 10
+                    gagination.__itemPerPage = jsResult.result.size || 15
                 } else {
                     treeList = jsResult.result
                 }
@@ -399,7 +399,7 @@ ColumnLayout {
         Layout.fillWidth: true
         pageCurrent: 1
         pageButtonCount: 7
-        __itemPerPage: 10
+        __itemPerPage: 15
         previousText: qsTr("<")
         nextText: qsTr(">")
         onRequestPage:

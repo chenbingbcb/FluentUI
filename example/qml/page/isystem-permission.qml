@@ -428,7 +428,7 @@ FluScrollablePage {
                                                                    formConfig: permissionRuleFormConfig
                                                                    , title: qsTr("数据权限规则")
                                                                    , formData: permissionRuleFormData
-                                                                   , saveButtonInvisile: true
+                                                                   , saveFormBtnInvisile: true
                                                  }, treePane)
                             }
                         }

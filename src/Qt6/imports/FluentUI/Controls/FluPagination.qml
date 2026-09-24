@@ -12,7 +12,7 @@ Item {
     property int itemCount: 0
     property int pageButtonCount: 5
     property int pageCount: itemCount > 0 ? Math.ceil(itemCount / __itemPerPage) : 0
-    property int __itemPerPage: 10
+    property int __itemPerPage: 15
     property int __pageButtonHalf: Math.floor(pageButtonCount / 2) + 1
     property Component header: null
     property Component footer: null
