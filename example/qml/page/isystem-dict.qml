@@ -80,27 +80,30 @@ FluScrollablePage {
                     label: '字典名称',
                     component: 'Input',
                     rules: [
-                    {
-                        required: true,
-                        message: '请输入字典名称',
-                    },
+                        {
+                            required: true,
+                            message: '请输入字典名称',
+                        },
                     ],
+                    colProps: { span: 24 },
                 },
                 {
                     field: 'dictCode',
                     label: '字典编码',
                     component: 'Input',
                     rules: [
-                    {
-                        required: true,
-                        message: '请输入字典编码',
-                    },
+                        {
+                            required: true,
+                            message: '请输入字典编码',
+                        },
                     ],
+                    colProps: { span: 24 },
                 },
                 {
                     field: 'description',
                     label: '描述',
                     component: 'Input',
+                    colProps: { span: 24 },
                 },
             ]
         }

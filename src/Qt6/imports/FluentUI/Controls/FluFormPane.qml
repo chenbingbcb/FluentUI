@@ -75,6 +75,7 @@ ColumnLayout{
             return
         }
 
+        saveFormBtnInvisile = formConfig.saveFormBtnInvisile || saveFormBtnInvisile
         var childTableConfig = []
         formConfig.schemas = formConfig.schemas || []
         for (var i = formConfig.schemas.length - 1; i >= 0; i--) {
