@@ -111,6 +111,36 @@ FluPopup {
                     implicitWidth: 150
                 }
 
+                FluText{
+                    id: text2
+                    visible: columnConfig.length > 2
+                    font: FluTextStyle.Body
+                    text: columnConfig.length > 2 ? columnConfig[2].title + ":" : ""
+                    leftPadding: 10
+                }
+
+                FluTextBox {
+                    id: textBox2
+                    visible: columnConfig.length > 2
+                    placeholderText: columnConfig.length > 2 ? columnConfig[2].title : ""
+                    implicitWidth: 150
+                }
+
+                FluText{
+                    id: text3
+                    visible: columnConfig.length > 3
+                    font: FluTextStyle.Body
+                    text: columnConfig.length > 3 ? columnConfig[3].title + ":" : ""
+                    leftPadding: 10
+                }
+
+                FluTextBox {
+                    id: textBox3
+                    visible: columnConfig.length > 3
+                    placeholderText: columnConfig.length > 3 ? columnConfig[3].title : ""
+                    implicitWidth: 150
+                }
+
                 FluIconButton{
                     iconSource: FluentIcons.Search
                     iconSize: 15
@@ -127,6 +157,8 @@ FluPopup {
                     onClicked:{
                         textBoxId.text = ""
                         textBoxName.text = ""
+                        textBox2.text = ""
+                        textBox3.text = ""
                         comboBoxSex.currentIndex = 0
                         calendarPicker.current = null
                         textBoxPhone.text = ""
@@ -544,6 +576,14 @@ FluPopup {
 
     function getTextBoxName() {
         return textBoxName.text
+    }
+
+    function getTextBox2() {
+        return textBox2.text
+    }
+
+    function getTextBox3() {
+        return textBox3.text
     }
 
     function getComboBoxSex() {

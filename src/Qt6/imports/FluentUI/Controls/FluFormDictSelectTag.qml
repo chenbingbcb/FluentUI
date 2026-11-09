@@ -9,17 +9,26 @@ FluComboBox {
     model: ListModel {ListElement { text: ""; title: ""; value: "" }}
     textRole: "text"
     valueRole: "value"
-    property var dictItems
+    property var updateModelListener //function, 用于更新model
 
     Component.onCompleted: {
         var componentProps = config.componentProps
-        if (componentProps && componentProps.dictCode) {
-            var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
-            if (dictItems) {
-                control.dictItems = dictItems
-            } else {
-                getDictItemsCallable.httpRequest(componentProps.dictCode)
+        if (componentProps) {
+            if (componentProps.dictCode) {
+                var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
+                if (dictItems) {
+                    model.append(dictItems)
+                } else {
+                    getDictItemsCallable.httpRequest(componentProps.dictCode)
+                }
+            } else if (componentProps.options && componentProps.options.length) {
+                var dictItems = componentProps.options.map(function(option) {
+                    return { text: option.label, value: option.value }
+                })
+                model.append(dictItems)
             }
+
+            updateModelListener = componentProps.updateModelListener
         }
     }
 
@@ -27,8 +36,13 @@ FluComboBox {
         value = control.currentValue
     }
 
-    onDictItemsChanged: {
-        model.append(dictItems)
+    Connections {
+        target: control.popup
+        function onAboutToShow() {
+            if (typeof updateModelListener === "function") {
+                updateModelListener()
+            }
+        }
     }
 
     FluNetworkCallable{
@@ -54,13 +68,13 @@ FluComboBox {
                 }
 
                 GlobalModel.sysAllDictItems[dictCode] = jsResult.result
-                dictItems = jsResult.result
+                model.append(jsResult.result)
             }
 
         function httpRequest(dictCode) {
             getDictItemsCallable.dictCode = dictCode
             FluNetwork.get(GlobalModel.basicUrl + "/sys/dict/getDictItems/" + dictCode)
-            .bind(root)
+            .bind(control)
             .addHeader("S-Token",GlobalModel.token)
             .go(getDictItemsCallable)
         }
@@ -73,6 +87,10 @@ FluComboBox {
                 control.currentIndex = i
                 break
             }
+        }
+
+        if (control.currentIndex === 0 && value !== null && value !== undefined) {
+            control.displayText = value //用于数据表等控件
         }
     }
 }

@@ -218,6 +218,7 @@
         <file>qml/page/online-onlineList-1920671189235699714-1920759948459421697.qml</file>
         <file>qml/page/online-onlineList-1935250376508334082-1935251294746337282.qml</file>
         <file>qml/page/online-onlineList-1935251006954168322-1935251430448848897.qml</file>
+        <file>qml/page/online-cgform.qml</file>
         <file>qml/window/onlineFormWindow.qml</file>
         <file>qml/window/authHeadTableWindow.qml</file>
         <file>qml/window/authMenuWindow.qml</file>

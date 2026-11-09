@@ -31,10 +31,11 @@ ColumnLayout{
         var isNew = title === qsTr("新增")
         tabRepeater.model.forEach(function(item, i) {
             var loaderItem = tabRepeater.itemAt(i).loaderItem
-            var value = formData[loaderItem.config.field]
+            var config = loaderItem.config
+            var value = formData[config.field]
             if (isNew) {
                 if (value === undefined) {
-                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                    loaderItem.value = config.defaultValue === undefined ? null : config.defaultValue
                 } else {
                     loaderItem.value = value
                 }
@@ -50,10 +51,11 @@ ColumnLayout{
             var temp = repeater.itemAt(i)
             if (!temp) return
             var loaderItem = temp.loaderItem
-            var value = formData[loaderItem.config.field]
+            var config = loaderItem.config
+            var value = formData[config.field]
             if (isNew) {
                 if (value === undefined) {
-                    loaderItem.value = loaderItem.config.defaultValue === undefined ? null : loaderItem.config.defaultValue
+                    loaderItem.value = config.defaultValue === undefined ? null : config.defaultValue
                 } else {
                     loaderItem.value = value
                 }
@@ -152,7 +154,7 @@ ColumnLayout{
         var componentProps = childTableConfig[i].componentProps || {}
         var properties = {
             formPane: root
-            , tableId: componentProps.genTableHeadId || componentProps.defaultValue || ""
+            , tableId: componentProps.genTableHeadId || childTableConfig[i].defaultValue || ""
             , formId: componentProps.genFormHeadId || "" //暂未支持子表form弹窗
             , menuId: componentProps.genMenuId || 0
             , relatedFields: componentProps.relatedField ? componentProps.relatedField.split(":") : []
@@ -221,7 +223,7 @@ ColumnLayout{
                 }
 
                 var config = tablePane.tableView.columnSource[column]
-                if (config.required === true && !rowObj[field]) {
+                if (config.required === true && (rowObj[field] === null || rowObj[field] === undefined)) {
                     showError(config.title + qsTr("不能为空"))
                     return false
                 }
@@ -252,42 +254,45 @@ ColumnLayout{
         var newData = Object.assign({}, formData)
         var sysUpdateFieldNames = []
         var loaderItem = null
+        var config = null
         for (var i = 0; i < tabRepeater.count; i++) {
             loaderItem = tabRepeater.itemAt(i).loaderItem
-            if (tabRepeater.itemAt(i).required === true && !loaderItem.value) {
-                showError(loaderItem.config.label + qsTr("不能为空"))
+            config = loaderItem.config
+            if (tabRepeater.itemAt(i).required === true && (loaderItem.value === null || loaderItem.value === undefined)) {
+                showError(config.label + qsTr("不能为空"))
                 return
             }
 
             if (newData.id) {
-                if (newData[loaderItem.config.field] !== loaderItem.value) {
-                    newData[loaderItem.config.field] = loaderItem.value
-                    sysUpdateFieldNames.push(loaderItem.config.field)
+                if (newData[config.field] !== loaderItem.value) {
+                    newData[config.field] = loaderItem.value
+                    sysUpdateFieldNames.push(config.field)
                 }
             } else {
                 if (loaderItem.value) {
-                    newData[loaderItem.config.field] = loaderItem.value
+                    newData[config.field] = loaderItem.value
                 }
             }
         }
 
         for (var j = 0; j < repeater.count; j++) {
             loaderItem = repeater.itemAt(j).loaderItem
-            if (repeater.itemAt(j).required === true && !loaderItem.value) {
-                showError(loaderItem.config.label + qsTr("不能为空"))
+            config = loaderItem.config
+            if (repeater.itemAt(j).required === true && (loaderItem.value === null || loaderItem.value === undefined)) {
+                showError(config.label + qsTr("不能为空"))
                 return
             }
 
             if (newData.id) {
-                if (newData[loaderItem.config.field] !== loaderItem.value) {
-                    newData[loaderItem.config.field] = loaderItem.value
-                    sysUpdateFieldNames.push(loaderItem.config.field)
+                if (newData[config.field] !== loaderItem.value) {
+                    newData[config.field] = loaderItem.value
+                    sysUpdateFieldNames.push(config.field)
                 }
             } else {
                 if (loaderItem.value !== null && loaderItem.value !== undefined) {
-                    newData[loaderItem.config.field] = loaderItem.value
-                } else if (loaderItem.config.defaultValue) {
-                    newData[loaderItem.config.field] = loaderItem.config.defaultValue
+                    newData[config.field] = loaderItem.value
+                } else if (config.defaultValue !== null && config.defaultValue !== undefined) {
+                    newData[config.field] = config.defaultValue
                 }
             }
         }
@@ -492,6 +497,11 @@ ColumnLayout{
                 if (typeof modelData.required === "function" && formData) {
                     return modelData.required(formData)
                 }
+
+                if (modelData.rules && modelData.rules.length > 0 && modelData.rules[0].required === true) {
+                    return true
+                }
+
                 return modelData.required === true
             }
             visible: {

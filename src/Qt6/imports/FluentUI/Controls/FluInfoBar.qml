@@ -218,19 +218,19 @@ FluObject {
             }
         }
     }
-    function showSuccess(text,duration=1000,moremsg){
+    function showSuccess(text,duration=3000,moremsg){
         return mcontrol.create(mcontrol.const_success,text,duration,moremsg ? moremsg : "")
     }
-    function showInfo(text,duration=1000,moremsg){
+    function showInfo(text,duration=3000,moremsg){
         return mcontrol.create(mcontrol.const_info,text,duration,moremsg ? moremsg : "")
     }
-    function showWarning(text,duration=1000,moremsg){
+    function showWarning(text,duration=3000,moremsg){
         return mcontrol.create(mcontrol.const_warning,text,duration,moremsg ? moremsg : "")
     }
-    function showError(text,duration=1000,moremsg){
+    function showError(text,duration=3000,moremsg){
         return mcontrol.create(mcontrol.const_error,text,duration,moremsg ? moremsg : "")
     }
-    function showCustom(itemcomponent,duration=1000){
+    function showCustom(itemcomponent,duration=3000){
         return mcontrol.createCustom(itemcomponent,duration)
     }
     function clearAllInfo(){

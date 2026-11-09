@@ -558,9 +558,8 @@ ColumnLayout {
                     tableView.editedRows[uuid] = 0
                     tableView.insertRow(0, rowObj)
                 } else {
-                    var rowFormData = null
+                    var rowFormData = {}
                     if (relatedFields.length === 2 && relatedRowData) {
-                        rowFormData = {}
                         rowFormData[relatedFields[1]] = relatedRowData[relatedFields[0]]
                     }
                     openFormWindow(rowFormData, qsTr("新增"))
@@ -594,7 +593,7 @@ ColumnLayout {
                         }
 
                         var config = tableView.columnSource[column]
-                        if (config.required === true && !rowObj[field]) {
+                        if (config.required === true && (rowObj[field] === null || rowObj[field] === undefined)) {
                             showError(config.title + qsTr("不能为空"))
                             return
                         }
@@ -792,7 +791,7 @@ ColumnLayout {
                             }
 
                             var config = tableView.columnSource[column]
-                            if (config.required === true && !rowObj[field]) {
+                            if (config.required === true && (rowObj[field] === null || rowObj[field] === undefined)) {
                                 showError(config.title + qsTr("不能为空"))
                                 return
                             }

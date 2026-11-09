@@ -65,7 +65,7 @@ FluCheckComboBox {
         function httpRequest(dictCode) {
             getDictItemsCallable.dictCode = dictCode
             FluNetwork.get(GlobalModel.basicUrl + "/sys/dict/getDictItems/" + dictCode)
-            .bind(root)
+            .bind(control)
             .addHeader("S-Token",GlobalModel.token)
             .go(getDictItemsCallable)
         }

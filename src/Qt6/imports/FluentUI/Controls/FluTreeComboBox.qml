@@ -117,7 +117,7 @@ T.ComboBox {
         height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
         topMargin: 32
         bottomMargin: 6
-        modal: true
+        // modal: true
         contentItem: FluTreeView {
             id: treeView
             showLine: false

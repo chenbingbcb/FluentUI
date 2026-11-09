@@ -454,6 +454,9 @@ Window {
             case "SelectButton":
                 url = "FluFormSelectButton.qml"
                 break
+            case "SelectRelatedFormCfg":
+                url = "FluFormSelectRelatedFormCfg.qml"
+                break
             case "TreeSelect":
                 url = "FluFormTreeSelect.qml"
                 break

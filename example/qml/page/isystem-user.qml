@@ -157,7 +157,7 @@ FluScrollablePage {
                                        formConfig: infoAssignFormConfig
                                        , title: qsTr("角色\\部门分配")
                                        , formData: infoAssignFormData
-                                       , formDataSaveListener: infoAssignFormDataSave
+                                       , formDataSaveListener: tablePane._to.infoAssignFormDataSave
                                    }, tablePane)
             }
 

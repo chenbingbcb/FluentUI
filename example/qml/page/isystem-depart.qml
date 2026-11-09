@@ -281,12 +281,13 @@ FluScrollablePage {
                     }
 
                     for (var j = 0; j < formPane.formConfig.schemas.length; j++) {
-                        var formConfig = formPane.formConfig.schemas[j]
-                        if (formConfig.field === "parentId") {
-                            formConfig.componentProps.treeData = treeData
+                        var config = formPane.formConfig.schemas[j]
+                        if (config.field === "parentId") {
+                            config.componentProps.treeData = treeData
                             break
                         }
                     }
+                    //此处formConfig是字面值, 而非引用, 所以qml会每次构造对象, 引起formPane.formConfig的绑定更新
                     formPane.formConfig = formPane.formConfig
                     formPane.formData = current.data
                 }
