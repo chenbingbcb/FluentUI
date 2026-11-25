@@ -15,6 +15,7 @@ ColumnLayout{
     property var formData //该行表单数据
     property var formDataSaveListener
     property var formBelowDelegate
+    property var formActionDelegate //表单操作委托组件
     property bool saveFormBtnInvisile: false
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
@@ -200,6 +201,9 @@ ColumnLayout{
         if (childTableConfig[i].tableActionDelegate) {
             properties.tableActionDelegate = childTableConfig[i].tableActionDelegate
         }
+        if (childTableConfig[i].pageSize) {
+            properties.pageSize = childTableConfig[i].pageSize
+        }
 
         tablePane = comTablePane.createObject(root, properties)
         tablePanes[i] = tablePane
@@ -313,8 +317,7 @@ ColumnLayout{
                     continue
                 }
 
-                var config = childTableConfig[k]
-                var field = config.field
+                var field = childTableConfig[k].field
                 newData[field] = updateObj
                 isChildTableUpdate = true
             }
@@ -357,6 +360,12 @@ ColumnLayout{
             Layout.rightMargin: 10
             text: qsTr("保存")
             onClicked: formDataSaveListener ? formDataSaveListener() : formDataSave()
+        }
+
+        FluLoader {
+            id: formActionLoader
+            property var formPane: root
+            sourceComponent: formActionDelegate
         }
 
         // FluIconButton{

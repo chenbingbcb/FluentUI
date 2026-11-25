@@ -8,6 +8,13 @@ FluTextBox {
     anchors.fill: parent
     placeholderText: qsTr("请输入")
 
+    Component.onCompleted: {
+        var componentProps = config.componentProps
+        if (componentProps && componentProps.placeholder) {
+            control.placeholderText = componentProps.placeholder
+        }
+    }
+
     onTextChanged: {
         value = control.text
     }

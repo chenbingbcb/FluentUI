@@ -11,6 +11,10 @@ FluWindow {
     property string roleId: ""
     property var rolePermissions: []
 
+    Component.onCompleted: {
+        showMaximized()
+    }
+
     onInitArgument:
         (argument)=>{
             roleId = argument.roleId || ""

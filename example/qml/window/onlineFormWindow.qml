@@ -12,7 +12,7 @@ FluWindow {
     property var formPane
 
     Component.onCompleted: {
-        // showMaximized()
+        showMaximized()
     }
 
     onInitArgument:
@@ -44,6 +44,7 @@ FluWindow {
                 childTableCustomConfig: argument.childTableCustomConfig || []
                 formDataSaveListener: argument.formDataSaveListener
                 formBelowDelegate: argument.formBelowDelegate
+                formActionDelegate: argument.formActionDelegate
                 saveFormBtnInvisile: argument.saveFormBtnInvisile || false
             }
         }

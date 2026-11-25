@@ -12,107 +12,6 @@ FluScrollablePage {
         getAllDataSourceCodeCallable.httpRequest()
     }
 
-    FluNetworkCallable{
-        id: getAllDataSourceCodeCallable
-        property string postfixUrl: "/sys/dataSource/getAllDataSourceCode"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                dataOptions = jsResult.result.map(function(item) {
-                    return { label: item, value: item }
-                })
-            }
-
-        function httpRequest() {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            networkParams.go(getAllDataSourceCodeCallable)
-        }
-    }
-
-    FluNetworkCallable{
-        id: getTablesCallable
-        property string postfixUrl: "/sys/dataSource/getTables"
-        onStart: {
-            showLoading()
-        }
-        onFinish: {
-            hideLoading()
-        }
-        onError:
-            (status,errorString,result)=>{
-                showError(qsTr(status+";"+errorString+";"+result))
-            }
-        onSuccess:
-            (result)=>{
-                var jsResult = JSON.parse(result)
-                console.debug(JSON.stringify(jsResult, null, 2))
-                if (jsResult.code !== 200) {
-                    showError(qsTr(postfixUrl + " failed: " + result))
-                    return
-                }
-
-                var dataTableOptions = jsResult.result.map(function(item) {
-                    return { text: item, value: item }
-                })
-                var formPane = tablePane._to.formPane
-                for (var i = 0; i < formPane.formRepeater.count; i++) {
-                    var loaderItem = formPane.formRepeater.itemAt(i).loaderItem
-                    if (loaderItem.config.field === "dataTable") {
-                        var dictSelectTag = loaderItem.item
-                        dictSelectTag.model = Qt.createQmlObject(
-                            'import QtQuick 2.15; ListModel { ListElement { text: ""; title: ""; value: "" } }',
-                            dictSelectTag
-                        )
-                        dictSelectTag.model.append(dataTableOptions)
-                        break
-                    }
-                }
-            }
-
-        function httpRequest() {
-            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
-            .bind(root)
-            .addHeader("S-Token", GlobalModel.token)
-
-            var dbCode = ""
-            var formPane = tablePane._to.formPane
-            for (var i = 0; i < formPane.formRepeater.count; i++) {
-                var loaderItem = formPane.formRepeater.itemAt(i).loaderItem
-                if (loaderItem.config.field === "dataSource") {
-                    dbCode = loaderItem.value
-                    break
-                }
-            }
-
-            if (!dbCode) {
-                showWarning(qsTr("请先选择数据源"))
-                return
-            }
-
-            networkParams.addQuery("dbCode", dbCode)
-            networkParams.go(getTablesCallable)
-        }
-    }
-
     FluTablePane {
         id: tablePane
         listUrl: "/online/genTableHead/list"
@@ -121,6 +20,7 @@ FluScrollablePage {
         editUrl: "/online/genTableHead/edit"
         queryByIdUrl: "/online/genTableHead/queryById"
         rowActionDelegate: comRowAction
+        formActionDelegate: comFormCustomAction
         tableTitle: "Online表单开发"
         tableConfig: {
             "tableModel": "modalSingleModel",
@@ -366,7 +266,584 @@ FluScrollablePage {
                     defaultValue: 'id',
                     },
                 },
+                {
+                    field: 'columnData',
+                    label: '列表字段',
+                    component: 'childTable',
+                    componentProps: {
+                        relatedField: "id:mainId",
+                    },
+                    listUrl: '/online/genTableColumn/list',
+                    deleteUrl: '/online/genTableColumn/delete',
+                    deleteBatchUrl: '/online/genTableColumn/deleteBatch',
+                    addUrl: '/online/genTableColumn/add',
+                    editUrl: '/online/genTableColumn/edit',
+                    queryByIdUrl: '/online/genTableColumn/queryById',
+                    pageSize: 100,
+                    tableConfig: {
+                        tableModel: "editAllModel",
+                        columns: [
+                            {
+                            title: '数据库字段',
+                            width: 150,
+                            dataIndex: 'fieldName',
+                            align: 'center',
+                            fixed: 'left',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '显示列名',
+                            width: 150,
+                            dataIndex: 'name',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字段别名',
+                            width: 150,
+                            dataIndex: 'filedAs',
+                            align: 'center',
+                            visible: false,
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '列宽',
+                            width: 150,
+                            dataIndex: 'width',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '是否显示',
+                            width: 150,
+                            dataIndex: 'isShow',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '是否编辑',
+                            width: 150,
+                            dataIndex: 'isEdit',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '控件类型',
+                            width: 250,
+                            dataIndex: 'controlType',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'control_type',
+                                placeholder: '请点击选择',
+                            },
+                            },
+                            {
+                            title: '字典table',
+                            width: 150,
+                            dataIndex: 'dictTable',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字典code',
+                            width: 150,
+                            dataIndex: 'dictCode',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字典text',
+                            width: 150,
+                            dataIndex: 'dictText',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '编辑规则',
+                            width: 150,
+                            dataIndex: 'editRuler',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '默认值',
+                            width: 150,
+                            dataIndex: 'defaultVal',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '文本对齐',
+                            width: 150,
+                            dataIndex: 'align',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'align',
+                                placeholder: '请点击选择',
+                                width: '100%',
+                            },
+                            },
+                            {
+                            title: '是否排序',
+                            width: 150,
+                            dataIndex: 'isOrder',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '锁定',
+                            width: 150,
+                            dataIndex: 'fixed',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'align',
+                                placeholder: '请点击选择',
+                                width: '100%',
+                            },
+                            },
+                            {
+                            title: '显示顺序',
+                            width: 150,
+                            dataIndex: 'displayOrder',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '控件扩展参数',
+                            width: 150,
+                            dataIndex: 'controlExtend',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '是否溢出省略号',
+                            width: 150,
+                            dataIndex: 'ellipsis',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '是否导出',
+                            width: 150,
+                            dataIndex: 'isExport',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '是否表字段',
+                            width: 150,
+                            dataIndex: 'isTableField',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '字段类型',
+                            width: 150,
+                            dataIndex: 'fieldType',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                        ],
+                        "actionColumn": {
+                            "width": 120,
+                            "title": "操作",
+                            "dataIndex": "action"
+                        },
+                        "defaultButtons": {
+                            "add": {
+                                "visible": true
+                            },
+                            "edit": {
+                                "visible": true
+                            },
+                            "delete": {
+                                "visible": true
+                            }
+                        },
+                    }
+                },
+                {
+                    field: 'queryData',
+                    label: '查询字段',
+                    component: 'childTable',
+                    componentProps: {
+                        relatedField: "id:mainId",
+                    },
+                    listUrl: '/online/genTableQuery/list',
+                    deleteUrl: '/online/genTableQuery/delete',
+                    deleteBatchUrl: '/online/genTableQuery/deleteBatch',
+                    addUrl: '/online/genTableQuery/add',
+                    editUrl: '/online/genTableQuery/edit',
+                    queryByIdUrl: '/online/genTableQuery/queryById',
+                    pageSize: 100,
+                    tableConfig: {
+                        tableModel: "editAllModel",
+                        columns: [
+                            {
+                            title: '字段名称',
+                            width: 150,
+                            dataIndex: 'fieldName',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '显示列名',
+                            width: 150,
+                            dataIndex: 'name',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '是否查询',
+                            width: 150,
+                            dataIndex: 'isQuery',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '查询控件',
+                            width: 150,
+                            dataIndex: 'controlType',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'control_type',
+                                placeholder: '请点击选择',
+                            },
+                            },
+                            {
+                            title: '控件宽度',
+                            width: 150,
+                            dataIndex: 'width',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '6为一行4列，8为一行3列，24为一行1列，默认4列',
+                            },
+                            },
+                            {
+                            title: '匹配方式',
+                            width: 150,
+                            dataIndex: 'queryMatch',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'rule_conditions',
+                                placeholder: '请点击选择',
+                            },
+                            },
+                            {
+                            title: '必填',
+                            width: 150,
+                            dataIndex: 'isRequire',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Switch',
+                            editComponentProps: {
+                                checkedValue: 1,
+                                unCheckedValue: 0,
+                            },
+                            },
+                            {
+                            title: '查询类型',
+                            width: 150,
+                            dataIndex: 'queryType',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'DictSelectTag',
+                            editComponentProps: {
+                                dictCode: 'query_type',
+                                placeholder: '请点击选择',
+                            },
+                            },
+                            {
+                            title: '显示顺序',
+                            width: 150,
+                            dataIndex: 'displayOrder',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                min: 0,
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '控件扩展参数',
+                            width: 150,
+                            dataIndex: 'controlExtend',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '默认值',
+                            width: 150,
+                            dataIndex: 'defaultVal',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字典table',
+                            width: 150,
+                            dataIndex: 'dictTable',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字典code',
+                            width: 150,
+                            dataIndex: 'dictCode',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                            {
+                            title: '字典text',
+                            width: 150,
+                            dataIndex: 'dictText',
+                            align: 'center',
+                            editRow: true,
+                            editComponent: 'Input',
+                            editComponentProps: {
+                                placeholder: '请点击输入',
+                            },
+                            },
+                        ],
+                        "actionColumn": {
+                            "width": 120,
+                            "title": "操作",
+                            "dataIndex": "action"
+                        },
+                        "defaultButtons": {
+                            "add": {
+                                "visible": true
+                            },
+                            "edit": {
+                                "visible": true
+                            },
+                            "delete": {
+                                "visible": true
+                            }
+                        },
+                    }
+                },
             ]
+        }
+    }
+
+    FluNetworkCallable{
+        id: getAllDataSourceCodeCallable
+        property string postfixUrl: "/sys/dataSource/getAllDataSourceCode"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                dataOptions = jsResult.result.map(function(item) {
+                    return { label: item, value: item }
+                })
+            }
+
+        function httpRequest() {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            networkParams.go(getAllDataSourceCodeCallable)
+        }
+    }
+
+    FluNetworkCallable{
+        id: getTablesCallable
+        property string postfixUrl: "/sys/dataSource/getTables"
+        onStart: {
+            showLoading()
+        }
+        onFinish: {
+            hideLoading()
+        }
+        onError:
+            (status,errorString,result)=>{
+                showError(qsTr(status+";"+errorString+";"+result))
+            }
+        onSuccess:
+            (result)=>{
+                var jsResult = JSON.parse(result)
+                console.debug(JSON.stringify(jsResult, null, 2))
+                if (jsResult.code !== 200) {
+                    showError(qsTr(postfixUrl + " failed: " + result))
+                    return
+                }
+
+                var dataTableOptions = jsResult.result.map(function(item) {
+                    return { text: item, value: item }
+                })
+                var formPane = tablePane._to.formPane
+                for (var i = 0; i < formPane.formRepeater.count; i++) {
+                    var loaderItem = formPane.formRepeater.itemAt(i).loaderItem
+                    if (loaderItem.config.field === "dataTable") {
+                        var dictSelectTag = loaderItem.item
+                        dictSelectTag.model = Qt.createQmlObject(
+                            'import QtQuick 2.15; ListModel { ListElement { text: ""; title: ""; value: "" } }',
+                            dictSelectTag
+                        )
+                        dictSelectTag.model.append(dataTableOptions)
+                        break
+                    }
+                }
+            }
+
+        function httpRequest() {
+            var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+            .bind(root)
+            .addHeader("S-Token", GlobalModel.token)
+
+            var dbCode = ""
+            var formPane = tablePane._to.formPane
+            for (var i = 0; i < formPane.formRepeater.count; i++) {
+                var loaderItem = formPane.formRepeater.itemAt(i).loaderItem
+                if (loaderItem.config.field === "dataSource") {
+                    dbCode = loaderItem.value
+                    break
+                }
+            }
+
+            if (!dbCode) {
+                showWarning(qsTr("请先选择数据源"))
+                return
+            }
+
+            networkParams.addQuery("dbCode", dbCode)
+            networkParams.go(getTablesCallable)
         }
     }
 
@@ -456,6 +933,94 @@ FluScrollablePage {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    //该组件在FluFormPane类中用formActionLoader实例化, 所以可以访问formPane对象
+    Component {
+        id: comFormCustomAction
+        RowLayout {
+            Layout.fillWidth: true
+
+            FluFilledButton {
+                text: qsTr("同步表字段")
+                visible: {
+                    var formData = formPane.formData
+                    return formData && formData.dataSource && formData.dataTable ? true : false
+                }
+                onClicked: {
+                    getTableColumnsCallable.httpRequest()
+                }
+            }
+
+            FluNetworkCallable{
+                id: getTableColumnsCallable
+                property string postfixUrl: "/sys/dataSource/getTableColumns"
+                onStart: {
+                    showLoading()
+                }
+                onFinish: {
+                    hideLoading()
+                }
+                onError:
+                    (status,errorString,result)=>{
+                        showError(qsTr(status+";"+errorString+";"+result))
+                    }
+                onSuccess:
+                    (result)=>{
+                        var jsResult = JSON.parse(result)
+                        console.debug(JSON.stringify(jsResult, null, 2))
+                        if (jsResult.code !== 200) {
+                            showError(qsTr(postfixUrl + " failed: " + result))
+                            return
+                        }
+
+                        if (!jsResult.result || !jsResult.result.length) {
+                            return
+                        }
+
+                        var columnMap = {}
+                        var childTablePane = formPane.tablePanes[0]
+                        var tableView = childTablePane.tableView
+                        for (var i = 0; i < tableView.rows; i++) {
+                            var obj = tableView.getRow(i)
+                            columnMap[obj.fieldName] = obj
+                        }
+
+                        jsResult.result.forEach(function(item) {
+                            if (!columnMap[item.id]) { //无需二次数组遍历
+                                var uuid = FluTools.uuid()
+                                var rowObj = {
+                                    _key: uuid
+                                    , _minimumHeight: childTablePane.defaultCellHeight
+                                    , action: tableView.customItem(childTablePane.rowActionDelegate, {newRow: uuid})
+                                }
+
+                                for (var field in childTablePane.editFieldColumn) {
+                                    rowObj[field] = null
+                                }
+                                rowObj.fieldName = item.id
+                                rowObj.name = item.name
+
+                                tableView.editedRows[uuid] = tableView.sourceModel.rowCount
+                                tableView.appendRow(rowObj)
+                            }
+                        })
+                    }
+
+                function httpRequest() {
+                    var networkParams = FluNetwork.get(GlobalModel.basicUrl + postfixUrl)
+                    .bind(root)
+                    .addHeader("S-Token", GlobalModel.token)
+
+                    var formData = formPane.formData
+                    if (formData) {
+                        networkParams.addQuery("dbCode", formData.dataSource)
+                        networkParams.addQuery("tableId", formData.dataTable)
+                    }
+                    networkParams.go(getTableColumnsCallable)
                 }
             }
         }

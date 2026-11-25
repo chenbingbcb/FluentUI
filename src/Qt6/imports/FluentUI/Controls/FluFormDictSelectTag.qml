@@ -14,15 +14,16 @@ FluComboBox {
     Component.onCompleted: {
         var componentProps = config.componentProps
         if (componentProps) {
+            var dictItems = null
             if (componentProps.dictCode) {
-                var dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
+                dictItems = GlobalModel.sysAllDictItems[componentProps.dictCode]
                 if (dictItems) {
                     model.append(dictItems)
                 } else {
                     getDictItemsCallable.httpRequest(componentProps.dictCode)
                 }
             } else if (componentProps.options && componentProps.options.length) {
-                var dictItems = componentProps.options.map(function(option) {
+                dictItems = componentProps.options.map(function(option) {
                     return { text: option.label, value: option.value }
                 })
                 model.append(dictItems)

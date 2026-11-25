@@ -12,6 +12,10 @@ FluWindow {
     property var currentRowObj: ({})
     property var childTablePanes: []
 
+    Component.onCompleted: {
+        showMaximized()
+    }
+
     onInitArgument:
         (argument)=>{
             loaderTablePane.sourceComponent = comTablePane

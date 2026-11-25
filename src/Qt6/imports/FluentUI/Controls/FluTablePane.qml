@@ -30,6 +30,7 @@ ColumnLayout {
     property string tableTitle: ""
     property var rowActionDelegate: comRowAction //行操作委托组件
     property var tableActionDelegate //列表操作委托组件
+    property var formActionDelegate //表单操作委托组件
     property var formBelowDelegate //表单下面委托组件
     property var childTableCustomConfig: [] //子表自定义配置
 
@@ -873,6 +874,7 @@ ColumnLayout {
                                , title: formTitle
                                , childTableCustomConfig: childTableCustomConfig
                                , formBelowDelegate: formBelowDelegate
+                               , formActionDelegate: formActionDelegate
                                , saveFormBtnInvisile: saveFormBtnInvisile
                            }, root)
     }

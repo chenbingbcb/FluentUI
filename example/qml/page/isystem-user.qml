@@ -157,7 +157,7 @@ FluScrollablePage {
                                        formConfig: infoAssignFormConfig
                                        , title: qsTr("角色\\部门分配")
                                        , formData: infoAssignFormData
-                                       , formDataSaveListener: tablePane._to.infoAssignFormDataSave
+                                       , formDataSaveListener: infoAssignFormDataSave
                                    }, tablePane)
             }
 
@@ -246,7 +246,7 @@ FluScrollablePage {
                 required: true,
                 component: 'InputPassword',
                 "componentProps": {
-                    "placeholderText": "请输入登录密码"
+                    "placeholder": "请输入登录密码"
                 },
             },
             {
@@ -254,7 +254,7 @@ FluScrollablePage {
                 label: '确认密码',
                 component: 'InputPassword',
                 "componentProps": {
-                    "placeholderText": "请重新输入登录密码"
+                    "placeholder": "请重新输入登录密码"
                 },
             },
         ]
