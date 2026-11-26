@@ -43,7 +43,7 @@ FluWindow {
                 title: argument.title
                 childTableCustomConfig: argument.childTableCustomConfig || []
                 formDataSaveListener: argument.formDataSaveListener
-                formBelowDelegate: argument.formBelowDelegate
+                formRepeaterBottomDelegate: argument.formRepeaterBottomDelegate
                 formActionDelegate: argument.formActionDelegate
                 saveFormBtnInvisile: argument.saveFormBtnInvisile || false
             }

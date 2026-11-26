@@ -212,6 +212,9 @@
         <file>qml/page/T_CustomPlot.qml</file>
         <file>res/image/logo_pro.png</file>
         <file>qml/page/T_FluentPro.qml</file>
+        <file>qml/window/onlineFormWindow.qml</file>
+        <file>qml/window/authHeadTableWindow.qml</file>
+        <file>qml/window/authMenuWindow.qml</file>
         <file>qml/page/jeecg-SelectDemo.qml</file>
         <file>qml/page/online-onlineList.qml</file>
         <file>qml/page/online-onlineList-1905182371816644611-0.qml</file>
@@ -220,9 +223,7 @@
         <file>qml/page/online-onlineList-1935251006954168322-1935251430448848897.qml</file>
         <file>qml/page/online-cgform.qml</file>
         <file>qml/page/online-form.qml</file>
-        <file>qml/window/onlineFormWindow.qml</file>
-        <file>qml/window/authHeadTableWindow.qml</file>
-        <file>qml/window/authMenuWindow.qml</file>
+        <file>qml/page/online-SysReport-List.qml</file>
         <file>qml/page/demo-oneToMany.qml</file>
         <file>qml/page/system-SysBusiRuleList.qml</file>
         <file>qml/page/isystem-user.qml</file>

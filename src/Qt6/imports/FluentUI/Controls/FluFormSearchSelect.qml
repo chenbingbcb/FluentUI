@@ -7,7 +7,6 @@ FluCheckComboBox {
     id: control
     anchors.fill: parent
     placeholderText: qsTr("请选择")
-    listMore: true
     property var listUrl: qsTr("")
     property var valField: qsTr("")
     property var txtField: qsTr("")
@@ -20,6 +19,7 @@ FluCheckComboBox {
             listUrl = componentProps.listUrl
             valField = componentProps.valField
             txtField = componentProps.txtField
+            listMore = componentProps.async ? true : false
             listUrlRequest([valField, txtField], 1)
         }
     }

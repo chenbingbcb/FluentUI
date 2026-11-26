@@ -31,7 +31,7 @@ ColumnLayout {
     property var rowActionDelegate: comRowAction //行操作委托组件
     property var tableActionDelegate //列表操作委托组件
     property var formActionDelegate //表单操作委托组件
-    property var formBelowDelegate //表单下面委托组件
+    property var formRepeaterBottomDelegate //表单repeater下方的委托组件
     property var childTableCustomConfig: [] //子表自定义配置
 
     property int tableViewHeight: defaultCellHeight * 10 + 42 //42为表头高度
@@ -49,7 +49,7 @@ ColumnLayout {
     property alias tableItemCount: gagination.itemCount
     property var formPane //子表所关联的FluFormPane对象 有值则表示当前为子表
     property var removeRecords: [] //删除的table记录
-    property var _to
+    property var _to //关联的表单窗口
     property var tableView
     Layout.fillWidth: true
 
@@ -60,12 +60,12 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        if (!tableConfig) {
+        if (tableConfig) {
+            if (!formConfig) {
+                formConfigRequest()
+            }
+        } else {
             columnsRequest()
-        }
-
-        if (!formConfig) {
-            formConfigRequest()
         }
     }
 
@@ -102,6 +102,9 @@ ColumnLayout {
                 }
 
                 tableConfig = jsResult.result
+                if (!formConfig) {
+                    formConfigRequest()
+                }
             }
     }
 
@@ -873,7 +876,7 @@ ColumnLayout {
                                , formData: rowFormData
                                , title: formTitle
                                , childTableCustomConfig: childTableCustomConfig
-                               , formBelowDelegate: formBelowDelegate
+                               , formRepeaterBottomDelegate: formRepeaterBottomDelegate
                                , formActionDelegate: formActionDelegate
                                , saveFormBtnInvisile: saveFormBtnInvisile
                            }, root)

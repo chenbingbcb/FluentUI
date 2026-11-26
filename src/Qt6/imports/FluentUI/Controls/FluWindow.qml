@@ -403,6 +403,7 @@ Window {
                 url = "FluFormPassword.qml"
                 break
             case "Textarea":
+            case "CodeEditor":
                 url = "FluFormTextArea.qml"
                 break
             case "Switch":

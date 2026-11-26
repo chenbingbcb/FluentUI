@@ -43,7 +43,7 @@ FluScrollablePage {
                 }
             ]
             tableActionDelegate: comCustomAction
-            formBelowDelegate: comCustomAction
+            formRepeaterBottomDelegate: comCustomAction
         }
     }
 

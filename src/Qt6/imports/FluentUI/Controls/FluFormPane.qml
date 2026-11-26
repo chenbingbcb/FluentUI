@@ -14,9 +14,9 @@ ColumnLayout{
     property var tabFields: []
     property var formData //该行表单数据
     property var formDataSaveListener
-    property var formBelowDelegate
     property var formActionDelegate //表单操作委托组件
     property bool saveFormBtnInvisile: false
+    property var formRepeaterBottomDelegate //repeater下方, 子表上方
     property var tablePanes: ({}) //子表面板map 子表数组索引做key
     property var tablePane //当前子表
     property bool forceSave: false
@@ -444,7 +444,7 @@ ColumnLayout{
     }
 
     FluLoader {
-        sourceComponent: formBelowDelegate ? formBelowDelegate : undefined
+        sourceComponent: formRepeaterBottomDelegate ? formRepeaterBottomDelegate : undefined
     }
 
     //子表tab
